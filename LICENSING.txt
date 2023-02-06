@@ -1,0 +1,15 @@
+    This code is part of StormSim software suite developed by the U.S. Army
+    Engineer Research and Development Center Coastal and Hydraulics
+    Laboratory (hereinafter “ERDC-CHL”). This material is distributed in
+    accordance with DoD Instruction 5230.24. Recipient agrees to abide by
+    all notices, and distribution and license markings. The controlling DOD
+    office is the U.S. Army Engineer Research and Development Center
+    (hereinafter, "ERDC"). This material shall be handled and maintained in
+    accordance with For Official Use Only, Export Control, and AR 380-19
+    requirements. ERDC-CHL retains all right, title and interest in
+    StormSim and any portion thereof and in all copies, modifications and
+    derivative works of StormSim and any portions thereof including,
+    without limitation, all rights to patent, copyright, trade secret,
+    trademark and other proprietary or intellectual property rights.
+    Recipient has no rights, by license or otherwise, to use, disclose or
+    disseminate StormSim, in whole or in part.
