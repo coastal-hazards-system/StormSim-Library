@@ -16,7 +16,7 @@ outDir = [config.project_name, filesep, config.struc_id, filesep,...
 
 %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
 switch workflow
-    case 1 %PROS
+    case 1 % PROS
         % Compute Structure R2% , q and P1
 
         % Compute Dn50 (Rubblemound)
@@ -47,13 +47,8 @@ switch workflow
                 structure.(storm_sampling).('Peaks').('WLP'), emp_coeff.(storm_sampling).('Peaks').('WLP'),...
                 {project_forcing.(storm_sampling).('Peaks').('WLP').LCNUM});
         end
-        %
         % Timeseries
         if use_timeseries == 1
-            % Replace Peak In Timeseries With Peak Reported In Peaks File
-            [project_forcing.(storm_sampling).('Timeseries')] = time_series_peak_replacer(project_forcing.(storm_sampling).('Timeseries'),...
-                project_forcing.(storm_sampling).('Peaks').('Maxima'),...
-                project_forcing.(storm_sampling).('Peaks').sampled_storms_indx);
             % Call StormSim: CSR Damage Progression Analysis
             [Resp.(storm_sampling).('Timeseries')] = stormsim_csr_dpa(config, structure.(storm_sampling).('Timeseries'), emp_coeff.(storm_sampling).('Timeseries'), LC_SimOUT_hyd);
         end

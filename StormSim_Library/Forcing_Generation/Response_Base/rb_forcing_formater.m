@@ -2,7 +2,8 @@ function project_forcing = rb_forcing_formater(config, sType, storm, prob_mass)
 
 %% GRAB INFORMATION FROM "config"
 % Define PROS Analysis Type (RB1, RB3)
-aType = config.pros_mode;
+% aType = config.pros_mode;
+use_timeseries = config.use_timeseries;
 
 %% GRAB INFORMATION FROM "prob_mass"
 % TC Storm Probability Masses
@@ -22,33 +23,29 @@ switch sType
 end
 
 %% RESHAPE FORCING PARAMETERS FOR RB1 ANALYSIS
-switch aType
-    case 'RB1'
-        % Disp
-        disp(['Reshaping ' sType ' forcing data for RB1 analysis....']);
-        % Reshape SWL To Be nStorms * normal_discretization
-        project_forcing.('Peaks').SWL = repmat(storm(:,1),1,RandNorm);
-        % Reshape Hm0 To Be nStorms * normal_discretization
-        project_forcing.('Peaks').Hm0 = repmat(storm(:,2),1,RandNorm);
-        % Reshape Tp To Be nStorms * normal_discretization
-        project_forcing.('Peaks').Tp = repmat(storm(:,3),1,RandNorm);
-        % Reshape Storm Probability Masses To Be nStorms * normal_discretization
-        if strcmp(sType,'TC')
-            project_forcing.('Peaks').TC_Freq = repmat(TC_Freq, 1, RandNorm);
-        end
-    case 'RB3'
-                % Disp
-        disp(['Reshaping ' sType ' forcing data for RB3 analysis....']);
-        % Reshape SWL To Be nStorms * normal_discretization
-        project_forcing.('Timeseries').SWL = repmat(storm(:,1),1,RandNorm);
-        % Reshape Hm0 To Be nStorms * normal_discretization
-        project_forcing.('Timeseries').Hm0 = repmat(storm(:,2),1,RandNorm);
-        % Reshape Tp To Be nStorms * normal_discretization
-        project_forcing.('Timeseries').Tp = repmat(storm(:,3),1,RandNorm);
-        % Reshape Storm Probability Masses To Be nStorms * normal_discretization
-        if strcmp(sType,'TC')
-            project_forcing.('Timeseries').TC_Freq = repmat(TC_Freq, 1, RandNorm);
-        end
+% Disp
+disp(['Reshaping ' sType ' forcing data for response base analysis....']);
+% Define Filednames In Storm
+fnames = fieldnames(storm);
+% Remove Unwanted Fields
+fnames = fnames(~contains(fnames,{'Timeseries','removed_storms'}));
+% Reshape Peaks Data
+for ii = 1:length(fnames)
+    % Reshape Peaks Data To Be nStorms * normal_discretization
+    project_forcing.('Peaks').(fnames{ii}).SWL = repmat(storm.(fnames{ii})(:,1),1,RandNorm); % SWL
+    project_forcing.('Peaks').(fnames{ii}).Hm0 = repmat(storm.(fnames{ii})(:,2),1,RandNorm); % Hm0
+    project_forcing.('Peaks').(fnames{ii}).Tp = repmat(storm.(fnames{ii})(:,3),1,RandNorm); % Tp
+end
+% Reshape Storm Probability Masses To Be nStorms * normal_discretization
+if strcmp(sType,'TC')
+    project_forcing.TC_Freq = repmat(TC_Freq, 1, RandNorm);
+end
+% Reshape Timeseries Data
+if use_timeseries == 1
+    % Reshape Peaks Data To Be nStorms * normal_discretization
+    project_forcing.('Timeseries').SWL = cellfun(@(x) repmat(x(:,2),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % SWL
+    project_forcing.('Timeseries').Hm0 = cellfun(@(x) repmat(x(:,3),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % Hm0
+    project_forcing.('Timeseries').Tp = cellfun(@(x) repmat(x(:,4),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % Tp
 end
 
 % % Save Point Depth

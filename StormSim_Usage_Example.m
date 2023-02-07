@@ -6,6 +6,9 @@ clc;clear all;
 Life cycle base variables will be organized in:
 Peaks:
     var.(storm_type).
+
+Timeseries fort.15 unstable results when compared to ADCIRC overall
+simulation. That's the reason for replacing the peak value.
 %}
 %% USER INPUTS
 %{
@@ -15,7 +18,7 @@ MCS/CSR & PROS Require:
     norm_20.mat -> (XCs only)
 %}
 % Define StormSim Input File Name
-stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
+stormsim_input_file = 'StormSim_Inputs2.xlsx'; % Include relative path if not in parent directory
 
 %% STEP 0: SET-UP ENVIRONMENT
 %{
@@ -178,7 +181,7 @@ PROS:
     for uncertainty?
 
 %}
-[structure, project_forcing, emp_coeff] = call_uncertainty_engine(config, structure, project_forcing);
+project_forcing = call_uncertainty_engine(config, project_forcing);
 
 
 %% STEP 5: COMPUTE  RESPONSE 

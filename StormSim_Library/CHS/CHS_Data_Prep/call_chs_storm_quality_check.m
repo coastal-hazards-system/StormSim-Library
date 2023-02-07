@@ -67,11 +67,10 @@ peaks_data = [peaks_data.Conv_Data];
 % Format storm Data
 [storm.Maxima] = chs_peaks_formater(peaks_data(ad_indx==1).Table_StormData,...
     peaks_data(ad_indx==0).Table_StormData, STWAVE_headers_location);
-
 % Convert From Tm to Tp (Special Case)
 if Tp_special == 1
     % Convert Tm to Tp (Lake Ontario Case)
-    storm.Maxima(:,3) = storm.Maxima(:,3)*1.2;
+    storm.Maxima(:,3) = storm.Maxima(:,3)*1.2;  % Remove This For Release, Need to inform user 
 end
 % Find NaN's In "Maxima" Dataset
 storm2rm = unique([find(isnan(storm.Maxima(:,1)));find(isnan(storm.Maxima(:,2)));...
@@ -114,7 +113,7 @@ end
 %% REMOVE INVALID STORMS & ADJUST PARAMETERS ACCORDINGLY
 % Maxima Dataset
 % Grab Removed Storm Ids For Maxima Dataset
-storm2rm = unique([storm2rm;removed_storms.Maxima];
+storm2rm = unique([storm2rm;removed_storms.Maxima]);
 % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
 % Remove Bad storms
 storm.Maxima(ismember(storm.Maxima(:,5),...

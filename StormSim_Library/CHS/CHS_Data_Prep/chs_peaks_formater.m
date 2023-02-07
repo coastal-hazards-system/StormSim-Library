@@ -26,7 +26,7 @@ function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_heade
     % Get Storm Data Table
             swl_peaks_table = sortrows(swl_peaks_table,'Storm ID','ascend');
             % Initialize Storm Matrix
-            Storm = zeros(height(swl_peaks_table),5);
+            Storm = zeros(height(swl_peaks_table),6);
             % Extract Storm ID From ADCIRC Table
             Storm(:,5) = str2double(swl_peaks_table.("Storm ID"));
             % Extract Water Level From ADyCIRC Table
@@ -49,4 +49,5 @@ function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_heade
             % Assign NaN's If Needed
             Storm(sum(Storm(:,2:4)==-99999,2)>=1,2:4) = NaN(1,1);
             Storm(sum(Storm(:,2:4)==0,2)>=1,2:4) = NaN(1,1);
+            Storm(:,6) = datenum(num2str(swl_peaks_table.("yyyymmddHHMM")),"yyyymmddHHMM");
         end

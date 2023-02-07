@@ -178,6 +178,9 @@ function [storm, CHS_Data, prob_mass, config] = call_chs_data_formater(config)
     if strcmp(config.region,'CHS-NA')
         config.region = 'NACCS';
     end
+
+    %% LOAD PROJECT IF FILES FOUND 
+    
     
     %% CONVERT CHS DATA
     %{
@@ -220,6 +223,9 @@ function [storm, CHS_Data, prob_mass, config] = call_chs_data_formater(config)
             use_timeseries, wlp_switch, whp_switch);
     end
     
+    %% TIMESERIES SWL PEAK REPLACER 
+    storm = chs_timeseries_peak_replacer(storm);
+
     %% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
     % Export Project Forcing 
     save([project_name filesep struc_id filesep project_name '_' struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'],...

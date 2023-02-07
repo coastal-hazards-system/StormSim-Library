@@ -240,9 +240,6 @@ RELEVANT PUBLICATIONS:
     % Cap sampled waves to positive values
     Y(Y(:,2)<0.05,2)=0.05;
 
-    XC_mean = nanmean(Y,1)-nanmean(storm_peaks,1);
-    XC_stdv = nanstd(Y,1)-nanstd(storm_peaks,1);
-
     %% SAMPLE STORM PARAMETERS FROM GAUSSIAN COPULA - WATER LEVEL PRIORITY
     if WLP_switch ==  1
         % Compute Water Level
@@ -257,9 +254,6 @@ RELEVANT PUBLICATIONS:
         Y_WLP(:,5)= XC_INDEX;
         % Cap sampled waves to positive values
         Y_WLP(Y_WLP(:,2)<0.05,2)=0.05;
-
-        XC_mean_WLP = nanmean(Y_WLP,1)-nanmean(storm_wlp_peaks,1);
-        XC_stdv_WLP = nanstd(Y_WLP,1)-nanstd(storm_wlp_peaks,1);
     end
     %% SAMPLE STORM PARAMETERS FROM GAUSSIAN COPULA - WAVE HEIGHT PRIORITY
     if WHP_switch == 1
@@ -275,9 +269,6 @@ RELEVANT PUBLICATIONS:
         Y_WHP(:,5)= XC_INDEX;
         % Cap sampled waves to positive values
         Y_WHP(Y_WHP(:,2)<0.05,2)=0.05;
-
-        XC_mean_WHP = nanmean(Y_WHP,1)-nanmean(storm_whp_peaks,1);
-        XC_stdv_WHP = nanstd(Y_WHP,1)-nanstd(storm_whp_peaks,1);
     end
     %% STORE SAMPLED EXTRATROPICAL STORMS
     % Monte Carlo Simulation Outputs (Sample Extratropical Storms Peaks)

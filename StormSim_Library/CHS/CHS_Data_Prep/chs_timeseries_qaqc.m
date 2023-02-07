@@ -41,7 +41,7 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
         % Remove Missing Storms
         stmID(storm2rm) = [];
         % Pre-Allocate Peaks Storage Variable
-        storm_matrix = [zeros(length(stmID),4),stmID]; % Water Level Priority Failsafe
+        storm_matrix = [zeros(length(stmID),4),stmID,zeros(length(stmID),1)]; % Water Level Priority Failsafe
         WLP_matrix = storm_matrix; % Water Level Priority
         WHP_matrix = storm_matrix; % Wave Height Priority
         
@@ -116,9 +116,12 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
                 wPeakWdir = wData.MeanWaveDirection(wIndx(dindx));
                 % Assign Peaks To Storage Variable
                 storm_matrix(stm,1:4) = [wlPeak,wPeak,wPeakTp,wPeakWdir];
+                % Add Peak Timestamp
+                storm_matrix(stm,end) = ADCIRC_tvector(wlIndx);
             else
                 % Assign Peaks To Storage Variable
                 storm_matrix(stm,1:4) = [-99999,-99999,-99999,-99999];
+                storm_matrix(stm,end) = -99999;
             end
             
             %% BUILD WATER LEVEL PRIORITY PEAKS DATASET
@@ -157,12 +160,12 @@ This means the values of the peak are more accurate.
                         try
                             WLP_matrix(stm,:) = [swl_peaks.('Water Elevation')(eIndx,1),...
                                 wData.ZeroMomentWaveHeight(wIndx), wData.PeakPeriod(wIndx), wData.MeanWaveDirection(wIndx),...
-                                stmID(stm)];
+                                stmID(stm), swl_peaks.('yyyymmddHHMM')(eIndx,1)];
                         catch
                             try
                                 WLP_matrix(stm,:) = [swl_peaks.('WaterElevation')(eIndx,1),...
                                     wData.ZeroMomentWaveHeight(wIndx), wData.PeakPeriod(wIndx), wData.MeanWaveDirection(wIndx),...
-                                    stmID(stm)];
+                                    stmID(stm), swl_peaks.('yyyymmddHHMM')(eIndx,1)];
                             catch
                                 WLP_matrix(stm,:) = storm_matrix(stm,:);
                             end
@@ -172,7 +175,7 @@ This means the values of the peak are more accurate.
                         WLP_matrix(stm,:) = storm_matrix(stm,:);
                     end
                 catch
-                    WLP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm)];
+                    WLP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm),-99999];
                 end
                 % Check For Special Tp Case
                 if Tp_special == 1
@@ -209,15 +212,15 @@ This means the values of the peak are more accurate.
                         % Grab Data
                         WHP_matrix(stm,:) = [hm0_peaks.('Water Elevation')(eIndx,1), hm0_peaks.(STWAVE_headers_location.Hm0)(eIndx,1),...
                             hm0_peaks.(STWAVE_headers_location.Tp)(eIndx,1), hm0_peaks.(STWAVE_headers_location.wDir)(eIndx,1),...
-                            str2double(hm0_peaks.("Storm ID")(eIndx,1))];
+                            str2double(hm0_peaks.("Storm ID")(eIndx,1)), datenum(num2str(hm0_peaks.('yyyymmddHHMM')(eIndx,1)),'yyyymmddHHMM')];
                     catch
                         try
                             % Grab Data
                             WHP_matrix(stm,:) = [hm0_peaks.('WaterElevation')(eIndx,1), hm0_peaks.(STWAVE_headers_location.Hm0)(eIndx,1),...
                                 hm0_peaks.(STWAVE_headers_location.Tp)(eIndx,1), hm0_peaks.(STWAVE_headers_location.wDir)(eIndx,1),...
-                                str2double(hm0_peaks.("Storm ID")(eIndx,1))];
+                                str2double(hm0_peaks.("Storm ID")(eIndx,1)), datenum(num2str(hm0_peaks.('yyyymmddHHMM')(eIndx,1)),'yyyymmddHHMM')];
                         catch % Flag As Bad Storm
-                            WHP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm)];
+                            WHP_matrix(stm,:) = [-99999, -99999, -99999, -99999, stmID(stm), -99999];
                         end
                     end
                 else % Grab Water Elevation From ADCIRC Timeseries
@@ -236,18 +239,18 @@ This means the values of the peak are more accurate.
                         try
                             WHP_matrix(stm,:) = [wlData.('Water Elevation')(wIndx,1), hm0_peaks.(STWAVE_headers_location.Hm0)(eIndx,1),...
                                 hm0_peaks.(STWAVE_headers_location.Tp)(eIndx,1), hm0_peaks.(STWAVE_headers_location.wDir)(eIndx,1),...
-                                str2double(hm0_peaks.("Storm ID")(eIndx,1))];
+                                str2double(hm0_peaks.("Storm ID")(eIndx,1)), helperVar];
                         catch
                             try
                                 WHP_matrix(stm,:) = [wlData.('WaterElevation')(wIndx,1), hm0_peaks.(STWAVE_headers_location.Hm0)(eIndx,1),...
                                     hm0_peaks.(STWAVE_headers_location.Tp)(eIndx,1), hm0_peaks.(STWAVE_headers_location.wDir)(eIndx,1),...
-                                    str2double(hm0_peaks.("Storm ID")(eIndx,1))];
+                                    str2double(hm0_peaks.("Storm ID")(eIndx,1)), helperVar];
                             catch
-                                WHP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm)];
+                                WHP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm), -99999];
                             end
                         end
                     else % catch
-                        WHP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm)];
+                        WHP_matrix(stm,:) = [-99999,-99999,-99999,-99999,stmID(stm), -99999];
                     end
                 end
                 % Check For Special Tp Case

@@ -187,7 +187,7 @@ RELEVANT PUBLICATIONS:
                         SimOUT_TC(n,5) = randsample(smpl0,1,true,TC_Freq(freq_indx));
                         
                         % Extract Data Corresponding To Sampled Storm (
-                        SimOUT_TC(n,6:10) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
+                        SimOUT_TC(n,6:11) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
                     else
                         % High Intensity Index (Maybe?)
                         SimOUT_TC(n,4) = 1;
@@ -200,7 +200,7 @@ RELEVANT PUBLICATIONS:
                         % Sample Random High Intensity Storm Index
                         SimOUT_TC(n,5) = randsample(smpl1,1,true,TC_Freq(freq_indx));
                         % Extract Data Corresponding To Sampled Storm
-                        SimOUT_TC(n,6:10) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:); % Maximums
+                        SimOUT_TC(n,6:11) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:); % Maximums
                     end%if
                     % Increment Storm
                     n=n+1;

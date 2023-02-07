@@ -79,16 +79,16 @@ disp('Preping project forcing data....');
 switch workflow
     case 1 % StormSim: PROS (Ressonse Base (RB1) Analysis)
         % Define Workflow Key Phrase
-        wName = 'RB1';
+        wName = 'RB';
         % Tropical Cyclones
         if contains(storm_sampling,{'TC','CC'})
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
-            project_forcing.('TC') = rb_forcing_formater(config, 'TC', storm.('TC').Maxima, prob_mass);
+            project_forcing.('TC') = rb_forcing_formater(config, 'TC', storm.('TC'), prob_mass);
         end
         % Extratropical Storms
         if contains(storm_sampling,{'XC','CC'})
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
-            project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC').Maxima, []);
+            project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
         end
     otherwise % StormSim: MCS/CSR (Life-Cycle Base Analysis)
         % Define Workflow Key Phrase

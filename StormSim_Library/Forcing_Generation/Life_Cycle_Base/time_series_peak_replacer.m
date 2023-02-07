@@ -62,7 +62,10 @@ AUTHOR:
 Fabian Garcia-Moreno
 %}
 function [LC_SimOUT_hyd] = time_series_peak_replacer(LC_SimOUT_hyd,LC_MCSimOUT,MC_indx)
-
+%{
+move this to chs_data_formater, replace timestep in timeseries with peaks
+file value (only ADCIRC). No +/-. 
+%}
 % Loop Through ALl Life Cycles
 for jj = 1:length(LC_SimOUT_hyd)
     % Extract Current Time Series LC

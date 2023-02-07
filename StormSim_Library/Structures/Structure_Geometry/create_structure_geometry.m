@@ -93,7 +93,7 @@ for ii = 1:length(vars_2_grab)
     switch eval(['class(config.' vars_2_grab{ii} ')'])
         case 'double'
             eval(['structure.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} ';']); % Mean
-            eval(['structure.std.(''' vars_2_grab{ii} ''') = ''NA'';']); % Standard Deviation
+%             eval(['structure.std.(''' vars_2_grab{ii} ''') = ''NA'';']); % Standard Deviation
         otherwise
             eval(['structure.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} '.mean;']); % Mean
             eval(['structure.std.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} '.std;']); % Standard Deviation
