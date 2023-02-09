@@ -6,7 +6,7 @@ function [gamma_v,gamma_star] = wall_influence_factor(crest_elevation,toe_elevat
         gamma_v = exp(-0.56*h_wall./Rc);
         gamma_star = gamma_v;
     else
-        gamma_v    = 1;
-        gamma_star = 1;
+        gamma_v    = ones(size(Rc));
+        gamma_star = ones(size(Rc));
     end
 end

@@ -18,6 +18,6 @@ if berm_width~=0
     gamma_b(gamma_b>1)=1;
 
 else
-    gamma_b = 1;
+    gamma_b = ones(size(Hm0));
 end
 end

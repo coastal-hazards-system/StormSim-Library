@@ -137,8 +137,6 @@ Szerolim = 0.2;
 % Output Save Dir
 outDir = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
-% Convert Forcing Structure To Cell Array
-LC_SimOUT_hyd = squeeze(struct2cell(LC_SimOUT_hyd));
 % Determine Number Of Life Cycles
 nLC = length(LC_SimOUT_hyd);
 % Determine Number Of Timesteps Per Life Cycle
@@ -150,21 +148,19 @@ nYears = config.mcs_nYears;
 
 %% GRAB INPUTS FROM "config"
 % ---------- PROJECT DETAILS ----------
-% Define Storm Type ('XC' or 'TC')
-storm_sampling = config.storm_sampling;
 % Define Sea Level Rise
 SL = config.swl_slr;
 % Water density (kg/m^3)
-dw = config.water_density;dw = dw.mean;
+dw = config.water_density;dw = dw;
 % Seaside Damage Ultimate Limit State (ULS)
-Ssea_ULS = config.seaside_limit_S.mean;
+Ssea_ULS = config.seaside_limit_S;
 % Leeside Damage Ultimate Limit State (ULS)
-Slee_ULS = config.leeside_limit_S.mean;
+Slee_ULS = config.leeside_limit_S;
 % Structure Type
 structure_type = config.struc_type;
 % Coefficients are found in CEM and in Eurotop. For levees with grass, the
 % surface roughness influence increses for small wave heights.
-gamma_f = config.roughness_ifactor;gamma_f = gamma_f.mean;
+gamma_f = config.roughness_ifactor;
 
 % ---------- LOGICAL SWITCHES ----------
 % Depth Limitation Adjustment Flag; 1 - Applied, Waves Adjusted, 0 - Not Applied

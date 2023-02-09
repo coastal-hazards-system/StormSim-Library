@@ -50,7 +50,7 @@ switch workflow
         % Timeseries
         if use_timeseries == 1
             % Call StormSim: CSR Damage Progression Analysis
-            [Resp.(storm_sampling).('Timeseries')] = stormsim_csr_dpa(config, structure.(storm_sampling).('Timeseries'), emp_coeff.(storm_sampling).('Timeseries'), LC_SimOUT_hyd);
+            [Resp.(storm_sampling).('Timeseries')] = stormsim_csr_dpa(config, structure.(storm_sampling).('Timeseries'), emp_coeff.(storm_sampling).('Timeseries'), {project_forcing.(storm_sampling).('Timeseries').LCNUM});
         end
         % Display Status
         disp('Saving structure responses....');
