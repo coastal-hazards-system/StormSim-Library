@@ -1,6 +1,6 @@
 function gammas = call_eurotop_ifactors(config, structure, SWL, Hm0)
 %% GRAB DETAILS FROM "config"
-strucType = config.strucType;
+strucType = config.struc_type;
 % Surface roughness coefficient
 gamma_f = config.roughness_ifactor;
 
@@ -26,5 +26,5 @@ gammas.gamma_f = surface_roughness_influence_factor(gamma_f, Hm0);
 % Oblique wave coefficients - Not implemented in StormSim as of 9/03/20
 [gammas.gamma_beta_r2p, gammas.gamma_beta_q] = oblique_waves_influence_factor(1);
 % Berm Influence Factor (Not used)
-[gammas.gamma_b] = berm_influence_factor(berm_width, berm_elev, Hm0, seaward_slope, length(Hm0));
+[gammas.gamma_b] = berm_influence_factor(berm_width, berm_elev, Hm0, SWL, seaward_slope);
 end

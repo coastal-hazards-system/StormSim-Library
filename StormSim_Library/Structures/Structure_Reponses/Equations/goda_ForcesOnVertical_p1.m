@@ -89,9 +89,9 @@ try
 %     end
 
     % compute hb with respect to the berm width
-    if 5.*hs < Bm
+    if 5*hs < Bm
         hb = d; 
-    elseif 5.*hs>Bm+(hs-d).*m
+    elseif 5*hs>Bm+(hs-d)*m
         hb = hs; 
     else
         hb = ((5.*hs-Bm)./m)+d;

@@ -26,7 +26,7 @@ ERROR = 1;
 fq = 1./T;
 % solve for kh(x1) using iterative method
 % initial guess for X1 based on WHSQ
-WHSQ = (depth/grav).* (2*pi*fq).^2;
+WHSQ = (depth./grav).* (2*pi*fq).^2;
 if WHSQ > 1.0
    X1 = WHSQ;
    if tanh(X1) > 1.-TOL  % deep water limits
@@ -57,8 +57,8 @@ while abs(CORR) > TOL
 end
 km = X1 ./ depth;
 % check against the empirical estimate
-arg=2*pi/T*sqrt(depth/grav);
+arg=2*pi./T.*sqrt(depth./grav);
 A = grav.*T.^2/2/pi;
-wavelen = A*(1-exp(-(arg^2.5)))^(0.4);
-kmest = (2*pi)/wavelen;
+wavelen = A.*(1-exp(-(arg.^2.5))).^(0.4);
+kmest = (2*pi)./wavelen;
 return
