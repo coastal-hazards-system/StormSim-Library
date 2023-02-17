@@ -34,9 +34,35 @@ switch workflow
                 end
             end
             % Call StormSim; CSR Peaks Reliability
-            Resp.('Peaks').(level_2{ii}) = stormsim_pros(config,...
+            helper_var = stormsim_pros(config,...
                 aux_var, structure, emp_coeff);
+            % Add Additional Layer To Data Structure For Peaks Alt Datasets
+            if isfield(helper_var,'XC')
+                Resp.('XC').('Peaks').(level_2{ii}) = helper_var.('XC').('Peaks');
+            end
+            if isfield(helper_var,'TC')
+                Resp.('TC').('Peaks').(level_2{ii}) = helper_var.('TC').('Peaks');
+            end
             clearvars('aux_var');
+        end
+        % RB3 
+        if use_timeseries == 1
+            for jj = 1:length(level_1)
+                aux_var.(level_1{jj}) = project_forcing.(level_1{jj}).('Timeseries');
+                if any(contains(fieldnames(project_forcing.(level_1{jj})),{'TC_Prob'}))
+                    aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
+                end
+            end
+              % Call StormSim; CSR Peaks Reliability - Need to debug , got
+              % error in SST
+            helper_var = stormsim_pros(config,...
+                aux_var, structure, emp_coeff);  
+            if isfield(helper_var,'XC')
+                Resp.('XC').('Timeseries') = helper_var.('XC').('Timeseries');
+            end
+            if isfield(helper_var,'TC')
+                Resp.('TC').('Timeseries') = helper_var.('TC').('Timeseries');
+            end
         end
     case 3 % CSR
 

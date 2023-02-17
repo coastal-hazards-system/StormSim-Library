@@ -48,6 +48,14 @@ Comments from Jeff
   on the geometry and the geotechnical failure location.   
 %}
 
+%% VECTORIZE INPUTS 
+data_dims = size(Hm0);
+Hm0 = Hm0(:);
+Tp = Tp(:);
+beta = beta(:);
+hs = hs(:);
+d = d(:);
+
 %%  PREPROCESSING
 % Compute Design Hm0
 H_design = Hm0*design_scale;
@@ -84,12 +92,14 @@ kp_hs = kp.*hs; % k_p .* h_s, unitless
 %% COMPUTE ALPHA'S
 % Alpha coefficients
 alpha1 = 0.6+0.5.*(2.*kp_hs./sinh(2.*kp_hs)).^2;
-alpha2 = arrayfun(@(x,y) min(x,y), (hb-d)./3./hb.*(H_design./d).^2, 2.*d./H_design);
+alpha2 = min([(hb-d)./3./hb.*(H_design./d).^2, 2.*d./H_design],[],2,"omitnan");
 alphaStar = alpha2;
 
 %% COMPUTE P1 (Table VI-5-53 in CEM)
 p1dyn=0.5.*(1+cos(beta)).*(lambda1.*alpha1+lambda2.*alphaStar.*...
     (cos(beta).^2)).*gamma_w.*H_design; % hydrodynamic p1 at SWL
+% Reshape 
+p1dyn = reshape(p1dyn,data_dims);
 end
 
 

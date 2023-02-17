@@ -35,7 +35,7 @@ switch dType
             % Add Tide To Storm Data
             for ii = 1:length(t_size)
                 % Build Index List For Replicates
-                rep_indx = arrayfun(@(x) [tide_indx(ii,x):tide_indx(ii,x)+t_size{ii}-1]',1:reps,'un',false);
+                rep_indx = cellfun(@(x) [tide_indx(ii,x):tide_indx(ii,x)+t_size{ii}-1]',num2cell(1:reps),'un',false);
                 % Extract Random Tidal Signal(s) for Replicates
                 rep_tide = cell2mat(cellfun(@(x) tidal_data(x),rep_indx,'un',false));
                 % Add Tidal Signal To Storm Data

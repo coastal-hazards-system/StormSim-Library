@@ -24,7 +24,7 @@ Rc = crest_ele - SWL;
 % Surface roughness Influence Factor
 gammas.gamma_f = surface_roughness_influence_factor(gamma_f, Hm0);
 % Oblique wave coefficients - Not implemented in StormSim as of 9/03/20
-[gammas.gamma_beta_r2p, gammas.gamma_beta_q] = oblique_waves_influence_factor(1);
+[gammas.gamma_beta_r2p, gammas.gamma_beta_q] = oblique_waves_influence_factor(size(Hm0));
 % Berm Influence Factor (Not used)
 [gammas.gamma_b] = berm_influence_factor(berm_width, berm_elev, Hm0, SWL, seaward_slope);
 end

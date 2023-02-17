@@ -504,8 +504,8 @@ end
 if use_AEP %Select AEPs
     HC_tbl_x = 1./[2 5 10 20 50 100 200 500 1000 2000 5000 1e4 2e4 5e4 1e5 2e5 5e5 1e6];
 else %Select AEFs
-    %     HC_tbl_x = 1./[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000,100000,200000,500000,1000000];
-    HC_tbl_x = 1./[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000]; %truncated to 1e-4 due to very high response values below it
+    %     HC_tbl_x = 1./[0.1 0.2 0.5 1 2 5 10 20 50 100 200 500 1e3 2e3 5e3 1e4 2e4 5e4 1e5 2e5 5e5 1e6];
+    HC_tbl_x = 1./[0.1 0.2 0.5 1 2 5 10 20 50 100 200 500 1e3 2e3 5e3 1e4]; %truncated to 1e-4 due to very high response values below it     
 end
 
 % Default responses for HC summary table HC_tbl_rsp_x
@@ -519,7 +519,7 @@ elseif isrow(HC_tbl_rsp_y)
 end
 
 % Default AEFs for full HC; in log10 scale (for plotting), from 10^1 to 10^-6
-d=1/90; v=10.^(1:-d:0)'; HC_plt_x=v; x=10;
+d=1/20; v=10.^(1:-d:0)'; HC_plt_x=v; x=10;
 for i=1:6, HC_plt_x=[HC_plt_x; v(2:end)/x]; x=x*10; end %#ok<AGROW>
 HC_plt_x=flipud(HC_plt_x);
 
@@ -1101,7 +1101,7 @@ end
 
 %% Save the output
 % disp(['*** Step 4: Saving results here: ',path_out])
-% save([path_out,'StormSim_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
+save([path_out,'StormSim_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
 
 [~,id_act]=hasPCT;if id_act==0,delete(gcp);end
 % disp('*** Evaluation finished.' )

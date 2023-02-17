@@ -165,8 +165,6 @@
                     FA_units(contains({FileAttributes(FA_indx).Name},{'Lat','Lon','Depth'})) = {FileAttributes(FA_units_indx).Value};
                     % Add TO Output Var
                     cData.units = FA_units;
-
-
                 end
             else
                 FileAttributes = [];
@@ -176,9 +174,9 @@
             end
 
             %% FIELD: DATASETS (info.Datasets)
+            
             if Has_Datasets
                 if File_version=="V2"
-
                     %%%% HEADERS
                     % Extract Dataset Info
                     FileDatasets = info.Datasets;

@@ -265,10 +265,11 @@ HISTORY OF REVISIONS:
     datasets. Reorganized the outputs. Changed input names.
 20210831-ERS: alpha version v0.3: duplicates now removed from x values when
     interpolating HC plot in the integration script.
+20230126-JAM: Minor change to U_a input check line
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function [JPM_output,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_vg] = StormSim_JPM_PROS_Tool_R1_v20210831JAM2023(Resp,ProbMass,vg_id,vg_ColNum,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y)
+function [JPM_output,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_vg] = StormSim_JPM_PROS_Tool_R1_v20210831_20230126PROS(Resp,ProbMass,vg_id,vg_ColNum,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y)
 %% General settings
 % clc;disp(['***********************************************************' newline...
 %     '***         StormSim-JPM Tool Alpha Version 0.3         ***' newline...
@@ -311,7 +312,7 @@ elseif isrow(HC_tbl_rsp_y)
 end
 
 % Set up AEFs for full HC; in log10 scale (for plotting), from 10^1 to 10^-6
-d=1/90; v=10.^(1:-d:0)'; HC_plt_x=v; x=10;
+d=1/20; v=10.^(1:-d:0)'; HC_plt_x=v; x=10;
 for i=1:6, HC_plt_x=[HC_plt_x; v(2:end)/x]; x=x*10; end %#ok<AGROW>
 HC_plt_x=flipud(HC_plt_x);
 
@@ -367,7 +368,9 @@ end
 
 
 %% Check the uncertainties
-if U_a<0||~isscalar(U_a)||isempty(U_a)||isinf(U_a),error('Input U_a must be a positive scalar.');end
+% JAM changed following line on 1/26/23
+%if U_a<0||~isscalar(U_a)||isempty(U_a)||isinf(U_a),error('Input U_a must be a positive scalar.');end
+if U_a<0,error('Input U_a must be a positive scalar.');end
 if U_r<0||~isscalar(U_r)||isempty(U_r)||isinf(U_r),error('Input U_r must be a positive scalar.');end
 if U_a==0,U_a=1e-7;end; if U_r==0,U_r=1e-7;end
 
@@ -544,7 +547,7 @@ switch sz
         
         % Store output
 %         disp(['*** Step 4: Saving results here: ',path_out])
-        %save([path_out,'StormSim_JPM_output.mat'],'JPM_output','HC_plt_x','HC_tbl_x','HC_tbl_rsp_y','Removed_vg','-v7.3')
+        save([path_out,'StormSim_JPM_output.mat'],'JPM_output','HC_plt_x','HC_tbl_x','HC_tbl_rsp_y','Removed_vg','-v7.3')
         
     case 0
         
@@ -563,7 +566,7 @@ switch sz
             Resp_p=Resp(:,Nc);ProbMass_p=ProbMass(:,Nc);sp_id_p=vg_id(:,Nc);U_tide_p=U_tide(:,Nc);
             
             %Export partition
-            %save([pth_inp,'InputPartition_',int2str(i),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
+            save([pth_inp,'InputPartition_',int2str(i),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
             
             %Execute counter for next loop
             Nc = Nc+5000;
@@ -571,7 +574,7 @@ switch sz
         
         % Now, create and export the last partition
         Resp_p=Resp(:,Nc(1):n);ProbMass_p=ProbMass(:,Nc(1):n);sp_id_p=vg_id(:,Nc(1):n);U_tide_p=U_tide(:,Nc(1):n);
-        %save([pth_inp,'InputPartition_',int2str(Np),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
+        save([pth_inp,'InputPartition_',int2str(Np),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
 %         Np = Np-1;
         
         %Display status
@@ -606,7 +609,7 @@ switch sz
             end
 
             % Export output per partition
-            %save([path_out,'StormSim_JPM_output_Part_',int2str(i),'.mat'],'JPM_output','HC_plt_x','HC_tbl_x','HC_tbl_rsp_y','Removed_vg','-v7.3')
+            save([path_out,'StormSim_JPM_output_Part_',int2str(i),'.mat'],'JPM_output','HC_plt_x','HC_tbl_x','HC_tbl_rsp_y','Removed_vg','-v7.3')
         end
 %         disp(['*** Step 4: Results stored here: ',path_out])
 end

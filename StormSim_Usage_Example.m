@@ -191,7 +191,7 @@ project_forcing = call_uncertainty_engine(config, project_forcing);
 % accompanied by report to address the selection of storm duration.
 % MCS-LC Its working but need to change K_ss in line 212 of
 % stormsim_csr_dpa.m. Also, need to update damage functions to latest.
-call_structure_response(config, project_forcing, structure);
+Resp = call_structure_response(config, project_forcing, structure);
 
 
 % Start work on defining an hdf5 file format to store outputs from MCS to

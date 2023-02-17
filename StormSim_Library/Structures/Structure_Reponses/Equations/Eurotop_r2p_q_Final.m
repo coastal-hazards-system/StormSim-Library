@@ -1,8 +1,8 @@
-function [R2p_final,q_final]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
-                Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
-                gamma_star, gamma_v, wall_toe,berm_width, structure_type)
+function [R2p, R2p_SWL, q]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
+    Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
+    gamma_star, gamma_v, gamma_b, wall_toe,berm_width, structure_type)
 
-       
+
 %{
  LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
@@ -129,148 +129,124 @@ REFERENCES:
         http:././www.overtopping-manual.com./eurotop.pdf
 %}
 
-% Do not calculate structure response if no storm forcing                
-if Hm0<=0 || Tp<=0 || SWL<=-100 || isnan(Hm0)==1 || isnan(Tp)==1 || ...
-        isnan(SWL)==1 %|| (h+SWL)<0
-    q_final = NaN; 
-    R2p_final = NaN;
-else
- % Temp Conversions 
-%  Hm0 = Hm0 *  3.280839895; % ft
-%  SWL = SWL *  3.280839895; % ft
-%   Rc = Rc *  3.280839895; % ft
-%  wall_toe = wall_toe *  3.280839895; % ft
-%   BermWidth = BermWidth *  3.280839895; % ft
-
+%% VECTORIZE INPUTS
+data_dims = size(SWL);
+Hm0 = Hm0(:);
+SWL = SWL(:);
+Tp = Tp(:);
+Rc = Rc(:);
+gamma_f = gamma_f(:);
+gamma_beta_r2p = gamma_beta_r2p(:);
+gamma_beta_OT = gamma_beta_OT(:);
+gamma_star = gamma_star(:);
+gamma_v = gamma_v(:);
+gamma_b = gamma_b(:);
 
 %% Define variables
 g = 9.80665;                            % gravitational acceleration
 T_m10 = Tp/1.1;                         % neg zero moment period tm_1,0
-L_m10 = g*T_m10^2 /(2*pi);              % Zero moment wave length
-s_m10 = Hm0/L_m10;                      % Wave steepness
-breaker_m10 = (1/slope)/sqrt(s_m10);    % Breaker parameter
-    
+L_m10 = g*T_m10.^2 /(2*pi);              % Zero moment wave length
+s_m10 = Hm0./L_m10;                      % Wave steepness
+breaker_m10 = (1/slope)./sqrt(s_m10);    % Breaker parameter
+
 % Assume no berm!
-    gamma_b = 1;
-    
+%     gamma_b = 1;
+
 %% Negative freeboard influence
-% EurOtop Eq 5.20
-if Rc <= 0 
-    q_overflow = 0.54 * sqrt(g*abs(Rc)^3);
-    Rc_corrt = 0; % need to calculate q with Rc = 0 for negative freeboards
-else 
-    q_overflow = 0;
-    Rc_corrt = Rc;
-end 
+% Initialize Variables
+q_overflow = zeros(size(Rc));
+Rc_corrt = zeros(size(Rc));
+% Compute Overflow When Strcuture Is Submerged
+q_overflow(Rc<=0) = 0.54 * sqrt(g*abs(Rc(Rc<=0)).^3);% EurOtop Eq 5.20
+%
+Rc_corrt(Rc>0) = Rc(Rc>0);
 
 %% Runup and overtopping loop
 if slope > 0.1 &&  structure_type==1  % slope cota > 1 ->  (levee)
-%     disp('      Calculating Levee Overtopping and Runup...')
+    %     disp('      Calculating Levee Overtopping and Runup...')
     % Embankment coefficients
-    runup_coeff1 = 1.65; % EurOtop Eq 5.1   
+    runup_coeff1 = 1.65; % EurOtop Eq 5.1
     runup_coeff2 = 1.00; % EurOtop Eq 5.2
-    runup_coeff3 = 0.80; % EurOtop Eq 5.6                           
+    runup_coeff3 = 0.80; % EurOtop Eq 5.6
 
     OT_coeff1 = 0.023;   % EurOtop Eq 5.10
     OT_coeff2 = 2.700;   % EurOtop Eq 5.10
     OT_coeff3 = 0.090;   % EurOtop Eq 5.11
     OT_coeff4 = 1.500;   % EurOtop Eq 5.11
-  
+
     if slope > 2
-        % EurOtop Runup Eq 5.1 and 5.2 
+        % EurOtop Runup Eq 5.1 and 5.2
         R2p_a = Hm0.*runup_coeff1.*gamma_b.*gamma_f.*gamma_beta_r2p.*breaker_m10;
         R2p_max = Hm0.*runup_coeff2.*gamma_f.*gamma_beta_r2p.*...
             (4-1.5./sqrt(gamma_b.*breaker_m10));
-        R2p(R2p_max>0) = min(R2p_a(R2p_max>0),R2p_max(R2p_max>0));
+        R2p = zeros(size(SWL));
+        R2p(R2p_max>0) = min([R2p_a(R2p_max>0),R2p_max(R2p_max>0)],[],2,"omitnan");
         R2p(R2p_max<=0) = R2p_a(R2p_max<=0);
 
-        if R2p_max > 0 
-            R2p = min(R2p_a,R2p_max);
-        else
-            R2p = R2p_a;
-        end 
-        
         % EurOtop Overtopping Eq 5.10 and 5.11
         q_a = sqrt(g.*Hm0.^3).*OT_coeff1./sqrt(1./slope).*gamma_b.*...
             breaker_m10.*exp(-(OT_coeff2.*Rc_corrt./breaker_m10./Hm0./...
             gamma_b./gamma_f./gamma_beta_OT./gamma_v).^1.3);
+
         q_max = sqrt(g.*Hm0.^3).*OT_coeff3.*...
             exp(-(OT_coeff4.*Rc_corrt./Hm0./gamma_f./gamma_beta_OT./...
             gamma_star).^1.3);
-        q = min(q_max,q_a);
-        
-        clear R2p_a R2p_max q_a q_max
-        
+        %
+        q = min([q_max,q_a],[],2,"omitnan");
     else % cota between 1:2 and 1:1 - embankment to vertical wall
         % EurOtop Runup Eq 5.6
-        R2p_a = min(Hm0.*runup_coeff3./(1./slope) + 1.6 , (3.*Hm0));
-        R2p = max(0,max(R2p_a,(1.8.*Hm0)));
-        
+        R2p_a = min([Hm0.*runup_coeff3./(1./slope) + 1.6 , (3.*Hm0)],[],2,"omitnan");
+        R2p = max([zeros(size(SWL)),max([R2p_a,(1.8.*Hm0)],[],2,"omitnan")],[],2,"omitnan");
+
         % EurOtop Overtopping eq 5.18- assumes only smooth slopes
         a_a = (0.09 - 0.01.*(2-(1./slope)).^2.1);
         a = a_a+(a_a.*0.15.*randn);
         b_a = min((1.5+0.42.*(2-(1./slope)).^1.5),2.35);
         b = b_a+(b_a.*0.10.*randn);
-        q = sqrt(g.*Hm0.^3).*a.*exp(-(b.*Rc_corrt./Hm0./gamma_beta_OT).^1.3); 
-        
-        clear R2p_a a_a a b_a b
-    end 
-
-elseif slope > 0.1 &&  structure_type==3 % rubble mound 
-%     disp('      Calculating Rubble Mound Overtopping and Runup...')
+        q = sqrt(g.*Hm0.^3).*a.*exp(-(b.*Rc_corrt./Hm0./gamma_beta_OT).^1.3);
+    end
+elseif slope > 0.1 &&  structure_type==3 % rubble mound
+    %     disp('      Calculating Rubble Mound Overtopping and Runup...')
     % Embankment coefficients
-    runup_coeff1 = 1.65; % EurOtop Eq 6.1   
-    runup_coeff2 = 1.00; % EurOtop Eq 6.1                  
+    runup_coeff1 = 1.65; % EurOtop Eq 6.1
+    runup_coeff2 = 1.00; % EurOtop Eq 6.1
 
     OT_coeff3 = 0.090;   % EurOtop Eq 6.5
     OT_coeff4 = 1.500;   % EurOtop Eq 6.5
 
     % gamma_f modifications
+    gamma_f_surge = gamma_f;
     % May need to include a switch for user to turn on./off
-    if breaker_m10 > 1.8 && breaker_m10 < 10 % EurOtop Eq. 6.1
-        gamma_f_surge = gamma_f + (breaker_m10-1.8).*(1-gamma_f)./8.2; 
-    else
-        gamma_f_surge = gamma_f; 
-    end
-
+    rIndx = breaker_m10 > 1.8 & breaker_m10 < 10;
+    % EurOtop Eq. 6.1
+    gamma_f_surge(rIndx) = gamma_f(rIndx) + (breaker_m10(rIndx)-1.8).*(1-gamma_f(rIndx))./8.2;
     % For overtopping, if there is a berm gamma_f is changed to gamma_BB in the
     % equations- assume hardly and partly reshaping berm breakwaters
 
     % Will also take care of instances where structure has steep slopes
-    if slope < 2 % Accounts for eq 6.5 - gamma_f
-        gamma_f_orBB = 1; 
-    elseif berm_width > 0 % EurOtop Eq 6.11 - gamma_f is not used for berm structures
-        gamma_f_orBB = max(0.6, 0.68-4.1.*s_m10-0.05.*berm_width./Hm0); % Max influence is 0.6
-    elseif breaker_m10 > 5 && breaker_m10 < 10 % EurOtop Eq. 6.7 - gamma_f
-        gamma_f_orBB = gamma_f + (breaker_m10-5).*(1-gamma_f)./5; 
+    if berm_width > 0 % EurOtop Eq 6.11 - gamma_f is not used for berm structures
+        gamma_f_orBB =  max([repmat(0.6,size(SWL)), 0.68-4.1.*s_m10-0.05.*berm_width./Hm0],[],2,"omitnan"); % Max influence is 0.6
     else
-        gamma_f_orBB = 1; 
+        gamma_f_orBB = ones(size(SWL));
     end
+    % EurOtop Eq. 6.7 - gamma_f
+    rIndx = breaker_m10 > 5 & breaker_m10 < 10;
+    gamma_f_orBB(rIndx) = gamma_f(rIndx) + (breaker_m10(rIndx)-5).*(1-gamma_f(rIndx))./5;
 
-    
     % EurOtop Runup Eq 6.1
     %%% Maximum Ru2%./Hm0 = 3 for impermeable and 2.0 for permeable
-    
+
     R2p_a = Hm0.*runup_coeff1.*gamma_b.*gamma_f_surge.*gamma_beta_r2p.*breaker_m10;
     R2p_max = Hm0.*runup_coeff2.*gamma_f_surge.*gamma_beta_r2p.*...
         (4-1.5./sqrt(gamma_b.*breaker_m10));
-    if R2p_max > 0 
-        R2p = min(R2p_a,R2p_max);
-    else
-        R2p = R2p_a;
-    end 
-
-
+    R2p = zeros(size(SWL));
+    R2p(R2p_max>0) = min([R2p_a(R2p_max>0),R2p_max(R2p_max>0)],[],2,"omitnan");
+    R2p(R2p_max<=0) = R2p_a(R2p_max<=0);
     q = sqrt(g.*Hm0.^3).*OT_coeff3.*...
         exp(-(OT_coeff4.*Rc_corrt./Hm0./gamma_f_orBB./gamma_beta_OT).^1.3);
-        
-
-    
-   
 else  % If the slope cota = 1 ------> Vertical walls
-%     disp('      Calculating Floodwall Overtopping...')
-    R2p = NaN;
-    
+    %     disp('      Calculating Floodwall Overtopping...')
+    R2p = NaN(size(SWL));
     % Vertical wall coefficients
     OT_coeff1 = 0.047 ;%+ 0.007;    % EurOtop Eq 7.1
     OT_coeff2 = 2.350 ;%+ 0.230;    % EurOtop Eq 7.1
@@ -278,70 +254,37 @@ else  % If the slope cota = 1 ------> Vertical walls
     OT_coeff4 = 2.780 ;%+ 0.170;    % EurOtop Eq 7.5
     OT_coeff5 = 0.011 ;%+ 0.0045;   % EurOtop Eq 7.7 and 7.15
     OT_coeff6 = 0.0014 ;%+ 0.0006;  % EurOtop Eq 7.8 and 7.14
-   
+
     % Franco equation (for reference)
-        % q = sqrt(g.*Hm0.^3).*0.2.*exp(-4.7.*Rc_corrt./Hm0);
-    
+    % q = sqrt(g.*Hm0.^3).*0.2.*exp(-4.7.*Rc_corrt./Hm0);
     % Sumberged depth of wall
-    w_depth=-wall_toe+SWL;     
+    w_depth= wall_toe+SWL;
     % depth above toe mound./berm in front of vertical wall
-    d_wall = Rc_corrt- w_depth; 
-    
-    if w_depth./Hm0 > 4  % no foreshore influence
-        % EurOtop Overtopping Eq 7.1
-        q = sqrt(g.*Hm0.^3).*OT_coeff1.*...
-            exp(-((OT_coeff2./gamma_beta_OT).*Rc_corrt./Hm0).^1.3);
-        
-    else  % foreshore influence
-%         if d_wall >= 0.6.*w_depth % no significant mound EurOtop Eq 7.3
-%             if (w_depth.^2./(Hm0.*L_m10)) > 0.23 % non-impulsive Eq 7.4
-                % EurOtop Overtopping Eq 7.5
-                q = sqrt(g.*Hm0.^3).*OT_coeff3.*...
-                    exp(-(OT_coeff4./gamma_beta_OT).*Rc_corrt./Hm0);   
-%                 
-%             else                              % impulsive submerged toe
-%                 if Rc_corrt./Hm0 >= 0 && Rc_corrt./Hm0 < 1.35
-%                     % EurOtop Overtopping Eq 7.7
-%                     q = sqrt(g.*Hm0.^3).*OT_coeff5.*(Hm0./(w_depth.*s_m10)).^0.5.*...
-%                         exp(-2.2.*Rc_corrt./Hm0);
-%                     
-%                 elseif Rc_corrt./Hm0 >= 1.35
-%                     % EurOtop Overtopping Eq 7.8
-%                     q = sqrt(g.*Hm0.^3).*OT_coeff6.*(Hm0./(w_depth.*s_m10)).^0.5.*...
-%                         (Rc_corrt./Hm0).^-3;
-%                     
-%                 end
-%             end
-%         else   % significant mound
-%             if (d_wall.*w_depth./(Hm0.*L_m10)) > 0.65% non-impulsive
-%                 % No data for composite structures: use EurOtop Overtopping Eq 7.5
-%                 q = sqrt(g.*Hm0.^3).*OT_coeff3.*exp(-OT_coeff4.*Rc_corrt./Hm0./gamma_beta_OT);
-%             else % impulsive
-%                 if Rc_corrt./Hm0 >= 1.35
-%                     % EurOtop Overtopping Eq 7.14
-%                     q = sqrt(g.*Hm0.^3).*1.3.*(d_wall./w_depth).^0.5.*OT_coeff6.*...
-%                         (Hm0./(w_depth.*s_m10)).^0.5.*(Rc_corrt./Hm0).^-3;
-%                 else
-%                     % EurOtop Overtopping Eq 7.15
-%                     q = sqrt(g.*Hm0.^3).*1.3.*(d_wall./w_depth).^0.5.*OT_coeff5.*...
-%                         (Hm0./(w_depth.*s_m10)).^0.5.*exp(-2.2.*Rc_corrt./Hm0./gamma_beta_OT);
-%                 end
-%             end
-%         end
-    end
-  
-end  
-
-q_final = q + q_overflow; 
-R2p_final = R2p;
-
-if isreal(q_final)==0
-    pause
+    d_wall = Rc_corrt- w_depth;
+    % Initialize
+    q = zeros(size(SWL));
+    rIndx = w_depth./Hm0>4;
+    % no foreshore influence
+    q(rIndx) = sqrt(g.*Hm0(rIndx).^3).*OT_coeff1.*...
+        exp(-((OT_coeff2./gamma_beta_OT(rIndx)).*Rc_corrt(rIndx)./Hm0(rIndx)).^1.3);% EurOtop Overtopping Eq 7.1
+    % foreshore influence
+    q(~rIndx) = sqrt(g.*Hm0(~rIndx).^3).*OT_coeff3.*...
+        exp(-(OT_coeff4./gamma_beta_OT(~rIndx)).*Rc_corrt(~rIndx)./Hm0(~rIndx));
 end
-
-end  
-    
-
+% q Overflow
+q = q + q_overflow;
+% Define NaN Index
+rIndx = Hm0<=0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);
+% Do not calculate structure response if no storm forcing
+q(rIndx) = NaN;
+R2p(rIndx) = NaN;
+% COmpute R2p + SWL
+R2p_SWL = R2p + SWL;
+% Reshape
+q = reshape(q,data_dims);
+R2p = reshape(R2p,data_dims);
+R2p_SWL = reshape(R2p_SWL,data_dims);
+end
 
 %{
 EurOtop notes
