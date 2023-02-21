@@ -1,4 +1,5 @@
 function HC_out = stormsim_pros(config, project_forcing, structure, emp_coeff)
+disp(['Running StormSim: PROS....']);
 warning('off');
 % Project_forcing input is project_forcing.XC.Peaks.Maxima ->
 toe_elev = structure.toe_elevation*-1;
@@ -29,32 +30,39 @@ end
 
 %% EXTRATROPICAL STORMS
 % Prompt Status
-disp('Processing extratropical storm data....');
+disp('   Processing extratropical storm data....');
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'XC'}))
     % 1. Compute Structure Responses
-    disp('Computing structure responses....');
     [Resp.('XC').(f_str), project_forcing] = compute_structure_response(config, structure, project_forcing, emp_coeff, 'XC');
     % 2. Compute Project Forcing & Structure Responses Hazard Curves
-    disp('Building hazard curves....');
     HC_out.('XC').(f_str) = call_hazard_curve_builder(config, structure, project_forcing.('XC'), Resp.('XC').(f_str), 'XC');
-    % 3. Combine Hazard Curves If Requested 
+    % 2a. Combine Hazard Curves If Requested
     if strcmp(storm_sampling,'CC')
-
-
+        % 3. Plot Outputs
+        %         plot_hazard_curves(HC_out.('CC').(f_str));
     end
+    % 3. Plot Outputs
+    disp('   Plot hazard curves....');
+    plot_hazard_curves(HC_out.('XC').(f_str));
 end
 %% TROPICAL STORMS
 % Prompt Status
-disp('Processing tropical storm data....');
+disp('   Processing tropical storm data....');
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'TC'}))
-    % Compute Structure Responses
-    disp('Computing structure responses....');
+    % 1. Compute Structure Responses
     [Resp.('TC').(f_str), project_forcing] = compute_structure_response(config, structure, project_forcing, emp_coeff, 'TC');
     % 2. Compute Project Forcing & Structure Responses Hazard Curves
-    disp('Building hazard curves....');
     HC_out.('TC').(f_str) = call_hazard_curve_builder(config, structure, project_forcing.('TC'), Resp.('TC').(f_str), 'TC');
+    % 2a. Combine Hazard Curves If Requested
+    if strcmp(storm_sampling,'CC')
+        % 3. Plot Outputs
+        %         plot_hazard_curves(HC_out.('CC').(f_str));
+    end
+    % 3. Plot Outputs
+    disp('   Plot hazard curves....');
+    plot_hazard_curves(HC_out.('TC').(f_str));
 end
 warning('on');
 end

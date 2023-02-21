@@ -10,6 +10,8 @@ disp('Applying uncertainty to project forcing....');
 switch wFlow
     case 1 % RB
         %% RESPONSE BASE
+        % Define Workflow Key Phrase
+        wName = 'RB';
         % Scan For Storm Types In "project_forcing"
         level_1 = fieldnames(project_forcing);
         % For Each Storm Sampling Scheme Available
@@ -61,6 +63,8 @@ switch wFlow
         end
     case {2,3} % LCS
         %% LIFE CYCLE BASE
+        % Define Workflow Key Phrase
+        wName = 'LCS';
         % Scan For Storm Types In "project_forcing"
         level_1 = fieldnames(project_forcing);
         % For Each Storm Sampling Scheme Available
@@ -92,6 +96,12 @@ switch wFlow
             end
         end
 end
+%% EXPORT OUTPUTS
+% Define Save Name
+save_name = [config.project_name, filesep, config.struc_id, filesep,...
+    config.project_name,'_', config.struc_id];
+% Save Peaks Life Cycle Structures
+save([save_name '_' wName '_project_forcing_with_U.mat'],'project_forcing','-v7.3');
 end
 
 

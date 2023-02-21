@@ -21,6 +21,8 @@ function  [Output]= call_hazard_curve_builder(config, structure, project_forcing
 %
 %   1.
 
+
+disp('   Building hazard curves....');
 %% GRAB DETAILS FROM "config"
 % Get Number Of Years (XC Storms)
 try
@@ -57,7 +59,7 @@ if ~isempty(project_forcing) && compute_forcing_hc == 1
     % Grab Prob Masses
     if strcmp(storm_type, 'TC')
         TC_Prob = project_forcing.TC_Prob;
-        % Remove Tc Prob From Filenames 
+        % Remove Tc Prob From Filenames
         vars_2_get = vars_2_get(~contains(vars_2_get,{'TC_Prob'}));
     end
     % Grab Forcing Uncertainty
@@ -163,7 +165,7 @@ for ii = 1:length(vars_2_get)
     switch storm_type
         case 'XC'
             % Disp Progress
-            disp(['Performing Stochastic Simulation Technique (SST) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
+            disp(['      Performing Stochastic Simulation Technique (SST) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             % Set Time Values TO Empty
             input_data.time_values = input_data.time_values(:);
             % Call SST
@@ -189,10 +191,10 @@ for ii = 1:length(vars_2_get)
             end
             % THIS SHOULD BE REMOVED ONCE SST/JPM HC COMBINATION IS SORTED
             if contains(staID,{'Hm0','SWL'})
-               % Add rsp_ 
+                % Add rsp_
             end
         case 'TC'
-            disp(['Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
+            disp(['      Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             % JPM Expects Data Matrix
             input_data.data_values = input_data.data_values;
             [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob, uncert_treatment);
@@ -206,7 +208,7 @@ for ii = 1:length(vars_2_get)
             Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
             Output(ii).y_table = flipud(dummy.HC_data.HC_tbl_y); % Hazard Curve Data For Table
             Output(ii).CL = [50,prc]; % Percentiles (Cols)
-            Output(ii).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
+            Output(ii).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
             % OVertopping Special Case
             if strcmp(staID,'q')
                 % Convert From [m^3/s per m] to [liters/s per m]

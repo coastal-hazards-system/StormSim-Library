@@ -90,7 +90,7 @@ switch workflow
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
             project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
         end
-    otherwise % StormSim: MCS/CSR (Life-Cycle Base Analysis)
+    case {2,3} % StormSim: MCS/CSR (Life-Cycle Base Analysis)
         % Define Workflow Key Phrase
         wName = 'LCS';
         % Call StormSim: Monte Carlo Storm Sampler
@@ -106,6 +106,6 @@ end
 save_name = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
 % Save Peaks Life Cycle Structures
-save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
+save([save_name '_' wName '_project_forcing_base.mat'],'project_forcing','-v7.3');
 
 end

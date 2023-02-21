@@ -53,7 +53,9 @@ struc_type = config.struc_type;
 workflow = config.cast_workflow;
 % Storm Sampling Scheme
 storm_sampling = config.storm_sampling;
-
+% Define Save Name
+save_name = [config.project_name, filesep, config.struc_id, filesep,...
+    config.project_name,'_', config.struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'];
 %% DEFINE VARIBALES TO GRAB FROM CONFIG PER STRUCTURE TYPE & WORKFLOW
 % Evaluate Case Per Structure Type
 switch struc_type
@@ -109,7 +111,11 @@ if show_plot == 1
 else
     close(fig);
 end
-
+%% APPEND TO .MAT File 
+if exist(save_name,'file') == 2
+    % Append To Existing .mat For Loading
+    save(save_name,'structure','-append');
+end
 %% RESHAPE STRUCTURE TO MATCH FORCING FIELD
 % Evaluate Case According To Workflow
 % switch workflow

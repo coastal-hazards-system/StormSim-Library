@@ -126,7 +126,7 @@ RELEVANT PUBLICATIONS:
                 and Development Center.
 %}
 %% IMPORT INPUT FILES
-disp([newline 'Running StormSim: Coastal Structure Reliability - Damage Progression Analysis....']);
+disp(['Running StormSim: Coastal Structure Reliability - Damage Progression Analysis....']);
 fprintf(1,'   Completion Progress: %3d%%\n',0);
 
 %% DEFINE CONSTANTS
@@ -151,7 +151,7 @@ nYears = config.mcs_nYears;
 % Define Sea Level Rise
 SL = config.swl_slr;
 % Water density (kg/m^3)
-dw = config.water_density;dw = dw;
+dw = config.water_density;
 % Seaside Damage Ultimate Limit State (ULS)
 Ssea_ULS = config.seaside_limit_S;
 % Leeside Damage Ultimate Limit State (ULS)
@@ -179,52 +179,45 @@ cutoff_delta = config.csr_cutoff_offset;
 sFields = fieldnames(structure);
 % Extract Strcutural Paramaters From Structure
 for ii = 1:length(sFields)
-    eval([sFields{ii} ' = {structure.(sFields{ii})};']);
+    eval([sFields{ii} ' = structure.(sFields{ii});']);
 end
 % Reference Elevation Used For Water Depth Computation (h)
-depth = cellfun(@(x) -1.*x,toe_elevation,'un',false);
+depth = -1*toe_elevation;
 % Armor Stone Specific Gravity
-SG = cellfun(@(x) x+1,armor_delta,'un',false);
+SG = 1 + armor_delta;
 % Armor Stone Density [kg/m^3]
-dr = cellfun(@(x) x.*dw,SG,'un',false);
+dr = SG*dw;
 % Seaside Median Volume of Armor Stone
-V_ss = cellfun(@(x,y) x./y,seaside_mass,dr,'un',false);
+V_ss = seaside_mass/dr;
 % Seaside Nominal Stone Diameter (m)
-SDn = cellfun(@(x) x.^(1/3),V_ss,'un',false);
+SDn = V_ss^(1/3);
 %Leeside Median Volume of Armor Stone
-LV_ss = cellfun(@(x,y) x./y,leeside_mass,dr,'un',false);
+LV_ss = leeside_mass/dr;
 % Leeside Nominal Stone Diameter (m)
-LDn = cellfun(@(x) x.^(1/3),LV_ss,'un',false);
+LDn = LV_ss^(1/3);
 
 %% EMPIRICAL COEFFICIENTS
 % Need to define wqhat K_ss is
-Km1 = {emp_coeff.km1}; % Seaside Damage Coeff
-Km2 = {emp_coeff.km2}; % Seaside Damage Coeff
-Ksi = {emp_coeff.k_si};
-Ksp = {emp_coeff.k_sp};
-K_ls1 = {emp_coeff.k_ls1}; % Leeside Damage Coeff
-K_ls2 = {emp_coeff.k_ls2}; % Leeside Damage Coeff
-Nz_ini = {emp_coeff.ini_waves};
+Km1 = emp_coeff.km1; % Seaside Damage Coeff
+Km2 = emp_coeff.km2; % Seaside Damage Coeff
+Ksi = emp_coeff.k_si;
+Ksp = emp_coeff.k_sp;
+K_ls1 = emp_coeff.k_ls1; % Leeside Damage Coeff
+K_ls2 = emp_coeff.k_ls2; % Leeside Damage Coeff
+Nz_ini = emp_coeff.ini_waves;
 K_ss = Ksp;
 
 %% ADJUST AND COMPUTE FORCING PARAMETERS
 % Extract Water Level
 WL = cellfun(@(x) x(:,5),LC_SimOUT_hyd,'un',false);
-% Adjust Water Level
-WL = cellfun(@(x) x+SL,WL,'un',false);
 % Compute Water Column
-h = cellfun(@(x,y) x+y,WL,depth,'un',false);
+h = cellfun(@(x) x+depth,WL,'un',false);
 % Compute Freeboard
-Rc = cellfun(@(x,y) x-y,crest_elevation,WL,'un',false);
+Rc = cellfun(@(x,y) crest_elevation - x,WL,'un',false);
 % Extract Wave Height
 Hm0 = cellfun(@(x) x(:,6),LC_SimOUT_hyd,'un',false);
 % Extract Wave Peak Period
 Tp = cellfun(@(x) x(:,7),LC_SimOUT_hyd,'un',false);
-% Apply Depth Limitation
-if depth_limitation == 1
-    Hm0 = cellfun(@(x, y, z) apply_depth_limitation(x, y, z), Hm0, Tp, h,'un',false);
-end
-
 % Mean wave period (sec)
 Tm = cellfun(@(x) x./1.2,Tp,'un',false);
 % Storm increment duration (hr)
@@ -234,20 +227,9 @@ Nz = cellfun(@(x,y) (x.*3600)./y,Dstm,Tm,'un',false);
 
 %% COMPUTE INITIAL STRUCTURE RESPONSES (runup & runup_vel)
 % Compute Run-up
-z1p = cellfun(@(w,x,y,z) z1p_calc(w,x,y,z,grav),Hm0,Tp,Rc,seaside_slope,'un',false);
+z1p = cellfun(@(w,x,y) z1p_calc(w,x,y,seaside_slope,grav),Hm0,Tp,Rc,'un',false);
 % Compute u1%
-u1p = cellfun(@(u,v,w,x,y,z) u1p_calc(u,v,w,x,y,z,grav),crest_width,Rc,z1p,Tp,Hm0,seaside_slope,'un',false);
-
-%% INITIALIZE RUNUP & OVERTOPPING MODULE FIELDS
-% Surface roughness coefficient
-
-% Oblique wave coefficients - Not implemented in StormSim as of 9/03/20
-% will use Eurotop eq 6.9 for RM ; eq. 5.28-5.31 for levees
-gamma_beta_r2p = 1;
-gamma_beta_q   = 1;
-% Wall Influence Factor
-[gamma_v,gamma_star] = cellfun(@(x, y, z) wall_influence_factor(x, y, z, structure_type),crest_elevation, toe_elevation, Rc,'un',false);
-gamma_b = cellfun(@(x, y, z, w, r) berm_influence_factor(x, y, z, w, r),berm_width, berm_elevation, Hm0, WL, seaside_slope,'un',false);
+u1p = cellfun(@(v,w,x,y) u1p_calc(crest_width,v,w,x,y,seaside_slope,grav),Rc,z1p,Tp,Hm0,'un',false);
 
 %% INITIALIZE DAMAGE VARIABLES
 Szero_no_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
@@ -305,15 +287,15 @@ for NlcS = 1:nLC
                     Szero_no_repairs{NlcS}(Ntime)=0;
                 else
                     [Szero_no_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
-                        Ssea_no_repairs_last,seaside_slope{NlcS}(Ntime),SDn{NlcS}(Ntime),SG{NlcS}(Ntime),...
-                        grav,cem_P{NlcS}(Ntime),Nz{NlcS}(Ntime),Km1{NlcS}(Ntime),K_ss{NlcS}(Ntime));
+                        Ssea_no_repairs_last,seaside_slope,SDn,SG,...
+                        grav,cem_P,Nz{NlcS}(Ntime),Km1,K_ss);
                 end
 
                 % Compute Incremental Seaside Damage
                 [Ssea_no_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope{NlcS}(Ntime),SDn{NlcS}(Ntime),SG{NlcS}(Ntime),...
-                    grav,cem_P{NlcS}(Ntime),Nz{NlcS}(Ntime),Szerolim,crest_elevation{NlcS}(Ntime)+cutoff_delta,...
-                    WL{NlcS}(Ntime),cutoff_switch,Km1{NlcS}(Ntime),K_ss{NlcS}(Ntime));
+                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope,SDn,SG,...
+                    grav,cem_P,Nz{NlcS}(Ntime),Szerolim,crest_elevation+cutoff_delta,...
+                    WL{NlcS}(Ntime),cutoff_switch,Km1,K_ss);
                 % Store Previous Seaside Damage Value
                 Ssea_no_repairs_last = Ssea_no_repairs{NlcS}(Ntime);
 
@@ -341,24 +323,24 @@ for NlcS = 1:nLC
                 else
                     % Szero for With Repairs Analysis
                     [Szero_with_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
-                        Ssea_with_repairs_last,seaside_slope{NlcS}(Ntime),SDn{NlcS}(Ntime),SG{NlcS}(Ntime),...
-                        grav,cem_P{NlcS}(Ntime),Nz{NlcS}(Ntime),Km1{NlcS}(Ntime),K_ss{NlcS}(Ntime));
+                        Ssea_with_repairs_last,seaside_slope,SDn,SG,...
+                        grav,cem_P,Nz{NlcS}(Ntime),Km1,K_ss);
                     % Szero for No Repairs Analysis
                     [Szero_no_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
-                        Ssea_no_repairs_last,seaside_slope{NlcS}(Ntime),SDn{NlcS}(Ntime),SG{NlcS}(Ntime),grav,...
-                        cem_P{NlcS}(Ntime),Nz{NlcS}(Ntime),Km1{NlcS}(Ntime),K_ss{NlcS}(Ntime));
+                        Ssea_no_repairs_last,seaside_slope,SDn,SG,grav,...
+                        cem_P,Nz{NlcS}(Ntime),Km1,K_ss);
                 end
 
                 % Seaside Damage With Repairs
                 [Ssea_with_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_with_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_with_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope{NlcS}(Ntime),SDn{NlcS}(Ntime),SG{NlcS}(Ntime),...
-                    grav,cem_P{NlcS}(Ntime),Nz{NlcS}(Ntime),Szerolim,crest_elevation{NlcS}(Ntime)+cutoff_delta,...
-                    WL{NlcS}(Ntime),cutoff_switch,Km1{NlcS}(Ntime),K_ss{NlcS}(Ntime));
+                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope,SDn,SG,...
+                    grav,cem_P,Nz{NlcS}(Ntime),Szerolim,crest_elevation+cutoff_delta,...
+                    WL{NlcS}(Ntime),cutoff_switch,Km1,K_ss);
                 % Seaside Damage Without Repairs
                 [Ssea_no_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope{NlcS}(Ntime),SDn{NlcS}(Ntime),SG{NlcS}(Ntime),grav,...
-                    cem_P{NlcS}(Ntime),Nz{NlcS}(Ntime),Szerolim,crest_elevation{NlcS}(Ntime)+cutoff_delta,WL{NlcS}(Ntime),...
-                    cutoff_switch,Km1{NlcS}(Ntime),K_ss{NlcS}(Ntime));
+                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope,SDn,SG,grav,...
+                    cem_P,Nz{NlcS}(Ntime),Szerolim,crest_elevation+cutoff_delta,WL{NlcS}(Ntime),...
+                    cutoff_switch,Km1,K_ss);
 
                 %% Store Damage Calculations For Next Iteration
                 % Seaside Damage With Repairs
@@ -391,13 +373,9 @@ for NlcS = 1:nLC
                     z1p{NlcS}(Ntime)=0;
                 end
                 % Compute Incremental Leeside Damage
-                %             [SLee_no_repairs,u1p{NlcS}(Ntime)] = LeeDamFunc(z1p{NlcS}(Ntime),SLee_no_repairs_last,...
-                %                 Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p{NlcS}(Ntime),LDn{NlcS}(Ntime),...
-                %                 SG{NlcS}(Ntime),grav,Sslp{NlcS}(Ntime),Lslp{NlcS}(Ntime),...
-                %                 Rc{NlcS}(Ntime),Crest_Width{NlcS}(Ntime),Nz{NlcS}(Ntime),INPUT);
                 [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn{NlcS}(Ntime),...
-                    leeside_slope{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta{NlcS}(Ntime),K_ls1{NlcS}(Ntime),K_ls2{NlcS}(Ntime));
+                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
+                    leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2);
 
                 % Store Previous Leeside Damage Value (Incremental)
                 SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
@@ -421,20 +399,14 @@ for NlcS = 1:nLC
                 if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
                     z1p{NlcS}(Ntime)=0;
                 end
-                %             % Leeside Damage With Repairs
-                %             [SLee_with_repairs,u1p] = LeeDamFunc(z1p,SLee_with_repairs_last,...
-                %                 Hm0,Tp,u1p,LDn,SG,grav,Sslp,Lslp,Rc,Crest_Width,Nz,INPUT);
-                %             % Leeside Damage Without Repairs
-                %             [SLee_no_repairs,u1p] = LeeDamFunc(z1p,SLee_no_repairs_last,...
-                %                 Hm0,Tp,u1p,LDn,SG,grav,Sslp,Lslp,Rc,Crest_Width,Nz,INPUT);
                 % Leeside Damage With Repairs
                 [SLee_with_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_with_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn{NlcS}(Ntime),...
-                    leeside_slope{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta{NlcS}(Ntime),K_ls1{NlcS}(Ntime),K_ls2{NlcS}(Ntime));
+                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
+                    leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2);
                 % Leeside Damage Without Repairs
                 [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn{NlcS}(Ntime),...
-                    leeside_slope{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta{NlcS}(Ntime),K_ls1{NlcS}(Ntime),K_ls2{NlcS}(Ntime));
+                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
+                    leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2);
 
                 %% Store Damage Calculations For Next Iteration
                 % Leeside Damage With Repairs
@@ -444,27 +416,10 @@ for NlcS = 1:nLC
             end
             %             disp(['LC: ' num2str(NlcS) ' , Timestep: ' num2str(Ntime) ' / ' num2str(nTimes_per_LC(NlcS))]);
         end
-        % Compute Run-up & Overtopping
-        [R2p{NlcS}(Ntime),q{NlcS}(Ntime)]=arrayfun(@Eurotop_r2p_q_Final,Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),...
-            WL{NlcS}(Ntime),Rc{NlcS}(Ntime),seaside_slope{NlcS}(Ntime),gamma_f,gamma_beta_r2p,...
-            gamma_beta_q,gamma_star{NlcS},gamma_v{NlcS},depth{NlcS},berm_width{NlcS},structure_type);
-
-        R2pPlusSWL{NlcS}(Ntime) = R2p{NlcS}(Ntime) + WL{NlcS}(Ntime);
-        % end of JAM added section
-
-
     end  %Ntime_per_LC
-
-    %     %% CREATE DIAGNOSTICS STRUCTURE
-    %     diagnostics(NlcS).LCNUM=table(Crest_Height,Crest_Width,WL_all,SL_all,H_raw,H_DL,H_CC,Tp_all,h_all,Nz_all,S_Zero_No_Repairs_all,S_Seaside_No_Repairs_all,S_Zero_With_Repairs_all,S_Seaside_With_Repairs_all,Freeboard_All,Run_up_All,u1p_all,S_Leeside_No_Repairs,S_Leeside_With_Repairs);
-    %
-    %     %% CLEAR DIAGNOSTIC VARS
-    %     clearvars('WL_all','SL_all','H_raw','H_DL','H_CC','Tp_all','h_all','Nz_all','S_Zero_No_Repairs_all',...
-    %         'S_Seaside_No_Repairs_all','S_Zero_With_Repairs_all','S_Seaside_With_Repairs_all','Freeboard_All',...
-    %         'Run_up_All','S_Leeside_No_Repairs','S_Leeside_With_Repairs','u1p_all','Crest_Height','Crest_Width');
     fprintf(1,'\b\b\b\b%3.0f%%',(100*(NlcS/nLC)));
 end
-disp([newline 'Computing Post Damage Statistics....']);
+disp([newline '   Computing Post Damage Statistics....']);
 
 %% STORE LAST COMPUTED DAMAGE FOR EACH LC
 % This will turn into a mean sigular value once percentiles are computed
@@ -473,10 +428,10 @@ Smean = cell2mat(cellfun(@(x) x(end),Ssea_no_repairs,'un',false));
 LSmean = cell2mat(cellfun(@(x) x(end),SLee_no_repairs,'un',false));
 
 %% DIAGNOSTICS STRUCTURE
-diagnostics(1,:) = cellfun(@(a) table(crest_elevation{a},crest_width{a},WL{a},Hm0{a},...
+diagnostics(1,:) = cellfun(@(a) table(WL{a},Hm0{a},...
     Tp{a},h{a},Nz{a},Rc{a},z1p{a},u1p{a},Szero_no_repairs{a},Ssea_no_repairs{a},Szero_with_repairs{a},...
     Ssea_with_repairs{a}, SLee_with_repairs{a}, SLee_no_repairs{a},'VariableNames',...
-    {'Crest_Elevation','Crest_Width','WL','Hm0','Tp','h','Nz','Rc','z1p','u1p',...
+    {'WL','Hm0','Tp','h','Nz','Rc','z1p','u1p',...
     'Szero_no_repairs','Ssea_no_repairs','Szero_with_repairs','Ssea_with_repairs',...
     'SLee_no_repairs','SLee_with_repairs'}),...
     num2cell(1:nLC),'un',false)';

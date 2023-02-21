@@ -1,21 +1,9 @@
 clc;clear all;
 
-
-%% NOTES 
-%{
-Life cycle base variables will be organized in:
-Peaks:
-    var.(storm_type).
-
-Timeseries fort.15 unstable results when compared to ADCIRC overall
-simulation. That's the reason for replacing the peak value.
-%}
 %% USER INPUTS
 %{
-MCS/CSR & PROS Require:
+MCS/CSR Requires:
     MCSim_Inputs -> TC Storm Probability Masses 
-    norm_444.mat -> -3 to 3 z-scores discretized normalized curve (TCs only)
-    norm_20.mat -> (XCs only)
 %}
 % Define StormSim Input File Name
 stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
@@ -88,10 +76,9 @@ Outputs:
                   these variables. RB workflows only use TC_freq.
 
 %}
-tic;
 % Call CHS Set-up Function 
 [storm, ~, prob_mass, config] = call_chs_data_formater(config);
-toc
+
 %% STEP 2: CREATE STORM FORCING 
 %{
  Description:
@@ -158,44 +145,37 @@ Outputs:
 
  
 %% STEP 3: CREATE STRUCTURE GEOMETRY
-
 % Create Project Structure Geometry
 [structure] = create_structure_geometry(config, project_forcing, 1);% Second input argument: 1 - show plot 0 - hide plot
 
 %% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
 %{
-% This functions applies uncertianty to forcing, structural parameters and
-empirical ecoefficients if supported by requested workflow.
+% This functions applies uncertianty to project forcing.
 
 Things to fix:
 MCS-LC:
-- Forcing uncertainty for MCS-LC is no the same as PROS (current PCHA).
-- Do we want to change how uncertainty is applied to the forcing ?
-- Structural parameters that support uncertainty are being treated with:
-    normrnd(structure_param_for_LC, param_std) -> nstorms_at_LC * 1
-    Crest height is caped to the design crest height 
+- Forcing uncertainty follows latest PCHA guidelines
+- Response uncertainty has not been incorporated.
 PROS:
 - Forcing unceratinty follows the lates PCHA method
 - There is no uncertainty applied to structural parameters. Why?
     Uncertainty is applied to the response, hence no need to double account
-    for uncertainty?
+    for uncertainty
 
 %}
 project_forcing = call_uncertainty_engine(config, project_forcing);
 
+%% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
+% SLR, Rand Tide, Depth Limitation
+project_forcing = call_project_forcing_adjuster(config, project_forcing, structure);
 
 %% STEP 5: COMPUTE  RESPONSE 
-% Need to vectorize equations (Eurotop_.... and other)
-% StormSim PROS Has not been incorporated 
-% MCS-CSR Peaks is working, need to sort out uncertianty. Needs to be
+% MCS-CSR Peaks is working, need to sort out uncertainty. Needs to be
 % accompanied by report to address the selection of storm duration.
 % MCS-LC Its working but need to change K_ss in line 212 of
 % stormsim_csr_dpa.m. Also, need to update damage functions to latest.
 Resp = call_structure_response(config, project_forcing, structure);
 
 
-% Start work on defining an hdf5 file format to store outputs from MCS to
-% feed to Go-Consequences -> No raw data.
-% Give damaging depths to will worked by us + Hm0 future (Peaks Only)
 
 

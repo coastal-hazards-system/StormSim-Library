@@ -19,10 +19,6 @@ Developed by: Fabian A. Garcia Moreno ERDC-CHL
     if ~exist([config.project_name filesep config.struc_id],'dir')
         mkdir([config.project_name filesep config.struc_id]);
     end
-    % Converted CHS Data
-    if ~exist('CHS_Data','dir')
-        mkdir('CHS_Data');
-    end
     
     %% DISPLAY WELCOME MESSAGE
     % Determine What TO Print

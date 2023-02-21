@@ -1,6 +1,6 @@
 function [R2p, R2p_SWL, q]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
     Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
-    gamma_star, gamma_v, gamma_b, wall_toe,berm_width, structure_type)
+    gamma_star, gamma_v, gamma_b, wall_toe, berm_width, structure_type)
 
 
 %{
