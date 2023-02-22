@@ -93,8 +93,8 @@ RELEVANT PUBLICATIONS:
 %}
 
 function [PF_Summary,Reliab_Summary] = stormsim_csr_peaks(config, structure, emp_coeff, LC_MCSimOUT)
-disp(['Running StormSim: Coastal Structure Reliability - Peaks....']);
-fprintf(1,'   Completion Progress: %3d%%\n',0);
+disp(['      Running StormSim: Coastal Structure Reliability - Peaks....']);
+fprintf(1,'         Completion Progress: %3d%%\n',0);
 %% GRAB INPUTS FROM "config"
 % Water density (kg/m^3)
 dw = config.water_density;
@@ -268,7 +268,7 @@ for lcS=1:size(LC_MCSimOUT,2)
     Reliab_all(lcS,1) = 1-sum(G_all<0)/nSim;
     fprintf(1,'\b\b\b\b%3.0f%%',(100*(lcS/size(LC_MCSimOUT,2))));
 end
-disp(newline);
+fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(lcS/size(LC_MCSimOUT,2))));
 %% RELIABILITY AVERAGES AND PERCENTILES
 % Define Row Names
 row_names = [{'Mean'}; cellstr([num2str(prc') repmat('%',size(prc',1),1)]); {'Std'}];
@@ -308,12 +308,4 @@ col3 = num2cell([mean(PF_ls,1,"omitnan");...
     std(PF_ls,1,"omitnan")]);
 % Create Reliability Summary Table
 PF_Summary = cell2table([row_names,col1,col2,col3],"VariableNames",{'Row_Name','Overall','Seaside','Leeside'});
-
-%% SAVE
-out_path = [outDir '_CSR_Outputs'];
-if ~exist(out_path,'dir')
-    mkdir(out_path);
-end
-% Save Sampled Storm Indexes
-save([out_path '_CSR_Peaks_Reliability.mat'],'PF_Summary','Reliab_Summary','-v7.3');
 end

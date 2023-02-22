@@ -179,9 +179,6 @@ function [storm, CHS_Data, prob_mass, config] = call_chs_data_formater(config)
         config.region = 'NACCS';
     end
 
-    %% LOAD PROJECT IF FILES FOUND 
-    
-    
     %% CONVERT CHS DATA
     %{
         Run provided CHS h5 files through h5 to MATLAB converter.
@@ -192,6 +189,8 @@ function [storm, CHS_Data, prob_mass, config] = call_chs_data_formater(config)
     %}
     % Append Filenames With Paths
     full_file_path = cellfun(@(x,y) [x filesep y],chs_files_2_convert_paths,chs_files_2_convert,'un',false);
+    % 
+    disp('Begin CHS h5 file conversion....');
     % Convert CHS Data
     CHS_Data = call_chs_h5_converter(full_file_path);
     % Export Data 

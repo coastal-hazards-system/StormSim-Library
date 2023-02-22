@@ -1,5 +1,6 @@
 clc;clear all;
-
+addpath(genpath('StormSim_Library'));
+diary 'Log.txt';
 %% USER INPUTS
 %{
 MCS/CSR Requires:
@@ -175,7 +176,7 @@ project_forcing = call_project_forcing_adjuster(config, project_forcing, structu
 % MCS-LC Its working but need to change K_ss in line 212 of
 % stormsim_csr_dpa.m. Also, need to update damage functions to latest.
 Resp = call_structure_response(config, project_forcing, structure);
-
+diary 'off';
 
 
 

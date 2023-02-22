@@ -100,9 +100,9 @@ if use_timeseries == 1
         has_WaterElevation, STWAVE_headers_location, WLP_switch, WHP_switch, Tp_special, storm_type);
     % Display Progress Step
     if strcmp(storm_type,'XC')
-        disp('Matching CHS extratropical timeseries waves and water levels....');
+        disp([newline 'Matching CHS extratropical timeseries waves and water levels....']);
     else
-        disp('Matching CHS tropical timeseries waves and water levels....');
+        disp([newline 'Matching CHS tropical timeseries waves and water levels....']);
     end
     % Create ADCIRC-STWAVE TimeSeries Dataset
     [storm.Timeseries] = chs_timeseries_formater(timeseries_data(ad_indx_timeseries==1).Table_StormData,...

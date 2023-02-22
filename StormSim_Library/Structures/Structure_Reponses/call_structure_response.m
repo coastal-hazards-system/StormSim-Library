@@ -27,6 +27,7 @@ switch workflow
             case 'CC'
                 level_1 = {'TC','XC'};
         end
+        wName = 'RB';
         % Scan Peaks Datasets
         level_2 = fieldnames(project_forcing.(level_1{1}).('Peaks'));
                      % Disp
@@ -34,7 +35,7 @@ switch workflow
         % Loop Through All Peak Datasets & Storm Types
         for ii = 1:length(level_2)
              % Disp
-            disp(['Processing ' level_2{ii} ' dataset....']);
+            disp(['   Processing ' level_2{ii} ' dataset....']);
             for jj = 1:length(level_1)
                 % Create Aux Var
                 aux_var.(level_1{jj}) = project_forcing.(level_1{jj}).('Peaks').(level_2{ii});
@@ -93,12 +94,13 @@ switch workflow
     case 3 % CSR
         %% STORMSIM: MCS-CSR
         disp('Computing structure responses with peaks....');
+        wName = 'LCS';
         % Scan Peaks Datasets
         level_2 = fieldnames(project_forcing.(storm_sampling).('Peaks'));
         level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
         % Loop Through All Peak Datasets & Storm Types
         for ii = 1:length(level_2)
-            disp(['Processing ' level_2{ii} ' dataset....']);
+            disp(['   Processing ' level_2{ii} ' dataset....']);
             % Compute Structure Respose: q, R2%, Dn50, Dn50 LCBW, P1
             [Resp.(storm_sampling).('Peaks').(level_2{ii}), ~] = compute_structure_response(config, structure, project_forcing.(storm_sampling).('Peaks').(level_2{ii}), emp_coeff, storm_sampling);
             % Rubblemound Only
@@ -122,12 +124,18 @@ switch workflow
         end
         % Generate Plot Structure
         S_damage_plotter(config, Resp.CC.Timeseries.S, 1, 0);
-       
+                                % Define Subdir 
+            subDir = [config.project_name, filesep, config.struc_id, filesep];
+            % Create Subdirectory 
+            mkdir([subDir 'LCS_DPA']);
+            % Move SST/JPM Outputs Into Subdir
+            movefile([subDir '*Seaside*'],[subDir 'LCS_DPA']);
+            movefile([subDir '*Leeside*'],[subDir 'LCS_DPA']);
 end
 
 %% EXPORT OUTPUTS
 % Display Status
 disp('Saving project responses....');
 % Save Outputs
-save([outDir '_Project_Responses.mat'],'Resp','-v7.3');
+save([outDir '_' wName '_project_responses.mat'],'Resp','-v7.3');
 end

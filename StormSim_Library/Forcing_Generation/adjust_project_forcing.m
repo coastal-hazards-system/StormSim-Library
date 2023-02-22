@@ -53,10 +53,10 @@ switch data_type
         end
         % Apply SLR
         if swl_slr~=0
-            if size(project_forcing.(storm_type)(1).LCNUM,2)==8  % Peaks
-                project_forcing.(storm_type).LCNUM = cellfun(@(x) x + [0 0 0 swl_slr 0 0 0 0], {project_forcing.LCNUM}, 'un', false);
+            if size(project_forcing(1).LCNUM,2)==8  % Peaks
+                project_forcing = cell2struct(cellfun(@(x) x + [0 0 0 swl_slr 0 0 0 0], {project_forcing.LCNUM}, 'un', false), 'LCNUM');
             else % Timeseries
-                project_forcing.(storm_type).LCNUM = cellfun(@(x) x + [0 0 0 0 swl_slr 0 0 0 0 0], {project_forcing.LCNUM}, 'un', false);
+                project_forcing = cell2struct(cellfun(@(x) x + [0 0 0 0 swl_slr 0 0 0 0 0], {project_forcing.LCNUM}, 'un', false), 'LCNUM');
             end
         end
         %------ Hm0 ADJUSTMENTS -----
@@ -66,7 +66,7 @@ switch data_type
             % Apply Depth Limitation
             if apply_DL == 1
                 for kk = 1:length(h)
-                    project_forcing.(storm_type)(kk).LCNUM(:,5) = apply_depth_limitation(project_forcing(kk).LCNUM(:,5),...
+                    project_forcing(kk).LCNUM(:,5) = apply_depth_limitation(project_forcing(kk).LCNUM(:,5),...
                         project_forcing(kk).LCNUM(:,6), h{kk});
                 end
             end

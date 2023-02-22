@@ -48,9 +48,9 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
         %% COMMAND WINDOW PROMPT
         % Display Progress Step
         if strcmp(sample_type,'XC')
-            disp('Inspecting CHS extratropicals timeseries files for mismatched storms....');
+            disp(['Inspecting CHS extratropicals timeseries files for mismatched storms....']);
         else
-            disp('Inspecting CHS tropicals timeseries files for mismatched storms....');
+            disp(['Inspecting CHS tropicals timeseries files for mismatched storms....']);
         end
         % Display Completion Progress Initial Print
         fprintf(1,'   Completion Progress: %3d%%\n',0);
@@ -263,7 +263,7 @@ This means the values of the peak are more accurate.
             end
             clearvars('wData','wlData');
         end % end stm
-        disp(newline);
+%         disp(newline);
         
         %% ADD INVALID STORMS TO STORM REMOVAL INDEX
         % Storms To Remove From Maxima Dataset

@@ -126,8 +126,8 @@ RELEVANT PUBLICATIONS:
                 and Development Center.
 %}
 %% IMPORT INPUT FILES
-disp(['Running StormSim: Coastal Structure Reliability - Damage Progression Analysis....']);
-fprintf(1,'   Completion Progress: %3d%%\n',0);
+disp(['   Running StormSim: Coastal Structure Reliability - Damage Progression Analysis....']);
+fprintf(1,'      Completion Progress: %3d%%\n',0);
 
 %% DEFINE CONSTANTS
 % Gravitational acceleration (m/s^2)
@@ -419,7 +419,7 @@ for NlcS = 1:nLC
     end  %Ntime_per_LC
     fprintf(1,'\b\b\b\b%3.0f%%',(100*(NlcS/nLC)));
 end
-disp([newline '   Computing Post Damage Statistics....']);
+disp([newline '      Computing Post Damage Statistics....']);
 
 %% STORE LAST COMPUTED DAMAGE FOR EACH LC
 % This will turn into a mean sigular value once percentiles are computed

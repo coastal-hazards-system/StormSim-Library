@@ -153,5 +153,7 @@ LC_SimOUT_hyd(lc).LCNUM(:,4);   %Date/Time
 
     ctr = ctr + 1;
 end
-disp(newline);
+    % Print Status
+    fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
+
 end

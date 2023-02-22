@@ -1,5 +1,5 @@
 function HC_out = stormsim_pros(config, project_forcing, structure, emp_coeff)
-disp(['Running StormSim: PROS....']);
+disp(['      Running StormSim: PROS....']);
 warning('off');
 % Project_forcing input is project_forcing.XC.Peaks.Maxima ->
 toe_elev = structure.toe_elevation*-1;
@@ -30,7 +30,7 @@ end
 
 %% EXTRATROPICAL STORMS
 % Prompt Status
-disp('   Processing extratropical storm data....');
+disp('      Processing extratropical storm data....');
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'XC'}))
     % 1. Compute Structure Responses
@@ -43,12 +43,12 @@ if any(contains(fieldnames(project_forcing),{'XC'}))
         %         plot_hazard_curves(HC_out.('CC').(f_str));
     end
     % 3. Plot Outputs
-    disp('   Plot hazard curves....');
+    disp('      Plotting hazard curves....');
     plot_hazard_curves(HC_out.('XC').(f_str));
 end
 %% TROPICAL STORMS
 % Prompt Status
-disp('   Processing tropical storm data....');
+disp('      Processing tropical storm data....');
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'TC'}))
     % 1. Compute Structure Responses
@@ -61,7 +61,7 @@ if any(contains(fieldnames(project_forcing),{'TC'}))
         %         plot_hazard_curves(HC_out.('CC').(f_str));
     end
     % 3. Plot Outputs
-    disp('   Plot hazard curves....');
+    disp('      Plotting hazard curves....');
     plot_hazard_curves(HC_out.('TC').(f_str));
 end
 warning('on');

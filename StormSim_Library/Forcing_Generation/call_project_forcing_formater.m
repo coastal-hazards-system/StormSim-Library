@@ -106,6 +106,6 @@ end
 save_name = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
 % Save Peaks Life Cycle Structures
-save([save_name '_' wName '_project_forcing_base.mat'],'project_forcing','-v7.3');
+save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
 
 end

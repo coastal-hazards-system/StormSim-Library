@@ -73,9 +73,9 @@ Developed by: Fabian A. Garcia Moreno ERDC-CHL
             chk2 = exist('MCSim_Inputs','dir')==7;
             % Verify Results
             if chk2
-                disp('  CHS tropical cylcones probability masses found...');
+                disp('CHS tropical cylcones probability masses found...');
             else
-                disp('  CHS tropical cylcones probability masses not found...');
+                disp('CHS tropical cylcones probability masses not found...');
                 % Throw Error Message
                 warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
                 % Update Config

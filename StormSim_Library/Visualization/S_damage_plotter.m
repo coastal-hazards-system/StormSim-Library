@@ -1,5 +1,5 @@
 function S_damage_plotter(config, TimeSeries, pctl, show_figs)
-disp('Plotting StormSim: CSR - Damage Progression Analysis outputs... ');
+disp('      Plotting StormSim: CSR - Damage Progression Analysis outputs... ');
 %% GRAB DETAILS FROM "config"
 % Define Project CHS Region
 loc = config.region;
