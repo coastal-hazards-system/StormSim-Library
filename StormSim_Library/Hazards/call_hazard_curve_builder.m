@@ -201,7 +201,7 @@ for ii = 1:length(vars_2_get)
             % Organize Outputs
             Output(ii).var = staID; % Station ID
             Output(ii).y_label = y_label; % Y Axis Label
-            Output(ii).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
+            Output(ii).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
                 ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
             Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
             Output(ii).y_plot = flipud(dummy.HC_data.HC_plt_y); % Hazard Curve Data For Plot
