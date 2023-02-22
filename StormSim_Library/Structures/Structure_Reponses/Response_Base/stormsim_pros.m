@@ -29,10 +29,10 @@ elseif isfield(project_forcing,'TC')
 end
 
 %% EXTRATROPICAL STORMS
-% Prompt Status
-disp('      Processing extratropical storm data....');
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'XC'}))
+    % Prompt Status
+disp('         Processing extratropical storm data....');
     % 1. Compute Structure Responses
     [Resp.('XC').(f_str), project_forcing] = compute_structure_response(config, structure, project_forcing, emp_coeff, 'XC');
     % 2. Compute Project Forcing & Structure Responses Hazard Curves
@@ -43,14 +43,14 @@ if any(contains(fieldnames(project_forcing),{'XC'}))
         %         plot_hazard_curves(HC_out.('CC').(f_str));
     end
     % 3. Plot Outputs
-    disp('      Plotting hazard curves....');
+    disp('            Plotting hazard curves....');
     plot_hazard_curves(HC_out.('XC').(f_str));
 end
 %% TROPICAL STORMS
-% Prompt Status
-disp('      Processing tropical storm data....');
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'TC'}))
+    % Prompt Status
+disp('         Processing tropical storm data....');
     % 1. Compute Structure Responses
     [Resp.('TC').(f_str), project_forcing] = compute_structure_response(config, structure, project_forcing, emp_coeff, 'TC');
     % 2. Compute Project Forcing & Structure Responses Hazard Curves
@@ -61,7 +61,7 @@ if any(contains(fieldnames(project_forcing),{'TC'}))
         %         plot_hazard_curves(HC_out.('CC').(f_str));
     end
     % 3. Plot Outputs
-    disp('      Plotting hazard curves....');
+    disp('            Plotting hazard curves....');
     plot_hazard_curves(HC_out.('TC').(f_str));
 end
 warning('on');

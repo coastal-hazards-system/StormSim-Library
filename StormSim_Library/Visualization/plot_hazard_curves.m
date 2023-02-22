@@ -1,18 +1,17 @@
 function plot_hazard_curves(plt)
-disp('Plotting hazard curves...');
 %% Plot hazard curves and save out
-% Define Fonts 
+% Define Fonts
 title_fnt = 20;
-ax_label_fnt = title_fnt-2; 
+ax_label_fnt = title_fnt-2;
 ax_tick_fnt = ax_label_fnt - 2;
 % Initialize Figure Handle
 Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','on');
+% Initialize Axes Handle
+ax = gca;
 % For Each Variable In PLOT
 for k = 1:length(plt)
     % Grab CLs
     prc = plt(k).CL;
-    % Initialize Axes Handle
-    ax = gca;
     % Define Y-Axis Type (Linear or Log)
     if plt(k).y_log_scale ==0
         set(ax,'XScale','log','YScale','linear','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
@@ -25,7 +24,7 @@ for k = 1:length(plt)
     colorstr = {'k-','b-.','r-.','r--','b--'};
     % Hold Axis Properties
     hold(ax,'on');
-    % Enabel Box 
+    % Enabel Box
     box(ax,'on');
     % For Each CL
     for i = 1:length(plt(k).y_plot(1,:))
@@ -38,8 +37,8 @@ for k = 1:length(plt)
         % Append Neew Data Tip
         p.DataTipTemplate.DataTipRows(end+1) = row;
     end
-        % Define Y Lim
-    ax.YLim(1) = min(plt(k).y_plot,[],'all','omitnan');
+    % Define Y Lim
+    ax.YLim = [min(plt(k).y_plot,[],'all','omitnan'),max(plt(k).y_plot,[],'all','omitnan')];
     % Define Figure Title
     title(ax,plt(k).title,'FontSize',title_fnt);
     % Define X Label
@@ -59,6 +58,7 @@ for k = 1:length(plt)
     % Clear Axes
     cla(ax);
 end
+close(Figure0);
 end
 
 

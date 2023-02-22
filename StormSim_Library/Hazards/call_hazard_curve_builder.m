@@ -22,7 +22,7 @@ function  [Output]= call_hazard_curve_builder(config, structure, project_forcing
 %   1.
 
 
-disp('   Building hazard curves....');
+disp('            Building hazard curves....');
 %% GRAB DETAILS FROM "config"
 % Get Number Of Years (XC Storms)
 try
@@ -165,7 +165,7 @@ for ii = 1:length(vars_2_get)
     switch storm_type
         case 'XC'
             % Disp Progress
-            disp(['      Performing Stochastic Simulation Technique (SST) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
+            disp(['               Performing Stochastic Simulation Technique (SST) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             % Set Time Values TO Empty
             input_data.time_values = input_data.time_values(:);
             % Call SST
@@ -194,7 +194,7 @@ for ii = 1:length(vars_2_get)
                 % Add rsp_
             end
         case 'TC'
-            disp(['      Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
+            disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             % JPM Expects Data Matrix
             input_data.data_values = input_data.data_values;
             [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob, uncert_treatment);
