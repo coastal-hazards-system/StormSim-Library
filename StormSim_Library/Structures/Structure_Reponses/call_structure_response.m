@@ -30,11 +30,11 @@ switch workflow
         wName = 'RB';
         % Scan Peaks Datasets
         level_2 = fieldnames(project_forcing.(level_1{1}).('Peaks'));
-                     % Disp
-                disp(['Computing structure responses with peaks....']);
+        % Disp
+        disp(['Computing structure responses with peaks....']);
         % Loop Through All Peak Datasets & Storm Types
         for ii = 1:length(level_2)
-             % Disp
+            % Disp
             disp(['   Processing ' level_2{ii} ' dataset....']);
             for jj = 1:length(level_1)
                 % Create Aux Var
@@ -55,9 +55,9 @@ switch workflow
                 Resp.('TC').('Peaks').(level_2{ii}) = helper_var.('TC').('Peaks');
             end
             clearvars('aux_var');
-            % Define Subdir 
+            % Define Subdir
             subDir = [config.project_name, filesep, config.struc_id, filesep];
-            % Create Subdirectory 
+            % Create Subdirectory
             mkdir([subDir 'RB1_' level_2{ii}]);
             % Move SST/JPM Outputs Into Subdir
             movefile([subDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
@@ -83,9 +83,9 @@ switch workflow
             if isfield(helper_var,'TC')
                 Resp.('TC').('Timeseries') = helper_var.('TC').('Timeseries');
             end
-                        % Define Subdir 
+            % Define Subdir
             subDir = [config.project_name, filesep, config.struc_id, filesep];
-            % Create Subdirectory 
+            % Create Subdirectory
             mkdir([subDir 'RB3']);
             % Move SST/JPM Outputs Into Subdir
             movefile([subDir '*SST*'],[subDir 'RB3']);
@@ -124,13 +124,13 @@ switch workflow
         end
         % Generate Plot Structure
         S_damage_plotter(config, Resp.CC.Timeseries.S, 1, 0);
-                                % Define Subdir 
-            subDir = [config.project_name, filesep, config.struc_id, filesep];
-            % Create Subdirectory 
-            mkdir([subDir 'LCS_DPA']);
-            % Move SST/JPM Outputs Into Subdir
-            movefile([subDir '*Seaside*'],[subDir 'LCS_DPA']);
-            movefile([subDir '*Leeside*'],[subDir 'LCS_DPA']);
+        % Define Subdir
+        subDir = [config.project_name, filesep, config.struc_id, filesep];
+        % Create Subdirectory
+        mkdir([subDir 'LCS_DPA']);
+        % Move SST/JPM Outputs Into Subdir
+        movefile([subDir '*Seaside*'],[subDir 'LCS_DPA']);
+        movefile([subDir '*Leeside*'],[subDir 'LCS_DPA']);
 end
 
 %% EXPORT OUTPUTS
