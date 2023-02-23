@@ -20,13 +20,15 @@ berm_width = structure.berm_width;
 % Seaside Slope (cot(alpha))
 slope = structure.seaside_slope;
 % Delta
-delta = structure.armor_delta;
-% Seaside Limit State
-S = structure.seaside_limit_S;
-% CEM P
-P = structure.cem_P;
-% Water Density kg/m^3
-rho_w = structure.water_density;
+if struc_type == 3
+    delta = structure.armor_delta;
+    % Seaside Limit State
+    S = structure.seaside_limit_S;
+    % CEM P
+    P = structure.cem_P;
+    % Water Density kg/m^3
+    rho_w = structure.water_density;
+end
 
 %% DEFINE CNOSTANTS
 g = 9.81; % Gravity
