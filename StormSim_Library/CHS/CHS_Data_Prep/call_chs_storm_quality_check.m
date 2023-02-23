@@ -34,7 +34,7 @@ function [config, storm, removed_storms, XC_Nyrs, XC_Nstm, prob_mass] = call_chs
 chs_region = config.region;
 % Save Point ID
 spID = config.sp_ID;
-% Define CHS Bias File 
+% Define CHS Bias File
 chs_bias_file = config.chs_bias_file;
 
 %% DEFINE AUX VARIABLES
@@ -70,7 +70,7 @@ peaks_data = [peaks_data.Conv_Data];
 % Convert From Tm to Tp (Special Case)
 if Tp_special == 1
     % Convert Tm to Tp (Lake Ontario Case)
-    storm.Maxima(:,3) = storm.Maxima(:,3)*1.2;  % Remove This For Release, Need to inform user 
+    storm.Maxima(:,3) = storm.Maxima(:,3)*1.2;  % Remove This For Release, Need to inform user
 end
 % Find NaN's In "Maxima" Dataset
 storm2rm = unique([find(isnan(storm.Maxima(:,1)));find(isnan(storm.Maxima(:,2)));...
@@ -111,30 +111,40 @@ if use_timeseries == 1
 end
 
 %% REMOVE INVALID STORMS & ADJUST PARAMETERS ACCORDINGLY
-% Maxima Dataset
-% Grab Removed Storm Ids For Maxima Dataset
-storm2rm = unique([storm2rm;removed_storms.Maxima]);
-% find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
-% Remove Bad storms
-storm.Maxima(ismember(storm.Maxima(:,5),...
-    removed_storms.Maxima),:) = [];
-% WLP
-if WLP_switch
-    % Grab Removed Storm Ids For WLP Dataset
-    storm2rm_WLP = removed_storms.WLP;
+if use_timeseries == 1
+    % Maxima Dataset
+    % Grab Removed Storm Ids For Maxima Dataset
+    storm2rm = unique([storm2rm;removed_storms.Maxima]);
+    % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
-    storm.WLP(ismember(storm.WLP(:,5),...
-        removed_storms.WLP),:) = [];
-end
-% WHP
-if WHP_switch
-    % Grab Removed Storm Ids For WHP Dataset
-    storm2rm_WHP = removed_storms.WHP;
-    % Add Structure Field To Prob Masses
+    storm.Maxima(ismember(storm.Maxima(:,5),...
+        removed_storms.Maxima),:) = [];
+    % WLP
+    if WLP_switch
+        % Grab Removed Storm Ids For WLP Dataset
+        storm2rm_WLP = removed_storms.WLP;
+        % Remove Bad storms
+        storm.WLP(ismember(storm.WLP(:,5),...
+            removed_storms.WLP),:) = [];
+    end
+    % WHP
+    if WHP_switch
+        % Grab Removed Storm Ids For WHP Dataset
+        storm2rm_WHP = removed_storms.WHP;
+        % Add Structure Field To Prob Masses
 
+        % Remove Bad storms
+        storm.WHP(ismember(storm.WHP(:,5),...
+            removed_storms.WHP),:) = [];
+    end
+else
+    % Maxima Dataset
+    % Grab Removed Storm Ids For Maxima Dataset
+    removed_storms.Maxima = storm2rm;
+    % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
-    storm.WHP(ismember(storm.WHP(:,5),...
-        removed_storms.WHP),:) = [];
+    storm.Maxima(ismember(storm.Maxima(:,5),...
+        removed_storms.Maxima),:) = [];
 end
 % Adjust storm Type Dependant Fields
 switch storm_type
