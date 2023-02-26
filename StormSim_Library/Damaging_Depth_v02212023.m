@@ -73,18 +73,17 @@ HISTORY OF REVISIONS:
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
 
-% Do not calculate structure response if no storm forcing                
-if Hm0<=0 || Tp<=0 || SWL<=-100 || isnan(Hm0) || isnan(Tp) || isnan(SWL) % (h+SWL)<0
-    DamDepth_final = NaN; 
-else
+cond = Hm0<=0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);% (h+SWL)<0
+
 % The following is the old approach as in, for example, ASCE7
 % Approximate 1% Hm0 using Rayleigh Distribution assumption
-    Total_SWL_depth = SPdepth + SWL;
-    MaxDD = SWL + Ks * (0.7 * 0.78 * Total_SWL_depth); % depth-limited
-    DamDepth = min(SWL + Ks * 0.7 * 1.6 * Hm0, MaxDD); 
-
+Total_SWL_depth = SPdepth + SWL;
+MaxDD = SWL + Ks .* (0.7 .* 0.78 .* Total_SWL_depth); % depth-limited
+DamDepth = min(SWL + Ks .* 0.7 .* 1.6 .* Hm0, MaxDD);
+% Do not calculate structure response if no storm forcing
+DamDepth(cond) = NaN;
 % Alternative approach
-    
-end
+
+
 
 end

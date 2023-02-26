@@ -167,6 +167,9 @@ PROS:
 project_forcing = call_uncertainty_engine(config, project_forcing);
 
 %% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
+% For Response Base Analysis:
+% _no_rep fields are used for SWL, Hm0, Tp, hazard curve calculations
+% Hence will not have depth limitation applied. Hm0 @ Savepoint Depth 
 % SLR, Rand Tide, Depth Limitation
 project_forcing = call_project_forcing_adjuster(config, project_forcing, structure);
 

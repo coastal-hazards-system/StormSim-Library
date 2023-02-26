@@ -22,10 +22,14 @@ switch data_type
         end
         % Apply SLR
         if swl_slr~=0
-            if ~iscell(project_forcing.('SWL'))  % Peaks
-                project_forcing.('SWL') = project_forcing.('SWL') + swl_slr;
-            else % Timeseries
-                project_forcing.('SWL') = cellfun(@(x) x + swl_slr, project_forcing.('SWL'), 'un', false);
+            SWL_fnames = fieldnames(project_forcing);
+            SWL_fnames = SWL_fnames(contains(SWL_fnames,{'SWL'}));
+            for gg = 1:length(SWL_fnames)
+                if ~iscell(project_forcing.(SWL_fnames{gg}))  % Peaks
+                    project_forcing.(SWL_fnames{gg}) = project_forcing.(SWL_fnames{gg}) + swl_slr;
+                else % Timeseries
+                    project_forcing.(SWL_fnames{gg}) = cellfun(@(x) x + swl_slr, project_forcing.(SWL_fnames{gg}), 'un', false);
+                end
             end
         end
         %------ Hm0 ADJUSTMENTS -----

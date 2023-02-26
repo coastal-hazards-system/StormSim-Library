@@ -4,8 +4,10 @@ function plot_hazard_curves(plt)
 title_fnt = 20;
 ax_label_fnt = title_fnt-2;
 ax_tick_fnt = ax_label_fnt - 2;
+% Remove Empty Fields 
+plt(cellfun(@isempty,{plt.y_plot})) = [];
 % Initialize Figure Handle
-Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','on');
+Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
 % Initialize Axes Handle
 ax = gca;
 % For Each Variable In PLOT

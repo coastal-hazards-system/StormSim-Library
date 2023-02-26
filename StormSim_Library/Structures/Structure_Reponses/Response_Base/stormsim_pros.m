@@ -3,13 +3,10 @@ disp(['      Running StormSim: PROS....']);
 warning('off');
 % Project_forcing input is project_forcing.XC.Peaks.Maxima ->
 toe_elev = structure.toe_elevation*-1;
-if isnan(config.sp_depth)
-    sp_depth = toe_elev;
-else
-    sp_depth = config.sp_depth;
-end
+    sp_depth = config.chs_sp_depth;
 struc_type = config.struc_type;
 storm_sampling = config.storm_sampling;
+
 %% DETERMINE DATA TYPE
 % Find Field Dimensions
 if isfield(project_forcing,'XC')

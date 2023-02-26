@@ -69,11 +69,11 @@ if ~isempty(project_forcing) && compute_forcing_hc == 1
     hm0_u_r = config.chs_hm0_u_r; % Hm0 Proportional
 end
 % Initialize Dummy Time Vector
-try
-    input_data.time_values = zeros(size(Resp.('q')));
-catch
-    input_data.time_values = zeros(size(project_forcing.('SWL')));
-end
+% try
+%     input_data.time_values = zeros(size(Resp.('q')));
+% catch
+%     input_data.time_values = zeros(size(project_forcing.('SWL')));
+% end
 % Save Name
 save_name = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
@@ -157,9 +157,13 @@ for ii = 1:length(vars_2_get)
     end
     % Assign Input Data
     if contains(staID,{'SWL','Hm0','Tp'}) && ~contains(staID,'R2p_SWL')
-        input_data.data_values = project_forcing.(staID);
+        c_indx = 1;% Only process 1st replicate, no double dipping for uncertainty
+        input_data.data_values = project_forcing.(staID)(:,c_indx);
+        input_data.time_values = zeros(size(project_forcing.(staID)(:,c_indx)));
     else
-        input_data.data_values = Resp.(staID);
+        c_indx = 1:size(Resp.(staID),2);
+        input_data.data_values = Resp.(staID)(:,c_indx);
+        input_data.time_values = zeros(size(Resp.(staID)(:,c_indx)));
     end
     % Call SST/JPM
     switch storm_type
@@ -197,7 +201,7 @@ for ii = 1:length(vars_2_get)
             disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             % JPM Expects Data Matrix
             input_data.data_values = input_data.data_values;
-            [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob, uncert_treatment);
+            [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment);
             % Organize Outputs
             Output(ii).var = staID; % Station ID
             Output(ii).y_label = y_label; % Y Axis Label

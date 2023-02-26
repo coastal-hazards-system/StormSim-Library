@@ -107,6 +107,14 @@ switch dflat
             Resp.('Dn50') = Dn50{:};
             %Resp.('Dn50_LCBW') = Dn50_LCBW{:};
         end
+        % Replace Forcing Fields With No Rep For HC Calcs
+        if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'}))
+            project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');
+            project_forcing.(storm_type).('Hm0') = project_forcing.(storm_type).('Hm0_no_rep');
+            project_forcing.(storm_type).('Tp') = project_forcing.(storm_type).('Tp_no_rep');
+            % Remove Fields
+            project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+        end
     case 2 % LCS
         if exist('R2p','var') && struc_type~=2
             Resp.('R2p') = cell2struct(R2p,'LCNUM');
@@ -132,6 +140,17 @@ switch dflat
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
             %Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+        end
+        % Replace Forcing Fields With No Rep For HC Calcs
+        if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'}))
+            SWL = project_forcing.(storm_type).('SWL_no_rep');
+            Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
+            Tp = project_forcing.(storm_type).('Tp_no_rep');
+            project_forcing.(storm_type).('SWL') = SWL;
+            project_forcing.(storm_type).('Hm0') = Hm0;
+            project_forcing.(storm_type).('Tp') = Tp;
+            % Remove Fields
+            project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
         end
         if compute_HC == 1
             % Find SWL Max For Each Storm

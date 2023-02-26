@@ -21,11 +21,6 @@ level_3 = fieldnames(project_forcing.(level_1{1}));
 level_3 = level_3(contains(level_3,{'Peaks','Timeseries'}));
 % Loop Through All Peak Datasets & Storm Types
 for jj = 1:length(level_1)
-    % Get Prob Mass
-    if isfield(project_forcing.(level_1{jj}),'TC_Prob')
-        continue;
-        %aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
-    end
     % Loop Through Peaks/Timeseries
     for kk = 1:length(level_3)
         if strcmp(level_3{kk},{'Peaks'})

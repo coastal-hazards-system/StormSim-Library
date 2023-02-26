@@ -161,10 +161,7 @@ try
     % Need To Access Attributes Of First Storm
     sp_depth = sp_depth.Groups.Attributes;
     % Grab Save Point Depth
-    config.sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
-catch
-    % Use Write In Value
-    config.sp_depth = NaN;
+    config.chs_sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
 end
 % Extract Filename
 [~,CHS_file_ref,~] = fileparts(CHS_file_ref);

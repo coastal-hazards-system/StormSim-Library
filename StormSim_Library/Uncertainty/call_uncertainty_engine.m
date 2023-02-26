@@ -40,11 +40,10 @@ switch wFlow
                         data = project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk});
                         % Apply Uncertainty
                         if strcmp(level_1{ii},'TC')
-                            [project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk}),...
-                                project_forcing.(level_1{ii}).TC_Prob] = apply_rb_uncertainty(config, data,...
+                            [project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk})] = apply_rb_uncertainty(config, data,...
                                 project_forcing.(level_1{ii}).TC_Freq, 'Peaks', RandNorm);
                         else
-                            [project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk}), ~] = apply_rb_uncertainty(config, data, [], 'Peaks', RandNorm);
+                            [project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk})] = apply_rb_uncertainty(config, data, [], 'Peaks', RandNorm);
                         end
                     end
                 else % Timeseries
@@ -52,11 +51,10 @@ switch wFlow
                     data = project_forcing.(level_1{ii}).(level_2{jj});
                     % Apply Uncertainty
                     if strcmp(level_1{ii},'TC')
-                        [project_forcing.(level_1{ii}).(level_2{jj}),...
-                            project_forcing.(level_1{ii}).TC_Prob] = apply_rb_uncertainty(config, data,...
+                        [project_forcing.(level_1{ii}).(level_2{jj})] = apply_rb_uncertainty(config, data,...
                             project_forcing.(level_1{ii}).TC_Freq, 'Timeseries', RandNorm);
                     else
-                        [project_forcing.(level_1{ii}).(level_2{jj}), ~] = apply_rb_uncertainty(config, data, [], 'Timeseries', RandNorm);
+                        [project_forcing.(level_1{ii}).(level_2{jj})] = apply_rb_uncertainty(config, data, [], 'Timeseries', RandNorm);
                     end
                 end
             end

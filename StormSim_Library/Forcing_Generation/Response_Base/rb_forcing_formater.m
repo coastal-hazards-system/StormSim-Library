@@ -28,17 +28,23 @@ disp(['Reshaping ' sType ' forcing data for response base analysis....']);
 % Define Filednames In Storm
 fnames = fieldnames(storm);
 % Remove Unwanted Fields
-fnames = fnames(~contains(fnames,{'Timeseries','removed_storms'}));
+fnames = fnames(contains(fnames,{'Maxima','WLP','WHP'}));
 % Reshape Peaks Data
 for ii = 1:length(fnames)
     % Reshape Peaks Data To Be nStorms * normal_discretization
     project_forcing.('Peaks').(fnames{ii}).SWL = repmat(storm.(fnames{ii})(:,1),1,RandNorm); % SWL
     project_forcing.('Peaks').(fnames{ii}).Hm0 = repmat(storm.(fnames{ii})(:,2),1,RandNorm); % Hm0
     project_forcing.('Peaks').(fnames{ii}).Tp = repmat(storm.(fnames{ii})(:,3),1,RandNorm); % Tp
+    % Add No Replicate Fields For Forcing HC Computations
+    project_forcing.('Peaks').(fnames{ii}).SWL_no_rep = storm.(fnames{ii})(:,1); % SWL
+    project_forcing.('Peaks').(fnames{ii}).Hm0_no_rep = storm.(fnames{ii})(:,2); % Hm0
+    project_forcing.('Peaks').(fnames{ii}).Tp_no_rep = storm.(fnames{ii})(:,3); % Tp
 end
 % Reshape Storm Probability Masses To Be nStorms * normal_discretization
 if strcmp(sType,'TC')
+    %
     project_forcing.TC_Freq = repmat(TC_Freq, 1, RandNorm);
+    project_forcing.TC_Prob = project_forcing.TC_Freq./RandNorm;
 end
 % Reshape Timeseries Data
 if use_timeseries == 1
@@ -46,6 +52,10 @@ if use_timeseries == 1
     project_forcing.('Timeseries').SWL = cellfun(@(x) repmat(x(:,2),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % SWL
     project_forcing.('Timeseries').Hm0 = cellfun(@(x) repmat(x(:,3),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % Hm0
     project_forcing.('Timeseries').Tp = cellfun(@(x) repmat(x(:,4),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % Tp
+    % Reshape Peaks Data To Be nStorms * normal_discretization
+    project_forcing.('Timeseries').SWL_no_rep = cellfun(@(x) x(:,2),storm.('Timeseries')(:,2),'un',false); % SWL
+    project_forcing.('Timeseries').Hm0_no_rep = cellfun(@(x) x(:,3),storm.('Timeseries')(:,2),'un',false); % Hm0
+    project_forcing.('Timeseries').Tp_no_rep = cellfun(@(x) x(:,4),storm.('Timeseries')(:,2),'un',false); % Tp
 end
 
 % % Save Point Depth
