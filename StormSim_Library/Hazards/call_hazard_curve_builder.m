@@ -151,7 +151,7 @@ for ii = 1:length(vars_2_get)
             U_a=0;
             U_r = q_u;
             uncert_treatment = 'relative';
-            unit_label = 'L/s per m';
+            unit_label = 'm^3/s per m';
             y_label = ['q [ ' unit_label ']'];
             var_name = 'q';
     end
@@ -173,53 +173,61 @@ for ii = 1:length(vars_2_get)
             % Set Time Values TO Empty
             input_data.time_values = input_data.time_values(:);
             % Call SST
-            [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, U_a, U_r, uncert_treatment);
-            % Organize Outputs
-            Output(ii).var = staID; % Station ID
-            Output(ii).y_label = y_label; % Y Axis Label
-            Output(ii).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
-                ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-            Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
-            Output(ii).y_plot = flipud(dummy.SST_output.HC_plt'); % Hazard Curve Data For Plot
-            Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
-            Output(ii).y_table = flipud(dummy.SST_output.HC_tbl'); % Hazard Curve Data For Table
-            Output(ii).CL = [50,prc]; % Percentiles (Cols)
-            Output(ii).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
-            % OVertopping Special Case
-            if strcmp(staID,'q')
-                % Convert From [m^3/s per m] to [liters/s per m]
-                Output(ii).y_plot = Output(ii).y_plot * 1000;
-                Output(ii).y_log_scale = 1; % Y Log Scale For Overtopping
-            else
-                Output(ii).y_log_scale = 0; % Regular Scale For The Rest
-            end
-            % THIS SHOULD BE REMOVED ONCE SST/JPM HC COMBINATION IS SORTED
-            if contains(staID,{'Hm0','SWL'})
-                % Add rsp_
+            try
+                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, U_a, U_r, uncert_treatment);
+                % Organize Outputs
+                Output(ii).var = staID; % Station ID
+                Output(ii).y_label = y_label; % Y Axis Label
+                Output(ii).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
+                    ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
+                Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
+                Output(ii).y_plot = flipud(dummy.SST_output.HC_plt'); % Hazard Curve Data For Plot
+                Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
+                Output(ii).y_table = flipud(dummy.SST_output.HC_tbl'); % Hazard Curve Data For Table
+                Output(ii).CL = [50,prc]; % Percentiles (Cols)
+                Output(ii).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
+                % OVertopping Special Case
+                if strcmp(staID,'q')
+                    % Convert From [m^3/s per m] to [liters/s per m]
+                    %                 Output(ii).y_plot = Output(ii).y_plot * 1000;
+                    Output(ii).y_log_scale = 1; % Y Log Scale For Overtopping
+                else
+                    Output(ii).y_log_scale = 0; % Regular Scale For The Rest
+                end
+                % THIS SHOULD BE REMOVED ONCE SST/JPM HC COMBINATION IS SORTED
+                if contains(staID,{'Hm0','SWL'})
+                    % Add rsp_
+                end
+            catch
+                disp(['               Stochastic Simulation Technique (SST) returned error, skipping: ', staID]);
             end
         case 'TC'
             disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             % JPM Expects Data Matrix
             input_data.data_values = input_data.data_values;
-            [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment);
-            % Organize Outputs
-            Output(ii).var = staID; % Station ID
-            Output(ii).y_label = y_label; % Y Axis Label
-            Output(ii).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
-                ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-            Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
-            Output(ii).y_plot = flipud(dummy.HC_data.HC_plt_y); % Hazard Curve Data For Plot
-            Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
-            Output(ii).y_table = flipud(dummy.HC_data.HC_tbl_y); % Hazard Curve Data For Table
-            Output(ii).CL = [50,prc]; % Percentiles (Cols)
-            Output(ii).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
-            % OVertopping Special Case
-            if strcmp(staID,'q')
-                % Convert From [m^3/s per m] to [liters/s per m]
-                Output(ii).y_plot = Output(ii).y_plot * 1000;
-                Output(ii).y_log_scale = 1; % Y Log Scale For Overtopping
-            else
-                Output(ii).y_log_scale = 0; % Regular Scale For The Rest
+            try
+                [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment);
+                % Organize Outputs
+                Output(ii).var = staID; % Station ID
+                Output(ii).y_label = y_label; % Y Axis Label
+                Output(ii).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
+                    ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
+                Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
+                Output(ii).y_plot = flipud(dummy.HC_data.HC_plt_y); % Hazard Curve Data For Plot
+                Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
+                Output(ii).y_table = flipud(dummy.HC_data.HC_tbl_y); % Hazard Curve Data For Table
+                Output(ii).CL = [50,prc]; % Percentiles (Cols)
+                Output(ii).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
+                % OVertopping Special Case
+                if strcmp(staID,'q')
+                    % Convert From [m^3/s per m] to [liters/s per m]
+                    %                 Output(ii).y_plot = Output(ii).y_plot * 1000;
+                    Output(ii).y_log_scale = 1; % Y Log Scale For Overtopping
+                else
+                    Output(ii).y_log_scale = 0; % Regular Scale For The Rest
+                end
+            catch
+                disp(['               Joint Probability Method (JPM) returned error, skipping: ', staID]);
             end
     end
 end
