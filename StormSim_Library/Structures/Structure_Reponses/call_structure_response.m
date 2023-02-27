@@ -58,7 +58,11 @@ switch workflow
             % Define Subdir
             subDir = [config.project_name, filesep, config.struc_id, filesep];
             % Create Subdirectory
-            mkdir([subDir 'RB1_' level_2{ii}]);
+            if ~exist([subDir 'RB1_' level_2{ii}],'dir')
+                mkdir([subDir 'RB1_' level_2{ii}]);
+            else 
+                delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
+            end
             % Move SST/JPM Outputs Into Subdir
             movefile([subDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
             movefile([subDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
