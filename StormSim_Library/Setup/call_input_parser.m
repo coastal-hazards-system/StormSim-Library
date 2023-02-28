@@ -143,6 +143,17 @@ if exist(config.chs_zip,'file')==2 % Valid Zip Folder Detected
     config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
     % Add h5 Files Path To Config
     config.chs_zip_path = 1;
+    % Grab CHS Identifiers 
+    chs_ident = strsplit(config.chs_files_2_convert{1,2},'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
+    % Add CHS Region
+%     if contains(chs_ident,'CHS-NA')
+%     config.region = 'NACCS';
+%     else
+    config.region = chs_ident{1}(3:end);
+%     end
+    % Add CHS SP
+    config.sp_ID = str2double(chs_ident{5}(3:end));
+
 else % Manual Files
     % Need to implement checks to make sure files are h5s and CHS
     % native.

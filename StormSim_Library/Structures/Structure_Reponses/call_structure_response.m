@@ -54,18 +54,23 @@ switch workflow
             if isfield(helper_var,'TC')
                 Resp.('TC').('Peaks').(level_2{ii}) = helper_var.('TC').('Peaks');
             end
+            if isfield(helper_var,'CC')
+                Resp.('CC').('Peaks').(level_2{ii}) = helper_var.('CC').('Peaks');
+            end
             clearvars('aux_var');
             % Define Subdir
             subDir = [config.project_name, filesep, config.struc_id, filesep];
             % Create Subdirectory
             if ~exist([subDir 'RB1_' level_2{ii}],'dir')
                 mkdir([subDir 'RB1_' level_2{ii}]);
-            else 
+            else
                 delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
             end
             % Move SST/JPM Outputs Into Subdir
             movefile([subDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
             movefile([subDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
+            movefile([subDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
+
         end
         % RB3
         if use_timeseries == 1
@@ -87,6 +92,9 @@ switch workflow
             if isfield(helper_var,'TC')
                 Resp.('TC').('Timeseries') = helper_var.('TC').('Timeseries');
             end
+            if isfield(helper_var,'CC')
+                Resp.('CC').('Timeseries') = helper_var.('CC').('Timeseries');
+            end
             % Define Subdir
             subDir = [config.project_name, filesep, config.struc_id, filesep];
             % Create Subdirectory
@@ -94,6 +102,7 @@ switch workflow
             % Move SST/JPM Outputs Into Subdir
             movefile([subDir '*SST*'],[subDir 'RB3']);
             movefile([subDir '*JPM*'],[subDir 'RB3']);
+            movefile([subDir '*StormSim_CC*'],[subDir 'RB3']);
         end
     case 3 % CSR
         %% STORMSIM: MCS-CSR

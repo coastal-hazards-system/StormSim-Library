@@ -1,4 +1,4 @@
-function  [Output]= call_hazard_curve_builder(config, structure, project_forcing, Resp, storm_type)
+function  [Output]= call_hazard_curve_builder(config, structure, project_forcing, Resp, storm_type, use_aep)
 % CALL_STRUCTURE_CURVE_BUILDER Computes hazard curve for provided forcing
 % and structure responses using StormSim's SST & JPM. Supports hazard curve
 % calculations for: SWL, Hm0, Tp, R2p, R2p+SWL, q, Dn50, Dn50_LCBW, p1.
@@ -90,6 +90,16 @@ hw = toe_elev + crest_elev;
 % Get Water Density
 rho_w = structure.water_density;
 
+%% DEFINE SWITCHES BASED ON AEF/AEP
+% Define HC Limt for Plots
+if use_aep == 1
+    x_lim = num2str(10^-3);
+    l_str = '>';
+else
+    x_lim = num2str(10^-4);
+    l_str = '>';
+end
+
 %% COMPUTE HAZARD CURVES WITH STORMSIM: SST/JPM
 % Loop Through All Stations
 for ii = 1:length(vars_2_get)
@@ -165,6 +175,8 @@ for ii = 1:length(vars_2_get)
         input_data.data_values = Resp.(staID)(:,c_indx);
         input_data.time_values = zeros(size(Resp.(staID)(:,c_indx)));
     end
+    % Initialize AEF/AEP Search Vector
+    s_indx = [];
     % Call SST/JPM
     switch storm_type
         case 'XC'
@@ -174,16 +186,24 @@ for ii = 1:length(vars_2_get)
             input_data.time_values = input_data.time_values(:);
             % Call SST
             try
-                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, U_a, U_r, uncert_treatment);
+                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment);
+                % Define Limtis For Frequency/Probability Vectors
+                eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
                 % Organize Outputs
                 Output(ii).var = staID; % Station ID
                 Output(ii).y_label = y_label; % Y Axis Label
                 Output(ii).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
                     ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-                Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
-                Output(ii).y_plot = flipud(dummy.SST_output.HC_plt'); % Hazard Curve Data For Plot
-                Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
-                Output(ii).y_table = flipud(dummy.SST_output.HC_tbl'); % Hazard Curve Data For Table
+                Output(ii).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEP/AEF For Plot
+                Output(ii).y_plot = dummy.SST_output.HC_plt(:, s_indx)'; % Hazard Curve Data For Plot
+                Output(ii).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
+                Output(ii).y_table = dummy.SST_output.HC_tbl'; % Hazard Curve Data For Table
+                if use_aep == 1
+                    Output(ii).tbl_rsp_x = dummy.SST_output.HC_tbl_rsp_x'; % x here implies Responses, AEP/AEF -> Responses
+                else
+                    Output(ii).tbl_rsp_x = aef2aep(dummy.SST_output.HC_tbl_rsp_x');
+                end
+                Output(ii).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
                 Output(ii).CL = [50,prc]; % Percentiles (Cols)
                 Output(ii).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
                 % OVertopping Special Case
@@ -206,16 +226,25 @@ for ii = 1:length(vars_2_get)
             % JPM Expects Data Matrix
             input_data.data_values = input_data.data_values;
             try
-                [dummy] = call_stormsim_jpm(staID, prc, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment);
+                [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment);
+                % Define Limtis For Frequency/Probability Vectors
+                eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
                 % Organize Outputs
                 Output(ii).var = staID; % Station ID
                 Output(ii).y_label = y_label; % Y Axis Label
                 Output(ii).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
                     ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-                Output(ii).x_plot = flipud(1./dummy.HC_plt_x); % Hazard Curve AEF For Plot
-                Output(ii).y_plot = flipud(dummy.HC_data.HC_plt_y); % Hazard Curve Data For Plot
-                Output(ii).x_table = flipud(1./dummy.HC_tbl_x'); % Hazard Curve ARF For Table
-                Output(ii).y_table = flipud(dummy.HC_data.HC_tbl_y); % Hazard Curve Data For Table
+                Output(ii).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEF For Plot
+                Output(ii).y_plot = dummy.HC_data.HC_plt_y(s_indx, :); % Hazard Curve Data For Plot
+                Output(ii).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
+                Output(ii).y_table = dummy.HC_data.HC_tbl_y; % Hazard Curve Data For Table
+                Output(ii).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
+                if use_aep == 1
+                    Output(ii).tbl_rsp_x = dummy.HC_data.HC_tbl_rsp_x;
+                else
+                    Output(ii).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
+                end
+                Output(ii).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
                 Output(ii).CL = [50,prc]; % Percentiles (Cols)
                 Output(ii).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
                 % OVertopping Special Case

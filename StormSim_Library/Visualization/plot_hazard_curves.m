@@ -1,11 +1,22 @@
-function plot_hazard_curves(plt)
+function plot_hazard_curves(plt, use_aep)
 %% Plot hazard curves and save out
 % Define Fonts
-title_fnt = 20;
+title_fnt = 28;
 ax_label_fnt = title_fnt-2;
 ax_tick_fnt = ax_label_fnt - 2;
-% Remove Empty Fields 
+% Remove Empty Fields
 plt(cellfun(@isempty,{plt.y_plot})) = [];
+% Define XTick Labels And XTicks
+if use_aep == 1
+    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
+    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
+    x_lim = [10^-3, 1];
+else
+       xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
+    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
+    x_lim = [10^-4 1];
+
+end
 % Initialize Figure Handle
 Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
 % Initialize Axes Handle
@@ -17,15 +28,15 @@ for k = 1:length(plt)
     % Define Y-Axis Type (Linear or Log)
     if plt(k).y_log_scale ==0
         set(ax,'XScale','log','YScale','linear','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-            'FontSize',ax_tick_fnt);
+            'FontSize',ax_tick_fnt,'XDir','reverse');
     else
         set(ax,'XScale','log','YScale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-            'FontSize',ax_tick_fnt);
+            'FontSize',ax_tick_fnt,'XDir','reverse');
     end
+% Hold Axis Properties
+hold(ax,'on');
     % Define Color Pallet
     colorstr = {'k-','b-.','r-.','r--','b--'};
-    % Hold Axis Properties
-    hold(ax,'on');
     % Enabel Box
     box(ax,'on');
     % For Each CL
@@ -41,10 +52,19 @@ for k = 1:length(plt)
     end
     % Define Y Lim
     ax.YLim = [min(plt(k).y_plot,[],'all','omitnan'),max(plt(k).y_plot,[],'all','omitnan')];
+    % Set XTicks
+    ax.XTick = xticks_data;
+    ax.XTickLabel = xticks_data_lbl;
+    % Define X Lim
+    ax.XLim = x_lim;
     % Define Figure Title
     title(ax,plt(k).title,'FontSize',title_fnt);
     % Define X Label
-    xlabel(ax,{'Annual Exceedance Frequency, AEF'},'FontSize',ax_label_fnt,'FontWeight','bold');
+    if use_aep == 1
+        xlabel(ax,{'Annual Exceedance Probability, AEP'},'FontSize',ax_label_fnt,'FontWeight','bold');
+    else
+        xlabel(ax,{'Annual Exceedance Frequency, AEF [1/yr]'},'FontSize',ax_label_fnt,'FontWeight','bold');
+    end
     % Define Y Label
     ylabel(ax,plt(k).y_label,'FontSize',ax_label_fnt,'FontWeight','bold');
     % Add Legend
