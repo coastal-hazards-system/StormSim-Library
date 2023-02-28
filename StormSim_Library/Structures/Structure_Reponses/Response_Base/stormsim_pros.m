@@ -2,8 +2,11 @@ function HC_out = stormsim_pros(config, project_forcing, structure, emp_coeff)
 disp(['      Running StormSim: PROS....']);
 warning('off');
 storm_sampling = config.storm_sampling;
-use_aep = config.pros_use_aep;
-
+try
+	use_aep = config.pros_use_aep;
+catch 
+	use_aep = 1;
+end
 %% DETERMINE DATA TYPE
 % Find Field Dimensions
 if isfield(project_forcing,'XC')
