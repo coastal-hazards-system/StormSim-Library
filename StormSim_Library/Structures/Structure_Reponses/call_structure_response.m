@@ -44,7 +44,7 @@ switch workflow
                     aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
                 end
             end
-            % Call StormSim; CSR Peaks Reliability
+            % Call StormSim: PROS RB1
             helper_var = stormsim_pros(config,...
                 aux_var, structure, emp_coeff);
             % Add Additional Layer To Data Structure For Peaks Alt Datasets
@@ -82,8 +82,7 @@ switch workflow
                     aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
                 end
             end
-            % Call StormSim; CSR Peaks Reliability - Need to debug , got
-            % error in SST
+            % Call StormSim: PROS RB3
             helper_var = stormsim_pros(config,...
                 aux_var, structure, emp_coeff);
             if isfield(helper_var,'XC')

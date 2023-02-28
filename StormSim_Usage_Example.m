@@ -24,7 +24,7 @@ stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in 
 t1 = tic;
 % Parse StormSim Configuration File  
 config = call_input_parser(stormsim_input_file);
- t1 = toc(t1)
+ t1 = toc(t1);
 %% STEP 1: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
 %{
  Description:
@@ -81,7 +81,7 @@ Outputs:
 t2 = tic;
 % Call CHS Set-up Function 
 [storm, ~, prob_mass, config] = call_chs_data_formater(config);
-t2 = toc(t2)
+t2 = toc(t2);
 %% STEP 2: CREATE STORM FORCING 
 %{
  Description:
@@ -146,13 +146,13 @@ Outputs:
 %}
 t3 = tic;
 [project_forcing] = call_project_forcing_formater(config, storm, prob_mass);
-t3 = toc(t3)
+t3 = toc(t3);
  
 %% STEP 3: CREATE STRUCTURE GEOMETRY
 t4 = tic;
 % Create Project Structure Geometry
 [structure] = create_structure_geometry(config, project_forcing, 1);% Second input argument: 1 - show plot 0 - hide plot
-t4 = toc(t4)
+t4 = toc(t4);
 %% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
 %{
 % This functions applies uncertianty to project forcing.
@@ -170,7 +170,7 @@ PROS:
 %}
 t5 = tic;
 project_forcing = call_uncertainty_engine(config, project_forcing);
-t5 = toc(t5)
+t5 = toc(t5);
 %% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
 % For Response Base Analysis:
 % _no_rep fields are used for SWL, Hm0, Tp, hazard curve calculations
@@ -178,7 +178,7 @@ t5 = toc(t5)
 % SLR, Rand Tide, Depth Limitation
 t6 = tic;
 project_forcing = call_project_forcing_adjuster(config, project_forcing, structure);
-t6 = toc(t6)
+t6 = toc(t6);
 
 %% STEP 5: COMPUTE  RESPONSE 
 % MCS-CSR Peaks is working, need to sort out uncertainty. Needs to be
@@ -187,7 +187,8 @@ t6 = toc(t6)
 % stormsim_csr_dpa.m. Also, need to update damage functions to latest.
 t7 = tic;
 Resp = call_structure_response(config, project_forcing, structure);
-t7 = toc(t7)
+t7 = toc(t7);
+sum([t1,t2,t3,t4,t5,t6,t7])/60
 diary 'off';
 
 

@@ -1,4 +1,4 @@
-function [ari_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, tc_resp_vector, ari_list)
+function [ari_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, ari_list)
 % Initialize Out Var
 ari_out = NaN(length(ari_list), size(xc_prob, 2));
 % Loop Through Each CL
@@ -16,19 +16,14 @@ ari_out = NaN(length(ari_list), size(xc_prob, 2));
         %% Process data for interpolation (remove NaN, inf, and repeats)
         x1 = FREQ_mean_3;
         y1 = xc_resp_vector;
-        y2 = tc_resp_vector;
         % Remove NaN & Inf Values
         rIndx = isnan(x1) | isinf(x1);
         x1(rIndx) = [];
         y1(rIndx) = [];
-        y2(rIndx) = [];
         % Compute Log
         x1 = log(x1);
         % Do Unique, Keep Order
         [C, ia, ~] = unique(x1,'stable');
-        % Redefine X & Y
-        x1 = C; y1 = y1(ia,1);y2 = y2(ia,1);
-        % Combine y1 & y2 ????
 
         %% Interpolate to compute ARI for each y-value
         try

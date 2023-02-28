@@ -20,10 +20,10 @@ for j = s_indx % SWL and/or Hm0
     disp(['               Combining ' tc_resp(j).var ' hazard curves....']);
     % Combine HCs To Create Table
     cc_resp(ctr).y_table = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
-        xc_resp(j).tbl_rsp_y, tc_resp(j).tbl_rsp_y, x_plot_tc);
+        xc_resp(j).tbl_rsp_y, x_plot_tc);
     % Combine HCs To Create Plot
     cc_resp(ctr).y_plot = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
-        xc_resp(j).tbl_rsp_y, tc_resp(j).tbl_rsp_y, x_plot_tc);
+        xc_resp(j).tbl_rsp_y, x_plot_tc);
     % ADjust Figure Title
     cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
     cc_resp(ctr).title(2) = {strrep(cc_resp(ctr).title{2},'TC','CC')};
