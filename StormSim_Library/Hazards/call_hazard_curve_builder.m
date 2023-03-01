@@ -122,8 +122,8 @@ for ii = 1:length(vars_2_get)
             y_label = ['H_{m_{0}} [' unit_label ']'];
             var_name = 'H_{m_{0}}';
         case 'Tp'
-            U_a=0;
-            U_r=sqrt(1+hm0_u_r)-1;
+            U_a = 0;
+            U_r = sqrt(1+hm0_u_r)-1;
             uncert_treatment = 'relative';
             unit_label = 's';
             y_label = ['T_p [' unit_label ']'];
@@ -167,13 +167,19 @@ for ii = 1:length(vars_2_get)
     end
     % Assign Input Data
     if contains(staID,{'SWL','Hm0','Tp'}) && ~contains(staID,'R2p_SWL')
-        c_indx = 1;% Only process 1st replicate, no double dipping for uncertainty
-        input_data.data_values = project_forcing.(staID)(:,c_indx);
-        input_data.time_values = zeros(size(project_forcing.(staID)(:,c_indx)));
+        if contains(storm_type,{'TC'})
+            c_indx = 1:size(project_forcing.(staID),2);
+            input_data.data_values = project_forcing.(staID);
+            input_data.time_values = zeros(size(project_forcing.(staID)));
+        else
+            c_indx = 1;% Only process 1st replicate, no double dipping for uncertainty
+            input_data.data_values = project_forcing.(staID)(:,c_indx);
+            input_data.time_values = zeros(size(project_forcing.(staID)(:,c_indx)));
+        end
     else
         c_indx = 1:size(Resp.(staID),2);
-        input_data.data_values = Resp.(staID)(:,c_indx);
-        input_data.time_values = zeros(size(Resp.(staID)(:,c_indx)));
+        input_data.data_values = Resp.(staID);
+        input_data.time_values = zeros(size(Resp.(staID)));
     end
     % Check For Full NaN Vector
     if sum(isnan(input_data.data_values(:)))==length(input_data.data_values(:))

@@ -18,7 +18,7 @@ else
 
 end
 % Initialize Figure Handle
-Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
+Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','on');
 % Initialize Axes Handle
 ax = gca;
 % For Each Variable In PLOT
@@ -80,7 +80,7 @@ for k = 1:length(plt)
     % Clear Axes
     cla(ax);
 end
-close(Figure0);
+close all;
 end
 
 

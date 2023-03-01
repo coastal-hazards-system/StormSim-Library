@@ -67,10 +67,15 @@ switch workflow
                 delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
             end
             % Move SST/JPM Outputs Into Subdir
-            movefile([subDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
-            movefile([subDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
-            movefile([subDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
-
+            if ~isempty(dir([subDir '*SST*']))
+                movefile([subDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
+            end
+            if ~isempty(dir([subDir '*JPM*']))
+                movefile([subDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
+            end
+            if ~isempty(dir([subDir '*StormSim_CC*']))
+                movefile([subDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
+            end
         end
         % RB3
         if use_timeseries == 1
@@ -99,9 +104,16 @@ switch workflow
             % Create Subdirectory
             mkdir([subDir 'RB3']);
             % Move SST/JPM Outputs Into Subdir
-            movefile([subDir '*SST*'],[subDir 'RB3']);
-            movefile([subDir '*JPM*'],[subDir 'RB3']);
-            movefile([subDir '*StormSim_CC*'],[subDir 'RB3']);
+            % Move SST/JPM Outputs Into Subdir
+            if ~isempty(dir([subDir '*SST*']))
+                movefile([subDir '*SST*'],[subDir 'RB3']);
+            end
+            if ~isempty(dir([subDir '*JPM*']))
+                movefile([subDir '*JPM*'],[subDir 'RB3']);
+            end
+            if ~isempty(dir([subDir '*StormSim_CC*']))
+                movefile([subDir '*StormSim_CC*'],[subDir 'RB3']);
+            end
         end
     case 3 % CSR
         %% STORMSIM: MCS-CSR

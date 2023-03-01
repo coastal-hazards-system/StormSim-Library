@@ -16,14 +16,13 @@ if isfield(project_forcing,'XC')
         f_str = 'Peaks';
     end
 elseif isfield(project_forcing,'TC')
-    if iscell(project_forcing.('TC').('SWL'))
-        if iscell(project_forcing.('TC').('SWL')) % Timeseries Dataset
-            f_str = 'Timeseries';
-        else % Peaks
-            f_str = 'Peaks';
-        end
+    if iscell(project_forcing.('TC').('SWL')) % Timeseries Dataset
+        f_str = 'Timeseries';
+    else % Peaks
+        f_str = 'Peaks';
     end
 end
+
 
 %% EXTRATROPICAL STORMS
 % Apply Workflow
