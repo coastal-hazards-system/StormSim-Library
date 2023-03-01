@@ -12,7 +12,7 @@ if use_aep == 1
     xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
     x_lim = [10^-3, 1];
 else
-       xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
+    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
     xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
     x_lim = [10^-4 1];
 
@@ -33,8 +33,8 @@ for k = 1:length(plt)
         set(ax,'XScale','log','YScale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
             'FontSize',ax_tick_fnt,'XDir','reverse');
     end
-% Hold Axis Properties
-hold(ax,'on');
+    % Hold Axis Properties
+    hold(ax,'on');
     % Define Color Pallet
     colorstr = {'k-','b-.','r-.','r--','b--'};
     % Enabel Box
@@ -54,7 +54,11 @@ hold(ax,'on');
     if plt(k).y_log_scale == 0
         ax.YLim = [min(plt(k).y_plot,[],'all','omitnan'),max(plt(k).y_plot,[],'all','omitnan')];
     else
-        ax.YLim = [1e-4,max(plt(k).y_plot,[],'all','omitnan')];
+        try
+            ax.YLim = [1e-4,max(plt(k).y_plot,[],'all','omitnan')];
+        catch % Data Ranges Are Below
+            ax.YLim = [1e-4 1e-3];
+        end
     end
     % Set XTicks
     ax.XTick = xticks_data;
