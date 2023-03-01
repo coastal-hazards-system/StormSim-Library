@@ -73,6 +73,8 @@ gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'
     slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
     toe_elev,berm_width, struc_type),...
     Hm0, Tp, SWL, Rc, gammas,'un',false);
+% Make Anything < 1e-4 for q as NaN
+% q(q<1e-4) = NaN;
 % Compute Structure Type Dependant Responses
 switch struc_type
     case 2 % Floodwall

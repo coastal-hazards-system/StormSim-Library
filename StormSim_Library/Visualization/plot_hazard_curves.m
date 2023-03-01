@@ -51,7 +51,11 @@ hold(ax,'on');
         p.DataTipTemplate.DataTipRows(end+1) = row;
     end
     % Define Y Lim
-    ax.YLim = [min(plt(k).y_plot,[],'all','omitnan'),max(plt(k).y_plot,[],'all','omitnan')];
+    if plt(k).y_log_scale == 0
+        ax.YLim = [min(plt(k).y_plot,[],'all','omitnan'),max(plt(k).y_plot,[],'all','omitnan')];
+    else
+        ax.YLim = [1e-4,max(plt(k).y_plot,[],'all','omitnan')];
+    end
     % Set XTicks
     ax.XTick = xticks_data;
     ax.XTickLabel = xticks_data_lbl;
