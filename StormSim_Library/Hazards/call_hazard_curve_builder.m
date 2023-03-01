@@ -175,6 +175,13 @@ for ii = 1:length(vars_2_get)
         input_data.data_values = Resp.(staID)(:,c_indx);
         input_data.time_values = zeros(size(Resp.(staID)(:,c_indx)));
     end
+    % Check For Full NaN Vector
+    if sum(isnan(input_data.data_values(:)))==length(input_data.data_values(:))
+        % Response Variable Has NaNs For All Entries
+        disp(['               No valid responses for ' staID ', Skipping response var....']);
+        % Skip Iteration
+        continue;
+    end
     % Initialize AEF/AEP Search Vector
     s_indx = [];
     % Call SST/JPM

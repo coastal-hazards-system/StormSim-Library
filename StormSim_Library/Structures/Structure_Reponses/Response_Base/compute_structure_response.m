@@ -73,8 +73,7 @@ gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'
     slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
     toe_elev,berm_width, struc_type),...
     Hm0, Tp, SWL, Rc, gammas,'un',false);
-% Make Anything < 1e-4 for q as NaN
-% q(q<1e-4) = NaN;
+
 % Compute Structure Type Dependant Responses
 switch struc_type
     case 2 % Floodwall
@@ -90,11 +89,14 @@ switch struc_type
         Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
         % Compute Stone SIze Using S Limit State
         if struc_type == 3
-            [Dn50] = cellfun(@(a, b, c, d) Seaside_stability_Melby_lowCrested(a, b, c,...
+            [Dn50, Dn50_LCBW] = cellfun(@(a, b, c, d) Seaside_stability_Melby_lowCrested(a, b, c,...
                 Nz, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
                 Hm0, Tm, h, Rc,'un',false);
         end
 end
+
+%% FLATTEN DATA & STORE RESPONSES
+% Evaluate According To Workflow
 switch dflat
     case 1 % RB1
         if exist('R2p','var') && struc_type~=2
@@ -107,7 +109,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = Dn50{:};
-            %Resp.('Dn50_LCBW') = Dn50_LCBW{:};
+            Resp.('Dn50_LCBW') = Dn50_LCBW{:};
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'}))
@@ -128,7 +130,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2struct(Dn50,'LCNUM');
-            %Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
+            Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
         end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
@@ -141,7 +143,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
-            %Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+            Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'}))
@@ -173,4 +175,38 @@ switch dflat
             project_forcing.(storm_type).('Tp') = dummy;
         end
 end
+
+%% IMPLEMENT FAILSAFES
+switch dflat
+    case {1,3} %
+        % q <10^-4
+        Resp.('q')(Resp.('q')<10^-4) = NaN;
+        % q Imaginary Numbers
+        if ~isreal(Resp.('q'))
+            nReal = real(Resp.('q'));
+            nImag = imag(Resp.('q'));
+            % Set Entries With Imaginary Component = 0 to NaNs
+            nReal(nImag~=0) = NaN;
+            % Store Back As Double
+            Resp.('q') = nReal;
+        end
+    case 2 % LCS
+        for kk = 1:length(Resp.('q'))
+            % Extract Response LC
+            dummy = Resp.('q')(kk).LCNUM;
+            % Apply q < 10^-4 Failsafe
+            dummy(dummy<10^-4) = NaN;
+            % Check For Comples Response
+            if ~isreal(dummy)
+                nReal = real(dummy);
+                nImag = imag(dummy);
+                % Set Entries With Imaginary Component = 0 to NaNs
+                nReal(nImag~=0) = NaN;
+                % Store Back As Double
+                Resp.('q')(kk) = nReal;
+            else
+                % Store Back
+                Resp.('q')(kk) = dummy;
+            end
+        end
 end
