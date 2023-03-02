@@ -180,7 +180,7 @@ t6 = tic;
 project_forcing = call_project_forcing_adjuster(config, project_forcing, structure);
 t6 = toc(t6);
 
-%% STEP 5: COMPUTE  RESPONSE 
+%% STEP 6: COMPUTE  RESPONSE 
 % MCS-CSR Peaks is working, need to sort out uncertainty. Needs to be
 % accompanied by report to address the selection of storm duration.
 % MCS-LC Its working but need to change K_ss in line 212 of
