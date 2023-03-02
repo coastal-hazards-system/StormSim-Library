@@ -8,7 +8,7 @@ else
     x_plot_tc = aef2aep(tc_resp(1).x_plot);
 end
 % Find SWL & Hm0 Row Index
-s_indx = find(sum([strcmp({xc_resp.var},{'SWL'});strcmp({xc_resp.var},{'Hm0'})],1));
+s_indx = 1:length(xc_resp);%find(sum([strcmp({xc_resp.var},{'SWL'});strcmp({xc_resp.var},{'Hm0'})],1));
 % Initialize Storage Var & Fields For CC HC
 cc_resp = tc_resp(s_indx);
 % Remove Plot & Table Fields

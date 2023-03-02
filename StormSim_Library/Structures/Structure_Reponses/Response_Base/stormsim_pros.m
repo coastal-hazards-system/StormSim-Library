@@ -3,9 +3,9 @@ disp(['      Running StormSim: PROS....']);
 warning('off');
 storm_sampling = config.storm_sampling;
 try
-	use_aep = config.pros_use_aep;
-catch 
-	use_aep = 1;
+    use_aep = config.pros_use_aep;
+catch
+    use_aep = 1;
 end
 %% DETERMINE DATA TYPE
 % Find Field Dimensions

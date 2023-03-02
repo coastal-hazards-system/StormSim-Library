@@ -11,6 +11,8 @@ use_timeseries = config.use_timeseries;
 % Output Save Dir
 outDir = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
+% Use AEP Flag 
+use_aep = config.pros_use_aep;
 % Load Empirical Coefficients
 [emp_coeff] = load_empirical_coefficients();
 
@@ -77,6 +79,16 @@ switch workflow
                 movefile([subDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
             end
         end
+        for ii = 1:length(level_1)
+            % Create Comparison Figure
+            peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', outDir);
+        end
+        % Make Dir
+        if ~exist([outDir filesep 'RB1_Comparison'],'dir')
+            mkdir([outDir filesep 'RB1_Comparison']);
+        end
+        % Move Files
+        movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
         % RB3
         if use_timeseries == 1
             % Disp

@@ -18,7 +18,7 @@ else
 
 end
 % Initialize Figure Handle
-Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','on');
+Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
 % Initialize Axes Handle
 ax = gca;
 % For Each Variable In PLOT
