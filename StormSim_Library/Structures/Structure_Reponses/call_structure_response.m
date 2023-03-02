@@ -79,9 +79,10 @@ switch workflow
                 movefile([subDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
             end
         end
-        for ii = 1:length(level_1)
+        level_a = fieldnames(Resp);
+        for ii = 1:length(level_a)
             % Create Comparison Figure
-            peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', outDir);
+            peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
         end
         % Make Dir
         if ~exist([subDir 'RB1_Comparison'],'dir')

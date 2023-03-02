@@ -17,15 +17,15 @@ pDatasets = fieldnames(Resp);
 
 for ii = 1:length(pDatasets)
     for jj = 1:length(Resp.(pDatasets{ii}))
-        % Get Min 
+        % Get Min
         dmin = min(Resp.(pDatasets{ii})(jj).y_plot,[],'all','omitnan');
-        % Get Max 
+        % Get Max
         dmax = max(Resp.(pDatasets{ii})(jj).y_plot,[],'all','omitnan');
         % Store Absolute Min For Dataset/Response
         y_min_list(jj,ii) = dmin;
-                % Store Absolute Max For Dataset/Response
-                y_max_list(jj,ii) = dmax;
-    end 
+        % Store Absolute Max For Dataset/Response
+        y_max_list(jj,ii) = dmax;
+    end
 end
 % Get Absolute Max/Min Global
 y_min_list = min(y_min_list,[],2,"omitnan");
@@ -43,12 +43,14 @@ switch orientation
         scol = 3;
         % Title
         title_indx = 2;
+        xticks_label = -9;
     case 'v'
         x_indx_label = 3;
         y_indx_label = -9;
         srow = 3;
         scol = 1;
         title_indx = 1;
+        xticks_label = 3;
 end
 %% Define XTick Labels And XTicks
 if use_aep == 1
@@ -102,7 +104,7 @@ for k = 1:length(Resp.(pDatasets{1}))
         ax.YLim = [y_min_list(k) y_max_list(k)];
         % Set XTicks
         ax.XTick = xticks_data;
-        if ll==3
+        if ll==xticks_label || xticks_label==-9
             ax.XTickLabel = xticks_data_lbl;
         else
             ax.XTickLabel = [];
@@ -131,13 +133,15 @@ for k = 1:length(Resp.(pDatasets{1}))
             ylabel(ax,plt(k).y_label,'FontSize',ax_label_fnt,'FontWeight','bold');
         end
         % Add Legend
-        legend2 = legend(ax);
-        % Get Legend Title Handle
-        htitle = get(legend2,'Title');
-        % Define Legend Location
-        set(legend2,'Location','Best','FontSize',ax_tick_fnt,'Orientation','horizontal','NumColumns',3);
-        % Define Legened Title
-        set(htitle,'String','Confidence Levels');
+        if ll==1
+            legend2 = legend(ax);
+            % Get Legend Title Handle
+            htitle = get(legend2,'Title');
+            % Define Legend Location
+            set(legend2,'Location','southeast','FontSize',ax_tick_fnt,'Orientation','horizontal','NumColumns',3);
+            % Define Legened Title
+            set(htitle,'String','Confidence Levels');
+        end
     end
     % Save Figure
     switch storm_type
