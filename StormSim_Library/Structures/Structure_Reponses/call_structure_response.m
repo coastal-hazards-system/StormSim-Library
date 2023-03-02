@@ -84,8 +84,8 @@ switch workflow
             peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', outDir);
         end
         % Make Dir
-        if ~exist([outDir filesep 'RB1_Comparison'],'dir')
-            mkdir([outDir filesep 'RB1_Comparison']);
+        if ~exist([subDir 'RB1_Comparison'],'dir')
+            mkdir([subDir 'RB1_Comparison']);
         end
         % Move Files
         movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
