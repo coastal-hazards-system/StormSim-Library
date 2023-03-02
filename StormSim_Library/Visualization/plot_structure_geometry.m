@@ -151,5 +151,5 @@ function [fig] = call_structure_geometry_plotter(config, structure)
     plot(ax,sand_geo,'FaceColor',[0.9 0.72 0.31],'FaceAlpha',1);
     
     %% EXPORT FIGURE 
-    saveas(fig, [project_name filesep structure_id filesep case_name filesep project_name '_' structure_id '_structure_cross_section.png']);
+    saveas(fig, [project_name filesep structure_id filesep case_name filesep project_name '_' structure_id '_' case_name '_structure_cross_section.png']);
 end

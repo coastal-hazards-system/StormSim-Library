@@ -1,4 +1,4 @@
-function [config] = call_environment_setup(config)
+function [config] = call_environment_setup(config, run_flag)
 %{
 %% DESCRIPTION
 This function initializes the StormSim library.
@@ -14,14 +14,23 @@ individual strucutre fields.
 %R DEV SIGNATURE
 Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
-    %% CREATE DIRECTORIES
-    % Project And Transect ID Folder And Subfolder
-    if ~exist([config.project_name filesep config.struc_id filesep config.case_name],'dir')
-        mkdir([config.project_name filesep config.struc_id filesep config.case_name]);
-    end
-    
-    %% DISPLAY WELCOME MESSAGE
-    % Determine What TO Print
+%% CREATE DIRECTORIES
+% Project Name
+project_name = config.project_name;
+% Transect Id
+struc_id = config.struc_id;
+% Define Case  Name
+case_name = config.case_name;
+% OutDir
+outDir = [project_name filesep struc_id filesep case_name];
+% Project And Transect ID Folder And Subfolder
+if ~exist(outDir,'dir')
+    mkdir(outDir);
+end
+
+%% DISPLAY WELCOME MESSAGE
+% Determine What TO Print
+if run_flag == 1
     switch config.cast_workflow
         case 1 % StormSim: PROS
             welcome_message = ['************************************************************************' newline...
@@ -45,12 +54,12 @@ Developed by: Fabian A. Garcia Moreno ERDC-CHL
                 '***                        FOR  TESTING  ONLY                        ***' newline...
                 '************************************************************************'];
         otherwise
-            
+
     end
-    
+
     % Display Welcome Banner
     disp(welcome_message);
-    
+
     %% LOAD ENRINMENT ACCORDING TO WORKFLOW
     % Determine Environment To Load
     switch config.cast_workflow
@@ -90,5 +99,12 @@ Developed by: Fabian A. Garcia Moreno ERDC-CHL
             %         disp('  Discretized normal curve not found...');
             %     end
     end
-    
+else
+    % Create Strucutre Variable
+    [structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot
+    assignin('base','structure',structure);
+    % Save Out Configuration File
+    save([outDir filesep project_name '_' struc_id '_' case_name '_config_file.mat'],...
+        'config','structure');
+end
 end

@@ -232,12 +232,16 @@ if contains(config.storm_sampling,{'XC','CC'})
     % Format And Inspect Storm Peaks Files
     [config, storm.('XC'), storm.('XC').removed_storms, config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC',...
         use_timeseries, wlp_switch, whp_switch);
+    % Add Fields To Storm 
+    storm.('XC').Nyrs_XC = config.Nyrs_XC;
+    storm.('XC').Nstm_XC = config.Nstm_XC;
 end
 
 %% TIMESERIES SWL PEAK REPLACER
 if use_timeseries == 1
     storm = chs_timeseries_peak_replacer(storm);
 end
+
 %% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
 % Export Project Forcing
 save([project_name filesep struc_id filesep project_name '_' struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'],...

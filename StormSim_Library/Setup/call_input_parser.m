@@ -27,6 +27,7 @@ input_file = readcell(input_filename);
 % Add Filename To Config
 config.stormsim_input_file = input_filename;
 
+
 %% PARSE INPUT FILE AND CREATE CONFIG STRUCTURE
 % Find Row And Column Index For "str_ref" In "input_file"
 [row_indx,col_indx] = find(cell2mat(cellfun(@(x) strcmp(x,str_ref),input_file,'un',false))==1);
@@ -143,14 +144,14 @@ if exist(config.chs_zip,'file')==2 % Valid Zip Folder Detected
     config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
     % Add h5 Files Path To Config
     config.chs_zip_path = 1;
-    % Grab CHS Identifiers 
+    % Grab CHS Identifiers
     chs_ident = strsplit(config.chs_files_2_convert{1,2},'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
     % Add CHS Region
-%     if contains(chs_ident,'CHS-NA')
-%     config.region = 'NACCS';
-%     else
-    config.region = chs_ident{1};
-%     end
+    if contains(chs_ident{1},'CHS-NA')
+        config.region = 'NACCS';
+    else
+        config.region = chs_ident{1};
+    end
     % Add CHS SP
     config.sp_ID = str2double(chs_ident{5}(3:end));
 
@@ -158,8 +159,34 @@ else % Manual Files
     % Need to implement checks to make sure files are h5s and CHS
     % native.
 end
-
+%% Check If This Is Fresh Run Or New Case
+% Project Name
+project_name = config.project_name;
+% Transect Id
+struc_id = config.struc_id;
+% Define Case  Name
+case_name = config.case_name;
+% Define
+file2look = [project_name filesep struc_id filesep...
+    project_name '_' struc_id '_CHS_' config.region '_SP*'];
+% Look For File
+dummy = dir(file2look);
+% Remove Raw Files Mat
+dummy = dummy(~contains({dummy.name},{'raw_files'}));
+if ~isempty(dummy) % New Case Run
+    % Build File Path
+    file2look = fullfile(dummy.folder,dummy.name);
+    disp(['Project forcing detected. Creating new case for ' project_name ': ' struc_id '....'])
+    % Load Storm File
+    load(file2look,'storm');
+    % Grab Extratropical Storm Fields If Exist
+    if isfield(storm,'XC')
+        % Grab XC_Nyrs & XC_Nstm
+        config.Nyrs_XC = storm.('XC').('Nyrs_XC');
+        config.Nstm_XC = storm.('XC').('Nstm_XC');
+    end
+end
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
-config = call_environment_setup(config);
+config = call_environment_setup(config, isempty(file2look));
 end

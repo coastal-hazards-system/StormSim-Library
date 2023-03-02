@@ -1,4 +1,4 @@
-function [structure] = create_structure_geometry(config, project_forcing, show_plot)
+function [structure] = create_structure_geometry(config, show_plot)
 %{
     %% DESCRIPTION
         This function creates MATLAB struture object containing project structure geometry.

@@ -8,18 +8,21 @@ storm_sampling = config.storm_sampling;
 structure_type = config.struc_type;
 %
 use_timeseries = config.use_timeseries;
+% WLP & WHP Switches
+use_whp = config.mcs_create_whp;
+use_wlp = config.mcs_create_wlp;
 % Project Name
 project_name = config.project_name;
 % Transect Id
 struc_id = config.struc_id;
-% Define Case  Name 
+% Define Case  Name
 case_name = config.case_name;
-% Define 
+% Define
 subDir = [project_name filesep struc_id filesep case_name filesep];
 % Output Save Dir
 outDir = [project_name, filesep, struc_id, filesep,...
     project_name,'_', struc_id];
-% Use AEP Flag 
+% Use AEP Flag
 use_aep = config.pros_use_aep;
 % Load Empirical Coefficients
 [emp_coeff] = load_empirical_coefficients();
@@ -44,58 +47,67 @@ switch workflow
         disp(['Computing structure responses with peaks....']);
         % Loop Through All Peak Datasets & Storm Types
         for ii = 1:length(level_2)
-            % Disp
-            disp(['   Processing ' level_2{ii} ' dataset....']);
-            for jj = 1:length(level_1)
-                % Create Aux Var
-                aux_var.(level_1{jj}) = project_forcing.(level_1{jj}).('Peaks').(level_2{ii});
-                %
-                if any(contains(fieldnames(project_forcing.(level_1{jj})),{'TC_Prob'}))
-                    aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
-                end
-            end
-            % Call StormSim: PROS RB1
-            helper_var = stormsim_pros(config,...
-                aux_var, structure, emp_coeff);
-            % Add Additional Layer To Data Structure For Peaks Alt Datasets
-            if isfield(helper_var,'XC')
-                Resp.('XC').('Peaks').(level_2{ii}) = helper_var.('XC').('Peaks');
-            end
-            if isfield(helper_var,'TC')
-                Resp.('TC').('Peaks').(level_2{ii}) = helper_var.('TC').('Peaks');
-            end
-            if isfield(helper_var,'CC')
-                Resp.('CC').('Peaks').(level_2{ii}) = helper_var.('CC').('Peaks');
-            end
-            clearvars('aux_var');
-            % Create Subdirectory
-            if ~exist([subDir 'RB1_' level_2{ii}],'dir')
-                mkdir([subDir 'RB1_' level_2{ii}]);
+            % Skip Based On Config File
+            if (strcmp(level_2{ii},'WLP') && use_wlp == 0) || (strcmp(level_2{ii},'WHP') && use_whp == 0)
+                continue;
             else
-                delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
-            end
-            % Move SST/JPM Outputs Into Subdir
-            if ~isempty(dir([outDir '*SST*']))
-                movefile([outDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
-            end
-            if ~isempty(dir([outDir '*JPM*']))
-                movefile([outDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
-            end
-            if ~isempty(dir([outDir '*StormSim_CC*']))
-                movefile([outDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
+                % Disp
+                disp(['   Processing ' level_2{ii} ' dataset....']);
+                % Create Helper Var (Removes One Layer Of Classification)
+                for jj = 1:length(level_1)
+                    % Create Aux Var
+                    aux_var.(level_1{jj}) = project_forcing.(level_1{jj}).('Peaks').(level_2{ii});
+                    %
+                    if any(contains(fieldnames(project_forcing.(level_1{jj})),{'TC_Prob'}))
+                        aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
+                    end
+                end
+                % Call StormSim: PROS RB1
+                helper_var = stormsim_pros(config,...
+                    aux_var, structure, emp_coeff);
+                % Add Additional Layer To Data Structure For Peaks Alt Datasets
+                if isfield(helper_var,'XC')
+                    Resp.('XC').('Peaks').(level_2{ii}) = helper_var.('XC').('Peaks');
+                end
+                if isfield(helper_var,'TC')
+                    Resp.('TC').('Peaks').(level_2{ii}) = helper_var.('TC').('Peaks');
+                end
+                if isfield(helper_var,'CC')
+                    Resp.('CC').('Peaks').(level_2{ii}) = helper_var.('CC').('Peaks');
+                end
+                clearvars('aux_var');
+                % Create Subdirectory
+                if ~exist([subDir 'RB1_' level_2{ii}],'dir')
+                    mkdir([subDir 'RB1_' level_2{ii}]);
+                else
+                    delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
+                end
+                % Move SST/JPM Outputs Into Subdir
+                if ~isempty(dir([outDir '*SST*']))
+                    movefile([outDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
+                end
+                if ~isempty(dir([outDir '*JPM*']))
+                    movefile([outDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
+                end
+                if ~isempty(dir([outDir '*StormSim_CC*']))
+                    movefile([outDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
+                end
             end
         end
         level_a = fieldnames(Resp);
-        for ii = 1:length(level_a)
-            % Create Comparison Figure
-            peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
+        if length(level_a) >= 2
+            for ii = 1:length(level_a)
+                % Create Comparison Figure
+                peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
+            end
+
+            % Make Dir
+            if ~exist([subDir 'RB1_Comparison'],'dir')
+                mkdir([subDir 'RB1_Comparison']);
+            end
+            % Move Files
+            movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
         end
-        % Make Dir
-        if ~exist([subDir 'RB1_Comparison'],'dir')
-            mkdir([subDir 'RB1_Comparison']);
-        end
-        % Move Files
-        movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
         % RB3
         if use_timeseries == 1
             % Disp
@@ -119,7 +131,9 @@ switch workflow
                 Resp.('CC').('Timeseries') = helper_var.('CC').('Timeseries');
             end
             % Create Subdirectory
-            mkdir([subDir 'RB3']);
+            if ~exist([subDir 'RB3'],'dir')
+                mkdir([subDir 'RB3']);
+            end
             % Move SST/JPM Outputs Into Subdir
             % Move SST/JPM Outputs Into Subdir
             if ~isempty(dir([outDir '*SST*']))
@@ -164,17 +178,19 @@ switch workflow
             end
         end
         % Generate Plot Structure
-        S_damage_plotter(config, Resp.CC.Timeseries.S, 1, 0);
+        S_damage_plotter(config, Resp.(storm_sampling).Timeseries.S, 1, 0);
         % Create Subdirectory
-        mkdir([subDir 'LCS_DPA']);
+        if ~exist([subDir 'LCS_DPA'],'dir')
+            mkdir([subDir 'LCS_DPA']);
+        end
         % Move SST/JPM Outputs Into Subdir
-        movefile([subDir '*Seaside*'],[subDir 'LCS_DPA']);
-        movefile([subDir '*Leeside*'],[subDir 'LCS_DPA']);
+        movefile([outDir '*Seaside*'],[subDir 'LCS_DPA']);
+        movefile([outDir '*Leeside*'],[subDir 'LCS_DPA']);
 end
 
 %% EXPORT OUTPUTS
 % Display Status
 disp('Saving project responses....');
 % Save Outputs
-save([outDir '_' wName '_project_responses.mat'],'Resp','-v7.3');
+save([subDir project_name '_' struc_id '_' case_name '_' wName '_project_responses.mat'],'Resp','-v7.3');
 end

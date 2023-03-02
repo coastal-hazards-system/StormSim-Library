@@ -151,7 +151,7 @@ t3 = toc(t3);
 %% STEP 3: CREATE STRUCTURE GEOMETRY
 t4 = tic;
 % Create Project Structure Geometry
-[structure] = create_structure_geometry(config, project_forcing, 1);% Second input argument: 1 - show plot 0 - hide plot
+[structure] = create_structure_geometry(config, 1);% Second input argument: 1 - show plot 0 - hide plot
 t4 = toc(t4);
 %% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
 %{
