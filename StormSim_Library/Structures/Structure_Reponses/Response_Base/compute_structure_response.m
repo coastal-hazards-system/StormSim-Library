@@ -8,6 +8,7 @@ Nz = config.storm_duration*3600; % Convert hr to s
 compute_HC = config.pros_compute_forcing_HC;
 % Define Requested Workflow
 workflow = config.cast_workflow;
+
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
 crest_elev = structure.crest_elevation;
