@@ -101,6 +101,8 @@ else
 end
 
 %% COMPUTE HAZARD CURVES WITH STORMSIM: SST/JPM
+% Initialize Counter 
+ctr = 1;
 % Loop Through All Stations
 for ii = 1:length(vars_2_get)
     % Define Station ID
@@ -203,29 +205,29 @@ for ii = 1:length(vars_2_get)
                 % Define Limtis For Frequency/Probability Vectors
                 eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
                 % Organize Outputs
-                Output(ii).var = staID; % Station ID
-                Output(ii).y_label = y_label; % Y Axis Label
-                Output(ii).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
+                Output(ctr).var = staID; % Station ID
+                Output(ctr).y_label = y_label; % Y Axis Label
+                Output(ctr).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
                     ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-                Output(ii).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEP/AEF For Plot
-                Output(ii).y_plot = dummy.SST_output.HC_plt(:, s_indx)'; % Hazard Curve Data For Plot
-                Output(ii).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
-                Output(ii).y_table = dummy.SST_output.HC_tbl'; % Hazard Curve Data For Table
+                Output(ctr).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEP/AEF For Plot
+                Output(ctr).y_plot = dummy.SST_output.HC_plt(:, s_indx)'; % Hazard Curve Data For Plot
+                Output(ctr).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
+                Output(ctr).y_table = dummy.SST_output.HC_tbl'; % Hazard Curve Data For Table
                 if use_aep == 1
-                    Output(ii).tbl_rsp_x = dummy.SST_output.HC_tbl_rsp_x'; % x here implies Responses, AEP/AEF -> Responses
+                    Output(ctr).tbl_rsp_x = dummy.SST_output.HC_tbl_rsp_x'; % x here implies Responses, AEP/AEF -> Responses
                 else
-                    Output(ii).tbl_rsp_x = aef2aep(dummy.SST_output.HC_tbl_rsp_x');
+                    Output(ctr).tbl_rsp_x = aef2aep(dummy.SST_output.HC_tbl_rsp_x');
                 end
-                Output(ii).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
-                Output(ii).CL = [50,prc]; % Percentiles (Cols)
-                Output(ii).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
+                Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
+                Output(ctr).CL = [50,prc]; % Percentiles (Cols)
+                Output(ctr).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
                 % OVertopping Special Case
                 if strcmp(staID,'q')
                     % Convert From [m^3/s per m] to [liters/s per m]
-                    %                 Output(ii).y_plot = Output(ii).y_plot * 1000;
-                    Output(ii).y_log_scale = 1; % Y Log Scale For Overtopping
+                    %                 Output(ctr).y_plot = Output(ctr).y_plot * 1000;
+                    Output(ctr).y_log_scale = 1; % Y Log Scale For Overtopping
                 else
-                    Output(ii).y_log_scale = 0; % Regular Scale For The Rest
+                    Output(ctr).y_log_scale = 0; % Regular Scale For The Rest
                 end
                 % THIS SHOULD BE REMOVED ONCE SST/JPM HC COMBINATION IS SORTED
                 if contains(staID,{'Hm0','SWL'})
@@ -243,35 +245,37 @@ for ii = 1:length(vars_2_get)
                 % Define Limtis For Frequency/Probability Vectors
                 eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
                 % Organize Outputs
-                Output(ii).var = staID; % Station ID
-                Output(ii).y_label = y_label; % Y Axis Label
-                Output(ii).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
+                Output(ctr).var = staID; % Station ID
+                Output(ctr).y_label = y_label; % Y Axis Label
+                Output(ctr).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
                     ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-                Output(ii).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEF For Plot
-                Output(ii).y_plot = dummy.HC_data.HC_plt_y(s_indx, :); % Hazard Curve Data For Plot
-                Output(ii).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
-                Output(ii).y_table = dummy.HC_data.HC_tbl_y; % Hazard Curve Data For Table
-                Output(ii).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
+                Output(ctr).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEF For Plot
+                Output(ctr).y_plot = dummy.HC_data.HC_plt_y(s_indx, :); % Hazard Curve Data For Plot
+                Output(ctr).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
+                Output(ctr).y_table = dummy.HC_data.HC_tbl_y; % Hazard Curve Data For Table
+                Output(ctr).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
                 if use_aep == 1
-                    Output(ii).tbl_rsp_x = dummy.HC_data.HC_tbl_rsp_x;
+                    Output(ctr).tbl_rsp_x = dummy.HC_data.HC_tbl_rsp_x;
                 else
-                    Output(ii).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
+                    Output(ctr).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
                 end
-                Output(ii).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
-                Output(ii).CL = [50,prc]; % Percentiles (Cols)
-                Output(ii).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
+                Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
+                Output(ctr).CL = [50,prc]; % Percentiles (Cols)
+                Output(ctr).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
                 % OVertopping Special Case
                 if strcmp(staID,'q')
                     % Convert From [m^3/s per m] to [liters/s per m]
-                    %                 Output(ii).y_plot = Output(ii).y_plot * 1000;
-                    Output(ii).y_log_scale = 1; % Y Log Scale For Overtopping
+                    %                 Output(ctr).y_plot = Output(ctr).y_plot * 1000;
+                    Output(ctr).y_log_scale = 1; % Y Log Scale For Overtopping
                 else
-                    Output(ii).y_log_scale = 0; % Regular Scale For The Rest
+                    Output(ctr).y_log_scale = 0; % Regular Scale For The Rest
                 end
             catch
                 disp(['               Joint Probability Method (JPM) returned error, skipping: ', staID]);
             end
     end
+    % Increase Counter 
+    ctr = ctr + 1; 
 end
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)
