@@ -16,8 +16,8 @@ Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
     %% CREATE DIRECTORIES
     % Project And Transect ID Folder And Subfolder
-    if ~exist([config.project_name filesep config.struc_id],'dir')
-        mkdir([config.project_name filesep config.struc_id]);
+    if ~exist([config.project_name filesep config.struc_id filesep config.case_name],'dir')
+        mkdir([config.project_name filesep config.struc_id filesep config.case_name]);
     end
     
     %% DISPLAY WELCOME MESSAGE
@@ -64,7 +64,7 @@ Developed by: Fabian A. Garcia Moreno ERDC-CHL
                 % Add Library To Path
                 addpath(genpath('StormSim_Library'));
                 % Display Status
-                disp('  StormSim library found...');
+                disp('StormSim library found...');
             else % Library not Found
                 % Throw Error Message
                 error('Error ID: 001: | call_environment_setup.missing_dependency | StormSim library not found....');

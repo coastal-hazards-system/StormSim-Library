@@ -8,9 +8,17 @@ storm_sampling = config.storm_sampling;
 structure_type = config.struc_type;
 %
 use_timeseries = config.use_timeseries;
+% Project Name
+project_name = config.project_name;
+% Transect Id
+struc_id = config.struc_id;
+% Define Case  Name 
+case_name = config.case_name;
+% Define 
+subDir = [project_name filesep struc_id filesep case_name filesep];
 % Output Save Dir
-outDir = [config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id];
+outDir = [project_name, filesep, struc_id, filesep,...
+    project_name,'_', struc_id];
 % Use AEP Flag 
 use_aep = config.pros_use_aep;
 % Load Empirical Coefficients
@@ -60,8 +68,6 @@ switch workflow
                 Resp.('CC').('Peaks').(level_2{ii}) = helper_var.('CC').('Peaks');
             end
             clearvars('aux_var');
-            % Define Subdir
-            subDir = [config.project_name, filesep, config.struc_id, filesep];
             % Create Subdirectory
             if ~exist([subDir 'RB1_' level_2{ii}],'dir')
                 mkdir([subDir 'RB1_' level_2{ii}]);
@@ -69,14 +75,14 @@ switch workflow
                 delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
             end
             % Move SST/JPM Outputs Into Subdir
-            if ~isempty(dir([subDir '*SST*']))
-                movefile([subDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
+            if ~isempty(dir([outDir '*SST*']))
+                movefile([outDir '*SST*'],[subDir 'RB1_' level_2{ii}]);
             end
-            if ~isempty(dir([subDir '*JPM*']))
-                movefile([subDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
+            if ~isempty(dir([outDir '*JPM*']))
+                movefile([outDir '*JPM*'],[subDir 'RB1_' level_2{ii}]);
             end
-            if ~isempty(dir([subDir '*StormSim_CC*']))
-                movefile([subDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
+            if ~isempty(dir([outDir '*StormSim_CC*']))
+                movefile([outDir '*StormSim_CC*'],[subDir 'RB1_' level_2{ii}]);
             end
         end
         level_a = fieldnames(Resp);
@@ -112,20 +118,18 @@ switch workflow
             if isfield(helper_var,'CC')
                 Resp.('CC').('Timeseries') = helper_var.('CC').('Timeseries');
             end
-            % Define Subdir
-            subDir = [config.project_name, filesep, config.struc_id, filesep];
             % Create Subdirectory
             mkdir([subDir 'RB3']);
             % Move SST/JPM Outputs Into Subdir
             % Move SST/JPM Outputs Into Subdir
-            if ~isempty(dir([subDir '*SST*']))
-                movefile([subDir '*SST*'],[subDir 'RB3']);
+            if ~isempty(dir([outDir '*SST*']))
+                movefile([outDir '*SST*'],[subDir 'RB3']);
             end
-            if ~isempty(dir([subDir '*JPM*']))
-                movefile([subDir '*JPM*'],[subDir 'RB3']);
+            if ~isempty(dir([outDir '*JPM*']))
+                movefile([outDir '*JPM*'],[subDir 'RB3']);
             end
-            if ~isempty(dir([subDir '*StormSim_CC*']))
-                movefile([subDir '*StormSim_CC*'],[subDir 'RB3']);
+            if ~isempty(dir([outDir '*StormSim_CC*']))
+                movefile([outDir '*StormSim_CC*'],[subDir 'RB3']);
             end
         end
     case 3 % CSR
@@ -161,8 +165,6 @@ switch workflow
         end
         % Generate Plot Structure
         S_damage_plotter(config, Resp.CC.Timeseries.S, 1, 0);
-        % Define Subdir
-        subDir = [config.project_name, filesep, config.struc_id, filesep];
         % Create Subdirectory
         mkdir([subDir 'LCS_DPA']);
         % Move SST/JPM Outputs Into Subdir

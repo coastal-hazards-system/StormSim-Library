@@ -149,7 +149,7 @@ if exist(config.chs_zip,'file')==2 % Valid Zip Folder Detected
 %     if contains(chs_ident,'CHS-NA')
 %     config.region = 'NACCS';
 %     else
-    config.region = chs_ident{1}(3:end);
+    config.region = chs_ident{1};
 %     end
     % Add CHS SP
     config.sp_ID = str2double(chs_ident{5}(3:end));

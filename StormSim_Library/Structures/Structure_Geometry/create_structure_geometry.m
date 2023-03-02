@@ -53,9 +53,16 @@ struc_type = config.struc_type;
 workflow = config.cast_workflow;
 % Storm Sampling Scheme
 storm_sampling = config.storm_sampling;
+% Project Name
+project_name = config.project_name;
+% Transect Id
+struc_id = config.struc_id;
+% Define Case  Name 
+case_name = config.case_name;
 % Define Save Name
-save_name = [config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'];
+save_name = [project_name filesep struc_id filesep case_name filesep project_name...
+    '_' struc_id '_' case_name '_config_file.mat'];
+
 %% DEFINE VARIBALES TO GRAB FROM CONFIG PER STRUCTURE TYPE & WORKFLOW
 % Evaluate Case Per Structure Type
 switch struc_type

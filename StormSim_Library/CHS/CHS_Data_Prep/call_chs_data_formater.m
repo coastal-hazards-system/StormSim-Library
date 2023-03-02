@@ -93,7 +93,8 @@ whp_switch = config.mcs_create_whp;
 project_name = config.project_name;
 % Transect Id
 struc_id = config.struc_id;
-% Structure Transect ID
+% Define Case  Name 
+case_name = config.case_name;
 
 %% FILTER OUT FILES (IF NEEDED) BASED ON USER INPUT
 % Filter Out Timeseries Files (If Any)
@@ -240,5 +241,7 @@ end
 %% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
 % Export Project Forcing
 save([project_name filesep struc_id filesep project_name '_' struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'],...
-    'storm', 'prob_mass','config');
+    'storm', 'prob_mass');
+save([project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' config.case_name '_config_file.mat'],...
+    'config');
 end
