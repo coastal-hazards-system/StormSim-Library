@@ -11,6 +11,8 @@ use_timeseries = config.use_timeseries;
 % WLP & WHP Switches
 use_whp = config.mcs_create_whp;
 use_wlp = config.mcs_create_wlp;
+% Compute Forcing HC 
+compute_forcing_hc = config.pros_compute_forcing_HC;
 % Project Name
 project_name = config.project_name;
 % Transect Id
@@ -94,7 +96,9 @@ switch workflow
                 end
             end
         end
+        % Check If XC & TC Exist 
         level_a = fieldnames(Resp);
+        % If Both Storm Types Are Available Make Comparison Figures 
         if length(level_a) >= 2
             for ii = 1:length(level_a)
                 % Create Comparison Figure
@@ -107,7 +111,12 @@ switch workflow
             end
             % Move Files
             movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
+             % Create Project Forcing + HC Comparison Figure 
+             if compute_forcing_hc == 1
+                 peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outDir);
+             end
         end
+       
         % RB3
         if use_timeseries == 1
             % Disp
