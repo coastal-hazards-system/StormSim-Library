@@ -11,7 +11,7 @@ use_timeseries = config.use_timeseries;
 % WLP & WHP Switches
 use_whp = config.mcs_create_whp;
 use_wlp = config.mcs_create_wlp;
-% Compute Forcing HC 
+% Compute Forcing HC
 compute_forcing_hc = config.pros_compute_forcing_HC;
 % Project Name
 project_name = config.project_name;
@@ -96,27 +96,34 @@ switch workflow
                 end
             end
         end
-        % Check If XC & TC Exist 
+        % Check If XC & TC Exist
         level_a = fieldnames(Resp);
-        % If Both Storm Types Are Available Make Comparison Figures 
-        if length(level_a) >= 2
-            for ii = 1:length(level_a)
-                % Create Comparison Figure
-                peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
+            % Only If there Is 2 Or More Peaks Datasets
+            if length(fieldnames(Resp.(level_a{1}).('Peaks')))>=2
+                % Create RB1 Peak Dataset HC Comparison Figures
+                for ii = 1:length(level_a)
+                    % Create Comparison Figure
+                    peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
+                end
+                % Make Dir
+                if ~exist([subDir 'RB1_Comparison'],'dir')
+                    mkdir([subDir 'RB1_Comparison']);
+                end
+                % Move Files
+                movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
+            end
+         % Create Project Forcing + HC Comparison Figure
+            if compute_forcing_hc == 1
+                % Create Figures
+                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outDir);
+                % Make Dir
+                if ~exist([subDir 'RB1_Project_Forcing_Comparison'],'dir')
+                    mkdir([subDir 'RB1_Project_Forcing_Comparison']);
+                end
+                % Move Files
+                movefile([outDir '*Project_Forcing_and_Hazard_Curve_Comparison*'],[subDir 'RB1_Project_Forcing_Comparison']);
             end
 
-            % Make Dir
-            if ~exist([subDir 'RB1_Comparison'],'dir')
-                mkdir([subDir 'RB1_Comparison']);
-            end
-            % Move Files
-            movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
-             % Create Project Forcing + HC Comparison Figure 
-             if compute_forcing_hc == 1
-                 peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outDir);
-             end
-        end
-       
         % RB3
         if use_timeseries == 1
             % Disp
