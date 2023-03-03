@@ -210,10 +210,10 @@ switch dflat
                 % Set Entries With Imaginary Component = 0 to NaNs
                 nReal(nImag~=0) = NaN;
                 % Store Back As Double
-                Resp.('q')(kk) = nReal;
+                Resp.('q')(kk).LCNUM = nReal;
             else
                 % Store Back
-                Resp.('q')(kk) = dummy;
+                Resp.('q')(kk).LCNUM = dummy;
             end
         end
 end
