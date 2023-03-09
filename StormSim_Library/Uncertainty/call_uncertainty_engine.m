@@ -9,6 +9,9 @@ disp('Applying uncertainty to project forcing....');
 % Execute Code Block By Workflow Type
 switch wFlow
     case 1 % RB
+        % This is disabled until uncertainty application inside or outside
+        % JPM/SST when computing project_forcing HC.
+        %{
         %% RESPONSE BASE
         % Define Workflow Key Phrase
         wName = 'RB';
@@ -59,6 +62,7 @@ switch wFlow
                 end
             end
         end
+        %}
     case {2,3} % LCS
         %% LIFE CYCLE BASE
         % Define Workflow Key Phrase

@@ -68,12 +68,6 @@ if ~isempty(project_forcing) && compute_forcing_hc == 1
     hm0_u_a = config.chs_hm0_u_a; % Hm0 Absolute
     hm0_u_r = config.chs_hm0_u_r; % Hm0 Proportional
 end
-% Initialize Dummy Time Vector
-% try
-%     input_data.time_values = zeros(size(Resp.('q')));
-% catch
-%     input_data.time_values = zeros(size(project_forcing.('SWL')));
-% end
 % Save Name
 save_name = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
@@ -94,14 +88,12 @@ rho_w = structure.water_density;
 % Define HC Limt for Plots
 if use_aep == 1
     x_lim = num2str(10^-3);
-    l_str = '>';
 else
     x_lim = num2str(10^-4);
-    l_str = '>';
 end
 
 %% COMPUTE HAZARD CURVES WITH STORMSIM: SST/JPM
-% Initialize Counter 
+% Initialize Counter
 ctr = 1;
 % Loop Through All Stations
 for ii = 1:length(vars_2_get)
@@ -110,30 +102,36 @@ for ii = 1:length(vars_2_get)
     % Assign Uncertainty Based On Station
     switch staID
         case 'SWL'
-            U_a = swl_u_a;
-            U_r = swl_u_r;
-            uncert_treatment = 'combined';
-            unit_label = 'm';
+            % Define Uncertainty Parameters
+            U_a = swl_u_a; % Define Absolute Uncertainty
+            U_r = swl_u_r; % Define Relative Uncertainty
+            uncert_treatment_jpm = 'combined';% JPM Uncertainty Treatment 
+            uncert_treatment_sst = 'combined';% SST Uncertainty Treatment 
+            % Define Var Properties
+            unit_label = 'm'; 
             y_label = ['SWL [' unit_label ']'];
             var_name = 'SWL';
         case 'Hm0'
             U_a = hm0_u_a;
             U_r = hm0_u_r;
-            uncert_treatment = 'combined';
+            uncert_treatment_jpm = 'combined';
+            uncert_treatment_sst = 'combined';
             unit_label = 'm';
             y_label = ['H_{m_{0}} [' unit_label ']'];
             var_name = 'H_{m_{0}}';
         case 'Tp'
             U_a = 0;
             U_r = sqrt(1+hm0_u_r)-1;
-            uncert_treatment = 'relative';
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
             unit_label = 's';
             y_label = ['T_p [' unit_label ']'];
             var_name = 'T_p';
         case {'R2p','R2p_SWL'}
             U_a=0;
             U_r = r2p_u;
-            uncert_treatment = 'relative';
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
             unit_label = 'm';
             y_label = ['R_{2%} [' unit_label ']'];
             var_name = 'R_{2%}';
@@ -144,25 +142,28 @@ for ii = 1:length(vars_2_get)
         case {'Dn50','Dn50_LCBW'}
             U_a=0;
             U_r = dn50_u;
-            uncert_treatment = 'relative';
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
             unit_label = 'm';
             y_label = ['D_{n_{50}} [' unit_label ']'];
             var_name = 'D_{n_{50}}';
-            if strcmp(staID,'R2p_SWL')
+            if strcmp(staID,'Dn50_LCBW')
                 y_label = ['D_{n_{50}} LCBW' unit_label ''];
                 var_name = 'D_{n_{50}} LCBW';
             end
         case 'p1'
             U_a=0;
             U_r = p1_u;
-            uncert_treatment = 'relative';
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
             unit_label = 'Pa';
             y_label = ['P_1 [ ' unit_label ']'];
             var_name = 'P_1';
         case 'q'
             U_a=0;
             U_r = q_u;
-            uncert_treatment = 'relative';
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
             unit_label = 'm^3/s per m';
             y_label = ['q [ ' unit_label ']'];
             var_name = 'q';
@@ -201,9 +202,9 @@ for ii = 1:length(vars_2_get)
             input_data.time_values = input_data.time_values(:);
             % Call SST
             try
-                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment);
+                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst);
                 % Define Limtis For Frequency/Probability Vectors
-                eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
+                eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Organize Outputs
                 Output(ctr).var = staID; % Station ID
                 Output(ctr).y_label = y_label; % Y Axis Label
@@ -241,7 +242,7 @@ for ii = 1:length(vars_2_get)
             % JPM Expects Data Matrix
             input_data.data_values = input_data.data_values;
             try
-                [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment);
+                [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm);
                 % Define Limtis For Frequency/Probability Vectors
                 eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
                 % Organize Outputs
@@ -274,8 +275,8 @@ for ii = 1:length(vars_2_get)
                 disp(['               Joint Probability Method (JPM) returned error, skipping: ', staID]);
             end
     end
-    % Increase Counter 
-    ctr = ctr + 1; 
+    % Increase Counter
+    ctr = ctr + 1;
 end
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)

@@ -169,9 +169,7 @@ PROS:
 
 %}
 t5 = tic;
-if config.cast_workflow ~=1 % Keep this until no uncertainty switch is implemented in SST/JPM.
 project_forcing = call_uncertainty_engine(config, project_forcing);
-end
 t5 = toc(t5);
 %% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
 % For Response Base Analysis:
