@@ -66,11 +66,14 @@ function project_forcing = call_project_forcing_formater(config, storm, prob_mas
         variable calls without having to alter core code.
 %}
 % Define Requested Workflow (1 -> RB1 Approach, other-> Life-Cycle Base)
-workflow = config.cast_workflow;
+workflow = config.workflow;
 % Define Storm Type ('XC' or 'TC')
 storm_sampling = config.storm_sampling;
 % Deifne Use Timeseries Flag
 use_timeseries = config.use_timeseries;
+% Define Save Name
+save_name = [config.project_name, filesep, config.struc_id, filesep,...
+    config.project_name,'_', config.struc_id];
 
 %% FORMAT FORCING DATA ACCORDING TO WORKFLOW
 % Prompt User
@@ -102,9 +105,6 @@ switch workflow
 end
 
 %% EXPORT OUTPUTS
-% Define Save Name
-save_name = [config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id];
 % Save Peaks Life Cycle Structures
 save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
 

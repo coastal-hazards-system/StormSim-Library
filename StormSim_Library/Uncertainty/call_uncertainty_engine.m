@@ -1,7 +1,7 @@
 function project_forcing = call_uncertainty_engine(config, project_forcing)
 %% GRAB INFORMATION FROM "config"
 % Workflow Called
-wFlow = config.cast_workflow;
+wFlow = config.workflow;
 
 %% APPLY FORCING AND STRCUCTURAL UNCERTAINTY
 % Display Status Message

@@ -50,7 +50,7 @@ function [structure] = create_structure_geometry(config, show_plot)
 % Structure Type
 struc_type = config.struc_type;
 % Workflow To Call
-workflow = config.cast_workflow;
+workflow = config.workflow;
 % Storm Sampling Scheme
 storm_sampling = config.storm_sampling;
 % Project Name

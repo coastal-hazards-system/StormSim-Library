@@ -105,10 +105,10 @@ for ii = 1:length(vars_2_get)
             % Define Uncertainty Parameters
             U_a = swl_u_a; % Define Absolute Uncertainty
             U_r = swl_u_r; % Define Relative Uncertainty
-            uncert_treatment_jpm = 'combined';% JPM Uncertainty Treatment 
-            uncert_treatment_sst = 'combined';% SST Uncertainty Treatment 
+            uncert_treatment_jpm = 'combined';% JPM Uncertainty Treatment
+            uncert_treatment_sst = 'combined';% SST Uncertainty Treatment
             % Define Var Properties
-            unit_label = 'm'; 
+            unit_label = 'm';
             y_label = ['SWL [' unit_label ']'];
             var_name = 'SWL';
         case 'Hm0'
@@ -244,7 +244,7 @@ for ii = 1:length(vars_2_get)
             try
                 [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm);
                 % Define Limtis For Frequency/Probability Vectors
-                eval(['s_indx = dummy.HC_plt_x' l_str x_lim ';']);
+                eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Organize Outputs
                 Output(ctr).var = staID; % Station ID
                 Output(ctr).y_label = y_label; % Y Axis Label

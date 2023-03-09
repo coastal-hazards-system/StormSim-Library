@@ -1,7 +1,8 @@
 function project_forcing = call_project_forcing_adjuster(config, project_forcing, structure)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
-workflow = config.cast_workflow;
+workflow = config.workflow;
+
 %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
 disp('Adjusting project forcing datasets....')
 % Determine Data Type

@@ -27,11 +27,13 @@ outDir = [project_name filesep struc_id filesep case_name];
 if ~exist(outDir,'dir')
     mkdir(outDir);
 end
+% Define Workflow
+workflow = config.workflow;
 
 %% DISPLAY WELCOME MESSAGE
 % Determine What TO Print
 if run_flag == 1
-    switch config.cast_workflow
+    switch workflow
         case 1 % StormSim: PROS
             welcome_message = ['************************************************************************' newline...
                 '***            Coastal Analysis And Screening Tool (CAST)            ***' newline...
@@ -62,7 +64,7 @@ if run_flag == 1
 
     %% LOAD ENRINMENT ACCORDING TO WORKFLOW
     % Determine Environment To Load
-    switch config.cast_workflow
+    switch workflow
         case 4 % Any External Workflow
             % Do Nothing
         otherwise % StormSim Workflow

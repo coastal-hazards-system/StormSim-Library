@@ -185,6 +185,8 @@ if ~isempty(dummy) % New Case Run
         config.Nyrs_XC = storm.('XC').('Nyrs_XC');
         config.Nstm_XC = storm.('XC').('Nstm_XC');
     end
+else
+    file2look = [];
 end
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment

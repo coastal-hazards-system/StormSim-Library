@@ -1,7 +1,7 @@
 function [Resp] = call_structure_response(config, project_forcing, structure)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
-workflow = config.cast_workflow;
+workflow = config.workflow;
 % Define Storm Sampling
 storm_sampling = config.storm_sampling;
 % Define Wave Height Priority Switch
