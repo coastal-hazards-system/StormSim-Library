@@ -10,13 +10,16 @@ hm0_u_r = config.chs_hm0_u_r; % Proportional
 
 %% GET INFORMATION FROM "project_forcing"
 SWL_fnames = fieldnames(project_forcing);
-SWL_fnames = SWL_fnames(contains(SWL_fnames, {'SWL'}));
+% SWL_fnames = SWL_fnames(contains(SWL_fnames, {'SWL'}));
+SWL_fnames = SWL_fnames(strcmp(SWL_fnames, {'SWL'}));
 
 Tp_fnames = fieldnames(project_forcing);
-Tp_fnames = Tp_fnames(contains(Tp_fnames, {'Tp'}));
+% Tp_fnames = Tp_fnames(contains(Tp_fnames, {'Tp'}));
+Tp_fnames = Tp_fnames(strcmp(Tp_fnames, {'Tp'}));
 
 Hm0_fnames = fieldnames(project_forcing);
-Hm0_fnames = Hm0_fnames(contains(Hm0_fnames, {'Hm0'}));
+% Hm0_fnames = Hm0_fnames(contains(Hm0_fnames, {'Hm0'}));
+Hm0_fnames = Hm0_fnames(strcmp(Hm0_fnames, {'Hm0'}));
 
 % For Each Var Pair
 for gg = 1:length(SWL_fnames)
@@ -45,21 +48,21 @@ for gg = 1:length(SWL_fnames)
                 project_forcing.(SWL_fnames{gg}) = pcha_forcing_uncertainty(SWL, swl_u_a, swl_u_r, normU);
             end
         case 'Timeseries'
-                % Determine Size Per Storm
-                Nstrm = cellfun(@(x) size(x,1),SWL,'un',false);
-                Ndscrt = length(RandNorm);
-                % Re-arrange Discrete Normal Dist. prior to adding uncertainty to SWL
-                % Is the Idea to Build nstorm * ndist with each col being a different Randnorm?
-                if contains(SWL_fnames{gg},{'_no_rep'})
-                    normU = cellfun(@(x) randn(x,1),Nstrm,'un',false);
-                else
-                    normU = cellfun(@(x) repmat(RandNorm,x,1),Nstrm,'un',false);
-                end
-                if swl_u_r ~= 1 %apply uncertainty to normal replicates
-                    % Apply uncertainty using a random normal distribution
-                    % ------------------ SWL ------------------
-                    project_forcing.(SWL_fnames{gg}) = cellfun(@(x,y) pcha_forcing_uncertainty(x, swl_u_a, swl_u_r, y),SWL,normU,'un',false);
-                end
+            % Determine Size Per Storm
+            Nstrm = cellfun(@(x) size(x,1),SWL,'un',false);
+            Ndscrt = length(RandNorm);
+            % Re-arrange Discrete Normal Dist. prior to adding uncertainty to SWL
+            % Is the Idea to Build nstorm * ndist with each col being a different Randnorm?
+            if contains(SWL_fnames{gg},{'_no_rep'})
+                normU = cellfun(@(x) randn(x,1),Nstrm,'un',false);
+            else
+                normU = cellfun(@(x) repmat(RandNorm,x,1),Nstrm,'un',false);
+            end
+            if swl_u_r ~= 1 %apply uncertainty to normal replicates
+                % Apply uncertainty using a random normal distribution
+                % ------------------ SWL ------------------
+                project_forcing.(SWL_fnames{gg}) = cellfun(@(x,y) pcha_forcing_uncertainty(x, swl_u_a, swl_u_r, y),SWL,normU,'un',false);
+            end
     end
 
     % ------------------ Hm0 & Tp ------------------
