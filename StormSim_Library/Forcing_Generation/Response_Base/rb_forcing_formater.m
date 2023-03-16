@@ -4,6 +4,7 @@ function project_forcing = rb_forcing_formater(config, sType, storm, prob_mass)
 % Define PROS Analysis Type (RB1, RB3)
 % aType = config.pros_mode;
 use_timeseries = config.use_timeseries;
+workflow = config.workflow;
 
 %% GRAB INFORMATION FROM "prob_mass"
 % TC Storm Probability Masses
@@ -12,14 +13,19 @@ if strcmp(sType,'TC')
 end
 
 %% LOAD NORMAL DISCRETIZATION BASED ON STORM TYPE
-% Execute Code Block According To Strom Type Being Called
-switch sType
-    case 'TC' % Tropical Cyclones - 444 Replicates
-        % Discrete Normal Distribution: (NCNC)
-        RandNorm = 444; % 444 values covering the (-3,3) z-score range
-    case 'XC' % Extratropical Storms - 20 Replicates
-        % Discrete Normal Distribution:
-        RandNorm = 20; % 20 values for XC because there is 1000 bootstrap samples in SST code
+if workflow == 2
+    % Only Computing Forcing HC
+    RandNorm = 1;
+else
+    % Execute Code Block According To Strom Type Being Called
+    switch sType
+        case 'TC' % Tropical Cyclones - 444 Replicates
+            % Discrete Normal Distribution: (NCNC)
+            RandNorm = 444; % 444 values covering the (-3,3) z-score range
+        case 'XC' % Extratropical Storms - 20 Replicates
+            % Discrete Normal Distribution:
+            RandNorm = 20; % 20 values for XC because there is 1000 bootstrap samples in SST code
+    end
 end
 
 %% RESHAPE FORCING PARAMETERS FOR RB1 ANALYSIS
@@ -36,9 +42,11 @@ for ii = 1:length(fnames)
     project_forcing.('Peaks').(fnames{ii}).Hm0 = repmat(storm.(fnames{ii})(:,2),1,RandNorm); % Hm0
     project_forcing.('Peaks').(fnames{ii}).Tp = repmat(storm.(fnames{ii})(:,3),1,RandNorm); % Tp
     % Add No Replicate Fields For Forcing HC Computations
-    project_forcing.('Peaks').(fnames{ii}).SWL_no_rep = storm.(fnames{ii})(:,1); % SWL
-    project_forcing.('Peaks').(fnames{ii}).Hm0_no_rep = storm.(fnames{ii})(:,2); % Hm0
-    project_forcing.('Peaks').(fnames{ii}).Tp_no_rep = storm.(fnames{ii})(:,3); % Tp
+    if workflow == 1
+        project_forcing.('Peaks').(fnames{ii}).SWL_no_rep = storm.(fnames{ii})(:,1); % SWL
+        project_forcing.('Peaks').(fnames{ii}).Hm0_no_rep = storm.(fnames{ii})(:,2); % Hm0
+        project_forcing.('Peaks').(fnames{ii}).Tp_no_rep = storm.(fnames{ii})(:,3); % Tp
+    end
 end
 % Reshape Storm Probability Masses To Be nStorms * normal_discretization
 if strcmp(sType,'TC')
@@ -53,9 +61,11 @@ if use_timeseries == 1
     project_forcing.('Timeseries').Hm0 = cellfun(@(x) repmat(x(:,3),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % Hm0
     project_forcing.('Timeseries').Tp = cellfun(@(x) repmat(x(:,4),1,RandNorm),storm.('Timeseries')(:,2),'un',false); % Tp
     % Reshape Peaks Data To Be nStorms * normal_discretization
-    project_forcing.('Timeseries').SWL_no_rep = cellfun(@(x) x(:,2),storm.('Timeseries')(:,2),'un',false); % SWL
-    project_forcing.('Timeseries').Hm0_no_rep = cellfun(@(x) x(:,3),storm.('Timeseries')(:,2),'un',false); % Hm0
-    project_forcing.('Timeseries').Tp_no_rep = cellfun(@(x) x(:,4),storm.('Timeseries')(:,2),'un',false); % Tp
+    if workflow == 1
+        project_forcing.('Timeseries').SWL_no_rep = cellfun(@(x) x(:,2),storm.('Timeseries')(:,2),'un',false); % SWL
+        project_forcing.('Timeseries').Hm0_no_rep = cellfun(@(x) x(:,3),storm.('Timeseries')(:,2),'un',false); % Hm0
+        project_forcing.('Timeseries').Tp_no_rep = cellfun(@(x) x(:,4),storm.('Timeseries')(:,2),'un',false); % Tp
+    end
 end
 
 % % Save Point Depth

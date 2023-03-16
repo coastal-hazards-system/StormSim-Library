@@ -35,7 +35,7 @@ end
 g = 9.81; % Gravity
 
 switch workflow
-    case 1 % RB
+    case {1,2} % RB
         % Create Forcing Variables For Simplicity
         if ~iscell(project_forcing.(storm_type).SWL)
             SWL = {project_forcing.(storm_type).SWL}; % SWL
@@ -52,7 +52,7 @@ switch workflow
             Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
             dflat = 3;
         end
-    case {2,3} % LCS
+    case 3 % LCS
         % Create Forcing Variables For Simplicity
         if size(project_forcing(1).LCNUM,2)==8  % Peaks
             swl_indx = 4;
@@ -67,35 +67,38 @@ switch workflow
         dflat = 2;
 end
 %% COMPUTE STRUCTURE RESPONSE
-% Call Eurotop Influence Factors
-gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
-% Compute runup & Overtopping
-[R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
-    slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
-    toe_elev,berm_width, struc_type),...
-    Hm0, Tp, SWL, Rc, gammas,'un',false);
+if workflow == 1
+    % Call Eurotop Influence Factors
+    gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
+    % Compute runup & Overtopping
+    [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+        slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+        toe_elev,berm_width, struc_type),...
+        Hm0, Tp, SWL, Rc, gammas,'un',false);
 
-% Compute Structure Type Dependant Responses
-switch struc_type
-    case 2 % Floodwall
-        % Compute Tm1_0
-        Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
-        % Compute Water Depth @ Berm
-        hb = cellfun(@(x) berm_elev + x, SWL,'un',false);
-        % Compute P1 Only
-        p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
-            zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
-    case {1,3} % Levees & Rubblemound
-        % Compute Mean Period
-        Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
-        % Compute Stone SIze Using S Limit State
-        if struc_type == 3
-            [Dn50, Dn50_LCBW] = cellfun(@(a, b, c, d) Seaside_stability_Melby_lowCrested(a, b, c,...
-                Nz, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
-                Hm0, Tm, h, Rc,'un',false);
-        end
+    % Compute Structure Type Dependant Responses
+    switch struc_type
+        case 2 % Floodwall
+            % Compute Tm1_0
+            Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
+            % Compute Water Depth @ Berm
+            hb = cellfun(@(x) berm_elev + x, SWL,'un',false);
+            % Compute P1 Only
+            p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
+                zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
+        case {1,3} % Levees & Rubblemound
+            % Compute Mean Period
+            Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
+            % Compute Stone SIze Using S Limit State
+            if struc_type == 3
+                [Dn50, Dn50_LCBW] = cellfun(@(a, b, c, d) Seaside_stability_Melby_lowCrested(a, b, c,...
+                    Nz, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
+                    Hm0, Tm, h, Rc,'un',false);
+            end
+    end
+else
+    Resp = [];
 end
-
 %% FLATTEN DATA & STORE RESPONSES
 % Evaluate According To Workflow
 switch dflat
@@ -104,7 +107,9 @@ switch dflat
             Resp.('R2p') = R2p{:};
             Resp.('R2p_SWL') = R2p_SWL{:};
         end
-        Resp.('q') = q{:};
+        if exist('q','var')
+            Resp.('q') = q{:};
+        end
         if exist('p1','var')
             Resp.('p1') = p1{:};
         end
@@ -113,22 +118,26 @@ switch dflat
             Resp.('Dn50_LCBW') = Dn50_LCBW{:};
         end
         % Replace Forcing Fields With No Rep For HC Calcs
-        if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
-            project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');
-            project_forcing.(storm_type).('Hm0') = project_forcing.(storm_type).('Hm0_no_rep');
-            project_forcing.(storm_type).('Tp') = project_forcing.(storm_type).('Tp_no_rep');
-            % Remove Fields
-            project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
-        else
-            % Remove Fields
-            project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+        if workflow == 1
+            if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
+                project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');
+                project_forcing.(storm_type).('Hm0') = project_forcing.(storm_type).('Hm0_no_rep');
+                project_forcing.(storm_type).('Tp') = project_forcing.(storm_type).('Tp_no_rep');
+                % Remove Fields
+                project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+            else
+                % Remove Fields
+                project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+            end
         end
     case 2 % LCS
         if exist('R2p','var') && struc_type~=2
             Resp.('R2p') = cell2struct(R2p,'LCNUM');
             Resp.('R2p_SWL') = cell2struct(R2p_SWL,'LCNUM');
         end
-        Resp.('q') = cell2struct(q,'LCNUM');
+        if exist('q','var')
+            Resp.('q') = cell2struct(q,'LCNUM');
+        end
         if exist('p1','var')
             Resp.('p1') = cell2struct(p1,'LCNUM');
         end
@@ -141,7 +150,9 @@ switch dflat
             Resp.('R2p') = cell2mat(cellfun(@(x) max(x,[],1),R2p,'un',false));
             Resp.('R2p_SWL') = cell2mat(cellfun(@(x) max(x,[],1),R2p_SWL,'un',false));
         end
-        Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
+        if exist('q','var')
+            Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
+        end
         if exist('p1','var')
             Resp.('p1') = cell2mat(cellfun(@(x) max(x,[],1),p1,'un',false));
         end
@@ -150,18 +161,20 @@ switch dflat
             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
         end
         % Replace Forcing Fields With No Rep For HC Calcs
-        if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
-            SWL = project_forcing.(storm_type).('SWL_no_rep');
-            Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
-            Tp = project_forcing.(storm_type).('Tp_no_rep');
-            project_forcing.(storm_type).('SWL') = SWL;
-            project_forcing.(storm_type).('Hm0') = Hm0;
-            project_forcing.(storm_type).('Tp') = Tp;
-            % Remove Fields
-            project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
-        else
-            % Remove Fields
-            project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+        if workflow == 1
+            if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
+                SWL = project_forcing.(storm_type).('SWL_no_rep');
+                Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
+                Tp = project_forcing.(storm_type).('Tp_no_rep');
+                project_forcing.(storm_type).('SWL') = SWL;
+                project_forcing.(storm_type).('Hm0') = Hm0;
+                project_forcing.(storm_type).('Tp') = Tp;
+                % Remove Fields
+                project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+            else
+                % Remove Fields
+                project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+            end
         end
         if compute_HC == 1
             % Find SWL Max For Each Storm
@@ -186,34 +199,38 @@ end
 %% IMPLEMENT FAILSAFES
 switch dflat
     case {1,3} %
-        % q <10^-4
-        Resp.('q')(Resp.('q')<10^-4) = NaN;
-        % q Imaginary Numbers
-        if ~isreal(Resp.('q'))
-            nReal = real(Resp.('q'));
-            nImag = imag(Resp.('q'));
-            % Set Entries With Imaginary Component = 0 to NaNs
-            nReal(nImag~=0) = NaN;
-            % Store Back As Double
-            Resp.('q') = nReal;
-        end
-    case 2 % LCS
-        for kk = 1:length(Resp.('q'))
-            % Extract Response LC
-            dummy = Resp.('q')(kk).LCNUM;
-            % Apply q < 10^-4 Failsafe
-            dummy(dummy<10^-4) = NaN;
-            % Check For Comples Response
-            if ~isreal(dummy)
-                nReal = real(dummy);
-                nImag = imag(dummy);
+        if exist('q','var')
+            % q <10^-4
+            Resp.('q')(Resp.('q')<10^-4) = NaN;
+            % q Imaginary Numbers
+            if ~isreal(Resp.('q'))
+                nReal = real(Resp.('q'));
+                nImag = imag(Resp.('q'));
                 % Set Entries With Imaginary Component = 0 to NaNs
                 nReal(nImag~=0) = NaN;
                 % Store Back As Double
-                Resp.('q')(kk).LCNUM = nReal;
-            else
-                % Store Back
-                Resp.('q')(kk).LCNUM = dummy;
+                Resp.('q') = nReal;
+            end
+        end
+    case 2 % LCS
+        if exist('q','var')
+            for kk = 1:length(Resp.('q'))
+                % Extract Response LC
+                dummy = Resp.('q')(kk).LCNUM;
+                % Apply q < 10^-4 Failsafe
+                dummy(dummy<10^-4) = NaN;
+                % Check For Comples Response
+                if ~isreal(dummy)
+                    nReal = real(dummy);
+                    nImag = imag(dummy);
+                    % Set Entries With Imaginary Component = 0 to NaNs
+                    nReal(nImag~=0) = NaN;
+                    % Store Back As Double
+                    Resp.('q')(kk).LCNUM = nReal;
+                else
+                    % Store Back
+                    Resp.('q')(kk).LCNUM = dummy;
+                end
             end
         end
 end

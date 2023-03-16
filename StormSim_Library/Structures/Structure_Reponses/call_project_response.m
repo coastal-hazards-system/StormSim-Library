@@ -1,4 +1,4 @@
-function [Resp] = call_structure_response(config, project_forcing, structure)
+function [Resp] = call_project_response(config, project_forcing, structure)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
 workflow = config.workflow;
@@ -31,7 +31,7 @@ use_aep = config.pros_use_aep;
 
 %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
 switch workflow
-    case 1 % PROS
+    case {1,2} % PROS
         %% STORMSIM: PROS
         % Grab "project_forcing" Structure Fields
         switch storm_sampling

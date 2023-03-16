@@ -62,8 +62,9 @@ switch wFlow
                 end
             end
         end
-        
-    case {2,3} % LCS
+    case 2 % SST/JPM for Forcing Only Using RB1 & RB3 Approach 
+        % Do nothing, Uncertainty is incorporated inside SST/JPM
+    case 3 % LCS
         %% LIFE CYCLE BASE
         % Define Workflow Key Phrase
         wName = 'LCS';

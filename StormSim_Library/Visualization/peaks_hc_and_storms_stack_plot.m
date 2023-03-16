@@ -1,5 +1,6 @@
 function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outpath)
 %% PULL DATA
+workflow = config.workflow;
 % Scan Peak Datasets
 storm_types = sort(fieldnames(Resp));
 storm_types = storm_types(contains(storm_types,{'XC','TC'}));
@@ -10,8 +11,13 @@ for ii = 1:length(storm_types)
     pDatasets = fieldnames(Resp.(storm_types{ii}).Peaks);
     for jj = 1:length(pDatasets)
         hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Peaks').(pDatasets{jj})(resp_indx);
-        sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL_no_rep');
-        sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0_no_rep');
+        if workflow == 1
+            sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL_no_rep');
+            sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0_no_rep');
+        else
+            sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL');
+            sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0');
+        end
     end
 end
 
@@ -90,7 +96,7 @@ end
 % For Each Peaks Dataset (Maxima, WLP, WHP)
 for ii = 1:length(pDatasets)
     % Initialize Figure Handle
-    Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','on');
+    Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
     % Grab Storm Type Dependant Fields
     % Extratropical
     if isfield(sData,'XC')
@@ -226,10 +232,14 @@ for ii = 1:length(pDatasets)
         % Plot Each HC
         for i = 1:length(CLs)
             % Define Curve Name
-            DataHeaders(i) = {[num2str(CLs(i)) '_CL']};
+            if CLs(i) == 50
+                DataName = 'Best Estimate';
+            else
+                DataName = [num2str(CLs(i)) '%'];
+            end
             % PLot CL into XC Axes
-            p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',[num2str(CLs(i)) '%']);
-            p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',[num2str(CLs(i)) '%']);            % Update Data Tip
+            p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
             % Create Data Tip Vector
             row = dataTipTextRow('RowID', 1:length(xc_x));
             % Append New Data Tip
@@ -244,10 +254,14 @@ for ii = 1:length(pDatasets)
         % Plot Each HC
         for i = 1:length(CLs)
             % Define Curve Name
-            DataHeaders(i) = {[num2str(CLs(i)) '_CL']};
+            if CLs(i) == 50
+                DataName = 'Best Estimate';
+            else
+                DataName = [num2str(CLs(i)) '%'];
+            end
             % PLot CL into TC Axes
-            p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',[num2str(CLs(i)) '%']);
-            p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',[num2str(CLs(i)) '%']);            % Update Data Tip
+            p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
             % Create Data Tip Vector
             row2 = dataTipTextRow('RowID', 1:length(tc_x));
             % Append New Data Tip

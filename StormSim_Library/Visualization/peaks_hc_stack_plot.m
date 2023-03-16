@@ -92,9 +92,13 @@ for k = 1:length(Resp.(pDatasets{1}))
         % For Each CL
         for i = 1:length(plt(k).y_plot(1,:))
             % Define Curve Name
-            DataHeaders(i) = {[num2str(prc(i)) '_CL']};
+            if prc(i) == 50
+                DataName = 'Best Estimate';
+            else
+                DataName = [num2str(prc(i)) '%'];
+            end
             % PLot CL into Axes
-            p = plot(ax,plt(k).x_plot(:,1),plt(k).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',[num2str(prc(i)) '%']);
+            p = plot(ax,plt(k).x_plot(:,1),plt(k).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
             % Update Data Tip
             row = dataTipTextRow('RowID', 1:length(plt(k).x_plot(:,1)));
             % Append Neew Data Tip

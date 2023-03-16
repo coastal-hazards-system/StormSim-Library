@@ -80,7 +80,7 @@ save_name = [config.project_name, filesep, config.struc_id, filesep,...
 disp('Preping project forcing data....');
 % Define Events Per Case
 switch workflow
-    case 1 % StormSim: PROS (Ressonse Base (RB1) Analysis)
+    case {1,2} % StormSim: PROS (Ressonse Base (RB1) Analysis)
         % Define Workflow Key Phrase
         wName = 'RB';
         % Tropical Cyclones
@@ -93,7 +93,7 @@ switch workflow
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
             project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
         end
-    case {2,3} % StormSim: MCS/CSR (Life-Cycle Base Analysis)
+    case 3 % StormSim: MCS/CSR (Life-Cycle Base Analysis)
         % Define Workflow Key Phrase
         wName = 'LCS';
         % Call StormSim: Monte Carlo Storm Sampler

@@ -87,9 +87,9 @@ t2 = toc(t2);
  Description:
    Once input storm data has been formated the next step is to generate the
    project forcing. There are three options to choose here: 1 - Response
-   Base I (RB1, StormSim: PROS), 2 - MCS (LCS, StormSim: MCS) , 3 - MCS/CSR
+   Base (RB1 & RB3, StormSim: PROS), 2 - MCS (LCS, StormSim: MCS) , 3 - MCS/CSR
    (LCS, StormSim: MCS/CSR. The key difference being a response base
-   approach using peaks (RB1) or doing a life cycle simulation (LCS) using
+   approach or doing a life cycle simulation (LCS) using
    peaks and timeseries. Option 3 computes structure response (S, R2p, q) after
    performing MCS storm sampling. Forcing generation options can be changed
    in input file by changing row with "cast_workflow" as Model Variable
@@ -186,7 +186,7 @@ t6 = toc(t6);
 % MCS-LC Its working but need to change K_ss in line 212 of
 % stormsim_csr_dpa.m. Also, need to update damage functions to latest.
 t7 = tic;
-Resp = call_structure_response(config, project_forcing, structure);
+Resp = call_project_response(config, project_forcing, structure);
 t7 = toc(t7);
 sum([t1,t2,t3,t4,t5,t6,t7])/60
 diary 'off';

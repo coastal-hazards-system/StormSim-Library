@@ -7,9 +7,9 @@ workflow = config.workflow;
 disp('Adjusting project forcing datasets....')
 % Determine Data Type
 switch workflow
-    case 1
+    case {1,2}
         wName = 'RB';
-    case {2,3}
+    case 3
         wName = 'LCS';
 end
 % Grab "project_forcing" Structure Fields

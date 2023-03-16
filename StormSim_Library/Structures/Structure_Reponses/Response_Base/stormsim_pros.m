@@ -7,6 +7,8 @@ try
 catch
     use_aep = 1;
 end
+workflow = config.workflow;
+
 %% DETERMINE DATA TYPE
 % Find Field Dimensions
 if isfield(project_forcing,'XC')
