@@ -98,31 +98,31 @@ switch workflow
         end
         % Check If XC & TC Exist
         level_a = fieldnames(Resp);
-            % Only If there Is 2 Or More Peaks Datasets
-            if length(fieldnames(Resp.(level_a{1}).('Peaks')))>=2
-                % Create RB1 Peak Dataset HC Comparison Figures
-                for ii = 1:length(level_a)
-                    % Create Comparison Figure
-                    peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
-                end
-                % Make Dir
-                if ~exist([subDir 'RB1_Comparison'],'dir')
-                    mkdir([subDir 'RB1_Comparison']);
-                end
-                % Move Files
-                movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
+        % Only If there Is 2 Or More Peaks Datasets
+        if length(fieldnames(Resp.(level_a{1}).('Peaks')))>=2
+            % Create RB1 Peak Dataset HC Comparison Figures
+            for ii = 1:length(level_a)
+                % Create Comparison Figure
+                peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', outDir);
             end
-         % Create Project Forcing + HC Comparison Figure
-            if compute_forcing_hc == 1
-                % Create Figures
-                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outDir);
-                % Make Dir
-                if ~exist([subDir 'RB1_Project_Forcing_Comparison'],'dir')
-                    mkdir([subDir 'RB1_Project_Forcing_Comparison']);
-                end
-                % Move Files
-                movefile([outDir '*Project_Forcing_and_Hazard_Curve_Comparison*'],[subDir 'RB1_Project_Forcing_Comparison']);
+            % Make Dir
+            if ~exist([subDir 'RB1_Comparison'],'dir')
+                mkdir([subDir 'RB1_Comparison']);
             end
+            % Move Files
+            movefile([outDir '_StormSim_Peaks_*'],[subDir 'RB1_Comparison']);
+        end
+        % Create Project Forcing + HC Comparison Figure
+        if compute_forcing_hc == 1
+            % Create Figures
+            peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outDir);
+            % Make Dir
+            if ~exist([subDir 'RB1_Project_Forcing_Comparison'],'dir')
+                mkdir([subDir 'RB1_Project_Forcing_Comparison']);
+            end
+            % Move Files
+            movefile([outDir '*Project_Forcing_and_Hazard_Curve_Comparison*'],[subDir 'RB1_Project_Forcing_Comparison']);
+        end
 
         % RB3
         if use_timeseries == 1
@@ -191,17 +191,20 @@ switch workflow
             if structure_type == 3 % Rubblemound Only
                 % Call StormSim: CSR Damage Progression Analysis
                 [Resp.(storm_sampling).('Timeseries').S] = stormsim_csr_dpa(config, structure, emp_coeff, {project_forcing.(storm_sampling).('Timeseries').LCNUM});
+                % Generate Plot Structure
+                S_damage_plotter(config, Resp.(storm_sampling).Timeseries.S, 1, 0);
+                % Create Subdirectory
+                if ~exist([subDir 'LCS_DPA'],'dir')
+                    mkdir([subDir 'LCS_DPA']);
+                end
+                % Move SST/JPM Outputs Into Subdir
+                movefile([outDir '*Seaside*'],[subDir 'LCS_DPA']);
+                movefile([outDir '*Leeside*'],[subDir 'LCS_DPA']);
             end
         end
-        % Generate Plot Structure
-        S_damage_plotter(config, Resp.(storm_sampling).Timeseries.S, 1, 0);
-        % Create Subdirectory
-        if ~exist([subDir 'LCS_DPA'],'dir')
-            mkdir([subDir 'LCS_DPA']);
-        end
-        % Move SST/JPM Outputs Into Subdir
-        movefile([outDir '*Seaside*'],[subDir 'LCS_DPA']);
-        movefile([outDir '*Leeside*'],[subDir 'LCS_DPA']);
+
+
+
 end
 
 %% EXPORT OUTPUTS

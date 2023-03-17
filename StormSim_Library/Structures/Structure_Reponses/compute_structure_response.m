@@ -20,20 +20,21 @@ berm_elev = structure.berm_elevation*-1; %
 berm_width = structure.berm_width;
 % Seaside Slope (cot(alpha))
 slope = structure.seaside_slope;
-% Delta
+% Rubblemound Fields
 if struc_type == 3
+    % Delta
     delta = structure.armor_delta;
     % Seaside Limit State
     S = structure.seaside_limit_S;
     % CEM P
     P = structure.cem_P;
-    % Water Density kg/m^3
-    rho_w = structure.water_density;
 end
+% Water Density kg/m^3
+rho_w = structure.water_density;
 
-%% DEFINE CNOSTANTS
+%% DEFINE CONSTANTS
 g = 9.81; % Gravity
-
+% Grab Workflow Specific Fields 
 switch workflow
     case {1,2} % RB
         % Create Forcing Variables For Simplicity
@@ -66,8 +67,9 @@ switch workflow
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
         dflat = 2;
 end
+
 %% COMPUTE STRUCTURE RESPONSE
-if workflow == 1
+if workflow ~= 2
     % Call Eurotop Influence Factors
     gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
     % Compute runup & Overtopping
@@ -75,7 +77,6 @@ if workflow == 1
         slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
         toe_elev,berm_width, struc_type),...
         Hm0, Tp, SWL, Rc, gammas,'un',false);
-
     % Compute Structure Type Dependant Responses
     switch struc_type
         case 2 % Floodwall
@@ -96,33 +97,37 @@ if workflow == 1
                     Hm0, Tm, h, Rc,'un',false);
             end
     end
-else
+else % StormSim:EVA was called, no structure responses
     Resp = [];
 end
+
 %% FLATTEN DATA & STORE RESPONSES
 % Evaluate According To Workflow
 switch dflat
     case 1 % RB1
+        % Store Responses In Response Var
         if exist('R2p','var') && struc_type~=2
-            Resp.('R2p') = R2p{:};
-            Resp.('R2p_SWL') = R2p_SWL{:};
+            Resp.('R2p') = R2p{:}; % Run-up
+            Resp.('R2p_SWL') = R2p_SWL{:}; % Run-up + SWL 
         end
         if exist('q','var')
-            Resp.('q') = q{:};
+            Resp.('q') = q{:}; % Overtopping 
         end
         if exist('p1','var')
-            Resp.('p1') = p1{:};
+            Resp.('p1') = p1{:}; % Goda Wall Pressure
         end
         if exist('Dn50','var')
-            Resp.('Dn50') = Dn50{:};
-            Resp.('Dn50_LCBW') = Dn50_LCBW{:};
+            Resp.('Dn50') = Dn50{:}; % Median Stone Size
+            Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
+            % Remove Forcing Fields With Replicates
             if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
-                project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');
-                project_forcing.(storm_type).('Hm0') = project_forcing.(storm_type).('Hm0_no_rep');
-                project_forcing.(storm_type).('Tp') = project_forcing.(storm_type).('Tp_no_rep');
+                % Rename Forcing Fields 
+                project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');% SWL 
+                project_forcing.(storm_type).('Hm0') = project_forcing.(storm_type).('Hm0_no_rep');% Hm0
+                project_forcing.(storm_type).('Tp') = project_forcing.(storm_type).('Tp_no_rep');% Tp
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
             else
@@ -131,6 +136,8 @@ switch dflat
             end
         end
     case 2 % LCS
+        %---- INSERT SECONDARY RESPONSES COMPUTATIONS HERE -------%
+        % P2, P3, Nappe (if p1 exist -> floodwall)
         if exist('R2p','var') && struc_type~=2
             Resp.('R2p') = cell2struct(R2p,'LCNUM');
             Resp.('R2p_SWL') = cell2struct(R2p_SWL,'LCNUM');
