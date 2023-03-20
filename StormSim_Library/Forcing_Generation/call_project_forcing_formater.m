@@ -82,7 +82,11 @@ disp('Preping project forcing data....');
 switch workflow
     case {1,2} % StormSim: PROS (Ressonse Base (RB1) Analysis)
         % Define Workflow Key Phrase
-        wName = 'RB';
+        if workflow == 1 % PROS
+            wName = 'RB';
+        else % EVA
+            wName = 'RB-EVA';
+        end
         % Tropical Cyclones
         if contains(storm_sampling,{'TC','CC'})
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)

@@ -39,6 +39,7 @@ if any(contains(fieldnames(project_forcing),{'XC'}))
     disp('            Plotting hazard curves....');
     plot_hazard_curves(HC_out.('XC').(f_str), use_aep);
 end
+
 %% TROPICAL STORMS
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'TC'}))

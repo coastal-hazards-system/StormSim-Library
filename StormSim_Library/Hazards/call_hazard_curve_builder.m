@@ -204,7 +204,7 @@ for ii = 1:length(vars_2_get)
             try
                 [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst);
                 % Define Limtis For Frequency/Probability Vectors
-                eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
+                s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Organize Outputs
                 Output(ctr).var = staID; % Station ID
                 Output(ctr).y_label = y_label; % Y Axis Label
@@ -244,7 +244,7 @@ for ii = 1:length(vars_2_get)
             try
                 [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm);
                 % Define Limtis For Frequency/Probability Vectors
-                eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
+                s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Organize Outputs
                 Output(ctr).var = staID; % Station ID
                 Output(ctr).y_label = y_label; % Y Axis Label

@@ -1,6 +1,6 @@
-function [ari_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, ari_list)
+function [aep_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, aep_list)
 % Initialize Out Var
-ari_out = NaN(length(ari_list), size(xc_prob, 2));
+aep_out = NaN(length(aep_list), size(xc_prob, 2));
 % Loop Through Each CL
     for ii = 1:size(xc_prob, 2) % Each CL
         % Define Probability Vectors
@@ -28,13 +28,13 @@ ari_out = NaN(length(ari_list), size(xc_prob, 2));
         %% Interpolate to compute ARI for each y-value
         try
             % Interpolate Response For Specified ARI's
-            dummy = interp1(x1,y1,log(ari_list),'linear','extrap');
+            dummy = interp1(x1,y1,log(aep_list),'linear','extrap');
         catch
             dummy = [];
         end
         % Set Negative Interp Values To NaN
         dummy(dummy<0) = NaN;
         % Store Results 
-        ari_out(:,ii) = dummy;
+        aep_out(:,ii) = dummy;
     end
 end

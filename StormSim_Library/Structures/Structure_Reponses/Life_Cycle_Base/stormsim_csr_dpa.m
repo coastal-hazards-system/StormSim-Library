@@ -437,7 +437,8 @@ diagnostics(1,:) = cellfun(@(a) table(WL{a},Hm0{a},...
     num2cell(1:nLC),'un',false)';
 
 %% COMPUTE MEAN DAMAGE CURVE
-[Smax,LSmax,SPcurves,LSPcurves] = S_yearly_v2(LC_SimOUT_hyd,Ssea_no_repairs,SLee_no_repairs,nYears);
+[LSmax,LSPcurves] = compute_lcs_yearly_curve(LC_SimOUT_hyd,SLee_no_repairs,nYears);
+[Smax,SPcurves] = compute_lcs_yearly_curve(LC_SimOUT_hyd,Ssea_no_repairs,nYears);
 % Fill values for year 0
 years = [0:length(Smax)]';
 Smax = [0;Smax];
