@@ -34,7 +34,7 @@ rho_w = structure.water_density;
 
 %% DEFINE CONSTANTS
 g = 9.81; % Gravity
-% Grab Workflow Specific Fields 
+% Grab Workflow Specific Fields
 switch workflow
     case {1,2} % RB
         % Create Forcing Variables For Simplicity
@@ -108,10 +108,10 @@ switch dflat
         % Store Responses In Response Var
         if exist('R2p','var') && struc_type~=2
             Resp.('R2p') = R2p{:}; % Run-up
-            Resp.('R2p_SWL') = R2p_SWL{:}; % Run-up + SWL 
+            Resp.('R2p_SWL') = R2p_SWL{:}; % Run-up + SWL
         end
         if exist('q','var')
-            Resp.('q') = q{:}; % Overtopping 
+            Resp.('q') = q{:}; % Overtopping
         end
         if exist('p1','var')
             Resp.('p1') = p1{:}; % Goda Wall Pressure
@@ -124,13 +124,19 @@ switch dflat
         if workflow == 1
             % Remove Forcing Fields With Replicates
             if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
-                % Rename Forcing Fields 
-                project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');% SWL 
+                % Rename Forcing Fields
+                project_forcing.(storm_type).('SWL') = project_forcing.(storm_type).('SWL_no_rep');% SWL
                 project_forcing.(storm_type).('Hm0') = project_forcing.(storm_type).('Hm0_no_rep');% Hm0
                 project_forcing.(storm_type).('Tp') = project_forcing.(storm_type).('Tp_no_rep');% Tp
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
-            else
+            elseif any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'TC'})
+                % Get Reshape Size
+                dSize = size(project_forcing.(storm_type).('SWL'),2);
+                % Rename Forcing Fields
+                project_forcing.(storm_type).('SWL') = repmat(project_forcing.(storm_type).('SWL_no_rep'),1,dSize);% SWL
+                project_forcing.(storm_type).('Hm0') = repmat(project_forcing.(storm_type).('Hm0_no_rep'),1,dSize);% Hm0
+                project_forcing.(storm_type).('Tp') = repmat(project_forcing.(storm_type).('Tp_no_rep'),1,dSize);% Tp
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
             end
