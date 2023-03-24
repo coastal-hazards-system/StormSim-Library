@@ -1,4 +1,4 @@
-function  [Output]= call_hazard_curve_builder(config, structure, project_forcing, Resp, storm_type, use_aep)
+function  [Output]= call_hazard_curve_builder(config, structure, project_forcing, Resp, storm_type, use_aep, outPath)
 % CALL_STRUCTURE_CURVE_BUILDER Computes hazard curve for provided forcing
 % and structure responses using StormSim's SST & JPM. Supports hazard curve
 % calculations for: SWL, Hm0, Tp, R2p, R2p+SWL, q, Dn50, Dn50_LCBW, p1.
@@ -69,8 +69,7 @@ if ~isempty(project_forcing) && compute_forcing_hc == 1
     hm0_u_r = config.chs_hm0_u_r; % Hm0 Proportional
 end
 % Save Name
-save_name = [config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id];
+save_name = [outPath filesep config.project_name,'_', config.struc_id];
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -94,7 +93,7 @@ end
 
 %% COMPUTE HAZARD CURVES WITH STORMSIM: SST/JPM
 % Initialize Counter
-ctr = 1;
+ctr = 1;Output = [];
 % Loop Through All Stations
 for ii = 1:length(vars_2_get)
     % Define Station ID
@@ -205,35 +204,21 @@ for ii = 1:length(vars_2_get)
                 [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst);
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
-                % Organize Outputs
-                Output(ctr).var = staID; % Station ID
-                Output(ctr).y_label = y_label; % Y Axis Label
-                Output(ctr).title = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
-                    ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-                Output(ctr).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEP/AEF For Plot
-                Output(ctr).y_plot = dummy.SST_output.HC_plt(:, s_indx)'; % Hazard Curve Data For Plot
-                Output(ctr).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
-                Output(ctr).y_table = dummy.SST_output.HC_tbl'; % Hazard Curve Data For Table
+                % Define Figure Title
+                title_str = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
+                    ['' storm_type ' | ' var_name ' [' unit_label ']']};
+                % Store SST Outputs
+                Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
+                    dummy.HC_plt_x(s_indx), dummy.SST_output.HC_plt(:, s_indx)',...
+                    dummy.HC_tbl_x', dummy.SST_output.HC_tbl',...
+                    0, [50,prc], [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']);
+                % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
                     Output(ctr).tbl_rsp_x = dummy.SST_output.HC_tbl_rsp_x'; % x here implies Responses, AEP/AEF -> Responses
                 else
                     Output(ctr).tbl_rsp_x = aef2aep(dummy.SST_output.HC_tbl_rsp_x');
                 end
                 Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
-                Output(ctr).CL = [50,prc]; % Percentiles (Cols)
-                Output(ctr).save_name = [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']; % Figure Save Name
-                % OVertopping Special Case
-                if strcmp(staID,'q')
-                    % Convert From [m^3/s per m] to [liters/s per m]
-                    %                 Output(ctr).y_plot = Output(ctr).y_plot * 1000;
-                    Output(ctr).y_log_scale = 1; % Y Log Scale For Overtopping
-                else
-                    Output(ctr).y_log_scale = 0; % Regular Scale For The Rest
-                end
-                % THIS SHOULD BE REMOVED ONCE SST/JPM HC COMBINATION IS SORTED
-                if contains(staID,{'Hm0','SWL'})
-                    % Add rsp_
-                end
             catch
                 disp(['               Stochastic Simulation Technique (SST) returned error, skipping: ', staID]);
             end
@@ -245,32 +230,21 @@ for ii = 1:length(vars_2_get)
                 [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm);
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
-                % Organize Outputs
-                Output(ctr).var = staID; % Station ID
-                Output(ctr).y_label = y_label; % Y Axis Label
-                Output(ctr).title = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
-                    ['' storm_type ' | ' var_name ' [' unit_label ']']}; % Title
-                Output(ctr).x_plot = dummy.HC_plt_x(s_indx); % Hazard Curve AEF For Plot
-                Output(ctr).y_plot = dummy.HC_data.HC_plt_y(s_indx, :); % Hazard Curve Data For Plot
-                Output(ctr).x_table = dummy.HC_tbl_x'; % Hazard Curve ARF For Table
-                Output(ctr).y_table = dummy.HC_data.HC_tbl_y; % Hazard Curve Data For Table
-                Output(ctr).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
+                % Define Figure Title
+                title_str = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
+                    ['' storm_type ' | ' var_name ' [' unit_label ']']};
+                % Store/Format JPM Outputs
+                Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
+                    dummy.HC_plt_x(s_indx), dummy.HC_data.HC_plt_y(s_indx, :),...
+                    dummy.HC_tbl_x', dummy.HC_data.HC_tbl_y,...
+                    0, [50,prc], [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']);
+                % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
                     Output(ctr).tbl_rsp_x = dummy.HC_data.HC_tbl_rsp_x;
                 else
                     Output(ctr).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
                 end
                 Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
-                Output(ctr).CL = [50,prc]; % Percentiles (Cols)
-                Output(ctr).save_name = [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']; % Figure Save Name
-                % OVertopping Special Case
-                if strcmp(staID,'q')
-                    % Convert From [m^3/s per m] to [liters/s per m]
-                    %                 Output(ctr).y_plot = Output(ctr).y_plot * 1000;
-                    Output(ctr).y_log_scale = 1; % Y Log Scale For Overtopping
-                else
-                    Output(ctr).y_log_scale = 0; % Regular Scale For The Rest
-                end
             catch
                 disp(['               Joint Probability Method (JPM) returned error, skipping: ', staID]);
             end
@@ -291,69 +265,86 @@ if compute_forcing_hc == 1
             h_plt = toe_elev + Output(sIndx(4)).y_plot;
             h_tbl = toe_elev + Output(sIndx(4)).y_table;
             % Compute Water Depth @ Berm
-            hb_plt = berm_elev + Output(sIndx(4)).y_plot;
-            hb_tbl = berm_elev + Output(sIndx(4)).y_table;
+            if berm_elev == 0 % No Berm 
+                hb_plt = h_plt;
+                hb_tbl = h_tbl;
+            else
+                hb_plt = berm_elev + Output(sIndx(4)).y_plot;
+                hb_tbl = berm_elev + Output(sIndx(4)).y_table;
+            end
             % Compute Freeboard
             Rc_plt = crest_elev - Output(sIndx(4)).y_plot;
             Rc_tbl = crest_elev - Output(sIndx(4)).y_table;
             % Compute P2 & P3 Wall Pressures (Plots)
-            [p2_plt,p3_plt,pu_plt]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_plot, Output(sIndx(3)).y_plot,...
+            [p2dyn_plt, p2sta_plt, p2total_plt,...
+                p3dyn_plt, p3sta_plt, p3total_plt, pu_plt]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_plot, Output(sIndx(3)).y_plot,...
                 1.8,0,h_plt,hb_plt,Rc_plt,hw,Output(sIndx(1)).y_plot,rho_w,[1 1]);
             % Compute P2 & P3 Wall Pressures (Table)
-            [p2_tbl,p3_tbl,pu_tbl]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_table, Output(sIndx(3)).y_table,...
+            [p2dyn_tbl, p2sta_tbl, p2total_tbl,...
+                p3dyn_tbl, p3sta_tbl, p3total_tbl, pu_tbl]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_table, Output(sIndx(3)).y_table,...
                 1.8,0,h_tbl,hb_tbl,Rc_tbl,hw,Output(sIndx(1)).y_table,rho_w,[1 1]);
-            % Copy Row From Previous Entry
-            rIndx = length(Output)+1;
-            Output(rIndx) = Output(sIndx(1));
-            % Replace Fields For P2
-            Output(rIndx).('var') = 'p2';
-            Output(rIndx).('y_label') = 'P_2 [Pa]';
-            Output(rIndx).('title')(2) = {[storm_type ' | P_2 [Pa]']};
-            Output(rIndx).('y_plot') = p2_plt;
-            Output(rIndx).('y_table') = p2_tbl;
-            Output(rIndx).('save_name') = [outName{1} Output(rIndx).('var') outName{2}];
-            % Copy Row From Previous Entry
-            rIndx = length(Output)+1;
-            Output(rIndx) = Output(sIndx(1));
-            % Replace Fields For P3
-            Output(rIndx).('var') = 'p3';
-            Output(rIndx).('y_label') = 'P_3 [Pa]';
-            Output(rIndx).('title')(2) = {[storm_type ' | P_3 [Pa]']};
-            Output(rIndx).('y_plot') = p3_plt;
-            Output(rIndx).('y_table') = p3_tbl;
-            Output(rIndx).('save_name') = [outName{1} Output(rIndx).('var') outName{2}];
-            % Copy Row From Previous Entry
-            rIndx = length(Output)+1;
-            Output(rIndx) = Output(sIndx(1));
-            % Replace Fields For Pu
-            Output(rIndx).('var') = 'pu';
-            Output(rIndx).('y_label') = 'P_u [Pa]';
-            Output(rIndx).('title')(2) = {[storm_type ' | P_u [Pa]']};
-            Output(rIndx).('y_plot') = pu_plt;
-            Output(rIndx).('y_table') = pu_tbl;
-            Output(rIndx).('save_name') = [outName{1} Output(rIndx).('var') outName{2}];
+            % Define Pressure Fields To Append
+            pFields = who('p2*_plt','p3*_plt','pu*_plt');
+            % Define Pressure Fields Y Labels (For Plots)
+            y_labels = {'P_2 (Dynamic) [Pa]', 'P_2 (Static) [Pa]', 'P_2 (Total) [Pa]',...
+                'P_3 (Dynamic) [Pa]', 'P_3 (Static) [Pa]', 'P_3 (Total) [Pa]',...
+                'P_u [Pa]'};
+            % Get Last Row Index
+            rIndx = length(Output);
+            % Define Title String Base
+            title_base = Output(rIndx).title;
+            % Loop Through Fieldnames
+            for kk = 1:length(pFields)
+                % Define Variable Name
+                sVar = strrep(pFields{kk},'_plt','');
+                % Define Title String
+                title_str = title_base;
+                title_str(2) =  {['' storm_type ' | ' y_labels{kk}]};
+                % Call Data Appender
+                Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
+                    Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), 0, [50,prc], [outName{1} sVar outName{2}]);
+            end
             % Compute Nappe Response (Table)
             [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
             % Compute Nappe Response (Plot)
             [Nappe_plt] = floodwall_nappe_response(Output(sIndx(4)).y_plot, Output(sIndx(2)).y_plot, Output(sIndx(5)).y_plot, hw, rho_w);
             % Get Filenames
-            fnames = fieldnames(Nappe_tbl);
+            pFields = fieldnames(Nappe_tbl);
             % Define Name & Units, Order Of Fields Is Fixed
-            var_info = [{'x_L';'\theta_L';'x_U';'\theta_U';'B_x';'x_{c_{surge}}';'\theta_c';'B_{jet}';'V_{jet}';'F_{jet}'},{'m';char(176);'m';char(176);'m';'m';char(176);'m';'m/s';'N/m'}];
+            y_labels = [{'x_L';'\theta_L';'x_U';'\theta_U';'B_x';'x_{c_{surge}}';'\theta_c';'B_{jet}';'V_{jet}';'F_{jet}'},{'m';char(176);'m';char(176);'m';'m';char(176);'m';'m/s';'N/m'}];
+            % Get Last Row Index
+            rIndx = length(Output);
+            % Define Title String Base
+            title_base = Output(rIndx).title;
             % Loop Through Fieldnames
-            for ii = 1:length(fnames)
-                % Compute Row Index
-                rIndx = length(Output)+1;
-                % Add Row
-                Output(rIndx) = Output(end);
-                % Replace Fields
-                Output(rIndx).('var') = fnames{ii};
-                Output(rIndx).('y_label') = [var_info{ii,1} ' [' var_info{ii,2} ']'];
-                Output(rIndx).('title')(2) = {[storm_type ' | ' Output(rIndx).('y_label')]};
-                Output(rIndx).('y_plot') = Nappe_plt.(fnames{ii});
-                Output(rIndx).('y_table') = Nappe_tbl.(fnames{ii});
-                Output(rIndx).('save_name') = [outName{1} Output(rIndx).('var') outName{2}];
+            for kk = 1:length(pFields)
+                % Define Title String
+                title_str = title_base;
+                title_str(2) =  {[y_labels{ii,1} ' [' y_labels{ii,2} ']']};
+                % Call Data Appender
+                Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
+                    Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}),...
+                    0, [50,prc], [outName{1} pFields{kk} outName{2}]);
             end
     end
 end
+
+%% AUX FUNCTIONS (CONSOLIDATE LINES OF CODE)
+    function Output =  rb_response_appender(Output, rIndx, sVar, y_label, title_str, x_plt, y_plt, x_tbl, y_tbl, y_log_scale, CL, outName)
+        % Initialize Entry
+        %         if ~isempty(Output)
+        %             Output(rIndx) = Output(end);
+        %         end
+        % Replace Fields For P2
+        Output(rIndx).('var') = sVar;
+        Output(rIndx).CL = CL; % Percentiles (Cols)
+        Output(rIndx).('x_plot') = x_plt;
+        Output(rIndx).('y_plot') = y_plt;
+        Output(rIndx).('x_table') = x_tbl;
+        Output(rIndx).('y_table') = y_tbl;
+        Output(rIndx).('y_label') = y_label;
+        Output(rIndx).('title') = title_str;
+        Output(rIndx).y_log_scale = y_log_scale; % Y Log Scale For Overtopping
+        Output(rIndx).('save_name') = outName;
+    end
 end
