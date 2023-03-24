@@ -326,6 +326,8 @@ if compute_forcing_hc == 1
                     Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}),...
                     0, [50,prc], [outName{1} pFields{kk} outName{2}]);
             end
+        case 3 % Rubblemound 
+            % Add DN50 LCBW here
     end
 end
 

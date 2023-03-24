@@ -27,7 +27,7 @@
 %
 %
 %============================================================
-function [Dn50_Melby, Dn50_LCBW] = Seaside_stability_Melby_lowCrested(Hsig,Tm,h,Nz,Sslp,delta,P,S,grav,km1,km2,Rc)
+function [Dn50_Melby] = melby_Dn50_seaside_stability(Hsig,Tm,h,Nz,Sslp,delta,P,S,grav,km1,km2,Rc)
 
 
 %% Melby
@@ -66,7 +66,9 @@ Dn50_Melby = sqrt(Mf./delta).*h.*am.*((ks.*sqrt(Nz))./S).^0.2;
 Dn50_Melby(Hsig<=0 | h<0) = NaN;
 % Reshape
 Dn50_Melby = reshape(Dn50_Melby, data_dims);
+
 %% Low Crested
+%{
 % From Burcharth et al 2006 - stability of low crested structures. 
 % Equation 5.
 % Assume same armor layer size for the whole structure and is valid for -3
