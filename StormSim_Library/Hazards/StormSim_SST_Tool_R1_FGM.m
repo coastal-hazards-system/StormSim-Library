@@ -3029,7 +3029,7 @@ HISTORY OF REVISIONS:
 function [HC_emp,HC_plt,HC_plt_x2,HC_tbl_y,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(POT_samp,Nyrs,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_criterion,apply_Tides,POT_samp2,SLC,gprMdl,apply_GPD_to_SS,tide_SD,U_a,U_r,uncert_treatment)
 
 %% Bootstrap Input Parameters
-Nsim = 1000; %Number of simulations (no less than 10,000)
+Nsim = 100; %Number of simulations (no less than 10,000)
 
 %% Develop empirical CDF (using output of POT function)
 POT_samp = sort(POT_samp,'descend'); %Sort POT sample in descending order
