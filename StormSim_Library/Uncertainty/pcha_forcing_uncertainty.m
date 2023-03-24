@@ -1,4 +1,11 @@
 function iVar_w_u = pcha_forcing_uncertainty(iVar, u_a, u_r, normU)
+%{
+Notes on how to check uncertainty:
+1. SWL_mean (across cols) -> Original value for SWL (without uncert)
+    sum(mean(iVar_w_u,2) == iVar(:,1)) ~ number_of_storms
+2. Std ~ SWL_mean * SWL_U_r
+3. Hist for each row choose 
+%}
 a = u_a+iVar; r = u_r.*iVar;
 u_iVar = 1./sqrt(1./(a).^2 + 1./(r).^2);
 u_iVar = u_iVar .* (a./abs(a));
