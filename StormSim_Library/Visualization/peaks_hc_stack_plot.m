@@ -11,6 +11,14 @@ ax_label_fnt = title_fnt-2;
 % TickLabel Font
 ax_tick_fnt = ax_label_fnt - 2;
 
+%% CREATE OUTPUT DIR
+% Make Dir
+if ~exist(outpath,'dir')
+    mkdir(outpath);
+else
+    delete([outpath filesep '*.png']);
+end
+
 %% DETERMINE ABSOLUTE MIN/MAX
 % Scan Peak Datasets
 pDatasets = fieldnames(Resp);

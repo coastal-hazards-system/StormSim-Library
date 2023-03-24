@@ -1,22 +1,49 @@
-function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, outpath)
+function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, ts_switch, outpath)
 %% PULL DATA
 workflow = config.workflow;
 % Scan Peak Datasets
 storm_types = sort(fieldnames(Resp));
 storm_types = storm_types(contains(storm_types,{'XC','TC'}));
 % HC Data
-resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0'}),{Resp.(storm_types{1}).('Peaks').('Maxima').var},'un',false)'),2)==1);
+if ts_switch == 0
+    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0'}),{Resp.(storm_types{1}).('Peaks').('Maxima').var},'un',false)'),2)==1);
+else
+    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0'}),{Resp.(storm_types{1}).('Timeseries').var},'un',false)'),2)==1);
+end
 % Remove Other HCs
 for ii = 1:length(storm_types)
-    pDatasets = fieldnames(Resp.(storm_types{ii}).Peaks);
-    for jj = 1:length(pDatasets)
-        hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Peaks').(pDatasets{jj})(resp_indx);
-        if workflow == 1
-            sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL_no_rep');
-            sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0_no_rep');
-        else
-            sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL');
-            sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0');
+    % Timeseries/Peaks
+    if ts_switch == 0 % Peaks
+        % Find Peak Datasets Fieldnames
+        pDatasets = fieldnames(Resp.(storm_types{ii}).Peaks);
+        % Loop Through Fieldnames
+        for jj = 1:length(pDatasets)
+            % Grab HC Data
+            hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Peaks').(pDatasets{jj})(resp_indx);
+            % Grab Forcing Data (Scatter)
+            if workflow == 1 % StormSim: PROS
+                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL_no_rep');
+                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0_no_rep');
+            else % StormSim: EVA
+                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL');
+                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0');
+            end
+        end
+    else % Timeseries
+        % Define Dummy Fieldname
+        pDatasets = {'Maxima'};
+        % Loop Through Fieldnames
+        for jj = 1:length(pDatasets)
+            % Grab HC Data
+            hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Timeseries')(resp_indx);
+                        % Grab Forcing Data (Scatter)
+            if workflow == 1 % StormSim: PROS
+                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Timeseries').('SWL_no_rep');
+                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Timeseries').('Hm0_no_rep');
+            else
+                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Timeseries').('SWL');
+                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Timeseries').('Hm0');
+            end
         end
     end
 end
@@ -45,6 +72,14 @@ ax_label_fnt = title_fnt-2;
 ax_tick_fnt = ax_label_fnt - 2;
 % Define Color Vector
 colorstr = {'k-','b-.','r-.','r--','b--'};
+
+%% CREATE OUTPUT DIR
+% Make Dir
+if ~exist(outpath,'dir')
+    mkdir(outpath);
+else
+    delete([outpath filesep '*.png']);
+end
 
 %% DETERMINE ABSOLUTE MIN/MAX
 y_limit = [];
