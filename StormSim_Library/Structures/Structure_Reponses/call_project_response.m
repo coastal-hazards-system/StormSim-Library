@@ -9,8 +9,8 @@ structure_type = config.struc_type;
 %
 use_timeseries = config.use_timeseries;
 % WLP & WHP Switches
-use_whp = config.mcs_create_whp;
-use_wlp = config.mcs_create_wlp;
+use_whp = config.create_whp;
+use_wlp = config.create_wlp;
 % Compute Forcing HC
 compute_forcing_hc = config.pros_compute_forcing_HC;
 % Project Name
