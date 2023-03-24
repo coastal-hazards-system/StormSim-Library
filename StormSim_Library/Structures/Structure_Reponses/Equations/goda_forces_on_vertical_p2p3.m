@@ -1,4 +1,4 @@
-function [p2dyn,p3dyn,pu]=goda_forces_on_vertical_p2p3(Hm0,Tp,design_scale,beta,hs,d,Rc,hw,p1dyn,rho_w,lambdas)
+function [p2dyn, p2sta, p2total, p3dyn, p3sta, p3total, pu]=goda_forces_on_vertical_p2p3(Hm0,Tp,design_scale,beta,hs,d,Rc,hw,p1dyn,rho_w,lambdas)
 
 %{ 
 This script computes Goda pressures, forces, and moments on a vertical wall
@@ -118,18 +118,26 @@ etaStar = 0.75*(1+cos(beta)).*H_design*lambda1;
 p2dyn = zeros(size(p1dyn));
 % Compute P2
 p2dyn(etaStar>Rc) = (1-Rc(etaStar>Rc)./etaStar(etaStar>Rc)).*p1dyn(etaStar>Rc); % Dynamic p2 at top of wall
-%     p2sta=max(gamma_w*-1*(hw-d),0); % hydrostatic p2 at top of wall
-%     p2total = p2dyn+p2sta; % total p2 at top of wall
+% p2sta=max(gamma_w*-1*(hw-d),0); % hydrostatic p2 at top of wall
+p2sta=gamma_w*-1*(hw-d); % hydrostatic p2 at top of wall
+p2sta(~isnan(p2sta)) = max(p2sta(~isnan(p2sta)),0);
+p2total = p2dyn+p2sta; % total p2 at top of wall
 % Compute P3
 p3dyn = alpha3.*p1dyn; % Dynamic p3 at ground/top of fill
-%     p3sta = max(gamma_w*d,0); % hydrostatic p3 at ground/top of fill
-%     p3total = p3dyn+p3sta; % total p3 at ground/top of fill
+p3sta = gamma_w*d; % hydrostatic p3 at ground/top of fill
+p3sta(~isnan(p3sta)) = max(p3sta(~isnan(p3sta)) ,0);
+p3total = p3dyn+p3sta; % total p3 at ground/top of fill
 % Compute uplift pressure at seaward edge
 pu = 0.5*(1+cos(beta)).*lambda3.*alpha1.*alpha3*gamma_w.*H_design;
 
 %% RESHAPE OUTPUT VARS 
 p2dyn = reshape(p2dyn,data_dims);
 p3dyn = reshape(p3dyn,data_dims);
+p2sta = reshape(p2sta,data_dims);
+p3sta = reshape(p3sta,data_dims);
+p2total = reshape(p2total,data_dims);
+p3total = reshape(p3total,data_dims);
+
 pu = reshape(pu,data_dims);
 end
 
