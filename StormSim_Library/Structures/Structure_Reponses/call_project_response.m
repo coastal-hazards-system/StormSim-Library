@@ -100,7 +100,7 @@ switch workflow
             % Create Project Forcing + HC Comparison Figure
             if compute_forcing_hc == 1 || workflow == 2
                 % Create Figures
-                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, [subDir 'RB1_Project_Forcing_Comparison']);
+                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 0, [subDir 'RB1_Project_Forcing_Comparison']);
             end
         end
         % RB3
@@ -130,7 +130,7 @@ switch workflow
             % Create Project Forcing + HC Comparison Figure
             if compute_forcing_hc == 1 || workflow == 2
                 % Create Figures
-                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, [subDir 'RB3_Project_Forcing_Comparison']);
+                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 1, [subDir 'RB3_Project_Forcing_Comparison']);
             end
         end
     case 3 % CSR

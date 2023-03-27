@@ -164,18 +164,16 @@ if use_timeseries == 1 && use_peaks == 1
     % WHP
     if WHP_switch
         % Grab Removed Storm Ids For WHP Dataset
-        storm2rm_WHP = removed_storms.WHP;
+        storm2rm_WHP = removed_storms.WHP       
         % Remove Bad storms
         storm.('Peaks').WHP(ismember(storm.('Peaks').WHP(:,5),...
             removed_storms.WHP),:) = [];
     end
-elseif use_timeseries == 0 && use_peaks == 1
-    % Maxima Dataset
-    % Grab Removed Storm Ids For Maxima Dataset
-    removed_storms.Maxima = storm2rm;
-    % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
+elseif use_timeseries == 1 && use_peaks == 0
+    % 
+    storm2rm = removed_storms.Maxima;
     % Remove Bad storms
-    storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
+    storm.('Timeseries')(ismember(cell2mat(storm.('Timeseries')(:,1)),...
         removed_storms.Maxima),:) = [];
 end
 % Adjust storm Type Dependant Fields
