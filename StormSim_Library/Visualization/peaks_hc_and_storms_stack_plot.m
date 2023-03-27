@@ -38,11 +38,11 @@ for ii = 1:length(storm_types)
             hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Timeseries')(resp_indx);
                         % Grab Forcing Data (Scatter)
             if workflow == 1 % StormSim: PROS
-                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Timeseries').('SWL_no_rep');
-                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Timeseries').('Hm0_no_rep');
+                sData.(storm_types{ii}).(pDatasets{jj}).SWL = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('SWL_no_rep'),'un',false));
+                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('Hm0_no_rep'),'un',false));
             else
-                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Timeseries').('SWL');
-                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Timeseries').('Hm0');
+                sData.(storm_types{ii}).(pDatasets{jj}).SWL = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('SWL'),'un',false));
+                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('Hm0'),'un',false));
             end
         end
     end
@@ -305,7 +305,7 @@ for ii = 1:length(pDatasets)
         end
     end
     % Save Figure
-    saveas(Figure0,[outpath '_StormSim_' pDatasets{ii} '_Project_Forcing_and_Hazard_Curve_Comparison'],'png');
+    saveas(Figure0,[outpath filesep 'StormSim_' pDatasets{ii} '_Project_Forcing_and_Hazard_Curve_Comparison'],'png');
     close all;
 end
 end
