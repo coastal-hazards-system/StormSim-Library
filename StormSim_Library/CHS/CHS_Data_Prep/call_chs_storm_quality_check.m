@@ -1,5 +1,5 @@
-function [config, storm, removed_storms, XC_Nyrs, XC_Nstm, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, storm_type,...
-    use_timeseries, WLP_switch, WHP_switch)
+function [config, storm, removed_storms, XC_Nyrs, XC_Nstm, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, storm_type)
+
 %{
     %% DESCRIPTION
         This function is responsible for grabbing and applying QA/QC
@@ -30,6 +30,10 @@ function [config, storm, removed_storms, XC_Nyrs, XC_Nstm, prob_mass] = call_chs
 %}
 
 %% GRAB INFORMATION FROM "config"
+use_timeseries = config.use_timeseries;
+use_peaks = config.use_peaks;
+WLP_switch = config.create_wlp;
+WHP_switch = config.create_whp;
 % CHS Region
 chs_region = config.region;
 % Save Point ID
@@ -48,35 +52,57 @@ switch storm_type
 end
 
 %% FORMAT CHS STORM DATA AND CREATE MAXIMA DATASET
-% Peaks Data
-peaks_indx = contains({CHS_Data.Filename},{'Peaks'});
-% Ectract Peaks Files
-peaks_data = CHS_Data(peaks_indx);
-% Find TC Filenames
-tc_indx = contains({peaks_data.Filename},storm_if);
-% Convert CHS Data Files
-peaks_data = peaks_data(tc_indx);
-% Find ADCIRC Filename
-ad_indx = contains({peaks_data.Filename},{'ADCIRC'});
-% Get Headers For Hm0,Tp,wDir
-[STWAVE_headers_location,Tp_special] = chs_wave_model_header_locator(peaks_data(ad_indx==0));
-% Determine If Wave Model Provides Water Elevation
-has_WaterElevation = sum(contains(peaks_data(ad_indx==0).Conv_Data.headers,{'Water Elevation','WaterElevation'}));
-% Extract "Strom_Table" Field
-peaks_data = [peaks_data.Conv_Data];
-% Format storm Data
-[storm.Maxima] = chs_peaks_formater(peaks_data(ad_indx==1).Table_StormData,...
-    peaks_data(ad_indx==0).Table_StormData, STWAVE_headers_location);
-% Convert From Tm to Tp (Special Case)
-if Tp_special == 1
-    % Convert Tm to Tp (Lake Ontario Case)
-    storm.Maxima(:,3) = storm.Maxima(:,3)*1.2;  % Remove This For Release, Need to inform user
+if use_peaks == 1
+    % Peaks Data
+    peaks_indx = contains({CHS_Data.Filename},{'Peaks'});
+    % Ectract Peaks Files
+    peaks_data = CHS_Data(peaks_indx);
+    % Find TC Filenames
+    tc_indx = contains({peaks_data.Filename},storm_if);
+    % Convert CHS Data Files
+    peaks_data = peaks_data(tc_indx);
+    % Find ADCIRC Filename
+    ad_indx = contains({peaks_data.Filename},{'ADCIRC'});
+    % Get Headers For Hm0,Tp,wDir
+    [STWAVE_headers_location,Tp_special] = chs_wave_model_header_locator(peaks_data(ad_indx==0));
+    % Determine If Wave Model Provides Water Elevation
+    has_WaterElevation = sum(contains(peaks_data(ad_indx==0).Conv_Data.headers,{'Water Elevation','WaterElevation'}));
+    % Extract "Strom_Table" Field
+    peaks_data = [peaks_data.Conv_Data];
+    % Format storm Data
+    [storm.('Peaks').Maxima] = chs_peaks_formater(peaks_data(ad_indx==1).Table_StormData,...
+        peaks_data(ad_indx==0).Table_StormData, STWAVE_headers_location);
+    % Convert From Tm to Tp (Special Case)
+    if Tp_special == 1
+        % Convert Tm to Tp (Lake Ontario Case)
+        storm.('Peaks').Maxima(:,3) = storm.('Peaks').Maxima(:,3)*1.2;  % Remove This For Release, Need to inform user
+    end
+    % Find NaN's In "Maxima" Dataset
+    storm2rm = unique([find(isnan(storm.('Peaks').Maxima(:,1)));find(isnan(storm.('Peaks').Maxima(:,2)));...
+        find(isnan(storm.('Peaks').Maxima(:,3)));find(isnan(storm.('Peaks').Maxima(:,4)))]);
+    % Convert From Row Index To storm ID
+    storm2rm =  storm.('Peaks').Maxima(storm2rm,5);
+else
+    % Peaks Data
+    peaks_indx = contains({CHS_Data.Filename},{'Timeseries'});
+    % Ectract Peaks Files
+    peaks_data = CHS_Data(peaks_indx);
+    % Find TC Filenames
+    tc_indx = contains({peaks_data.Filename},storm_if);
+    % Convert CHS Data Files
+    peaks_data = peaks_data(tc_indx);
+    % Find ADCIRC Filename
+    ad_indx = contains({peaks_data.Filename},{'ADCIRC'});
+    % Get Headers For Hm0,Tp,wDir
+    [STWAVE_headers_location,Tp_special] = chs_wave_model_header_locator(peaks_data(ad_indx==0));
+    % Determine If Wave Model Provides Water Elevation
+    has_WaterElevation = sum(contains(peaks_data(ad_indx==0).Conv_Data.headers,{'Water Elevation','WaterElevation'}));
+    % Extract "Strom_Table" Field
+    peaks_data = [peaks_data.Conv_Data];
+    % Define Storms To Remove
+    storm2rm = [];
+    removed_storms.Maxima = [];
 end
-% Find NaN's In "Maxima" Dataset
-storm2rm = unique([find(isnan(storm.Maxima(:,1)));find(isnan(storm.Maxima(:,2)));...
-    find(isnan(storm.Maxima(:,3)));find(isnan(storm.Maxima(:,4)))]);
-% Convert From Row Index To storm ID
-storm2rm =  storm.Maxima(storm2rm,5);
 
 %% APPLY TIMESERIES QA/QC AND GENERATE ALTERNATE DATASETS
 if use_timeseries == 1
@@ -90,60 +116,66 @@ if use_timeseries == 1
     ad_indx_timeseries = contains({timeseries_data(tc_indx).Filename},{'ADCIRC'});
     % Progress One Level
     timeseries_data = [timeseries_data(tc_indx).Conv_Data];
-    % Run QA/QC Using TimeSeries
-    [removed_storms.Maxima,...
-        storm.WLP,storm.WHP,...
-        removed_storms.WHP,...
-        removed_storms.WLP] = chs_timeseries_qaqc(storm2rm,...
-        peaks_data(ad_indx==1).Table_StormData, peaks_data(ad_indx==0).Table_StormData,...
-        timeseries_data(ad_indx_timeseries==1).Table_StormData, timeseries_data(ad_indx_timeseries==0).Table_StormData,...
-        has_WaterElevation, STWAVE_headers_location, WLP_switch, WHP_switch, Tp_special, storm_type);
+    if use_peaks == 1
+        % Run QA/QC Using TimeSeries
+        [removed_storms.Maxima,...
+            storm.('Peaks').WLP, storm.('Peaks').WHP,...
+            removed_storms.WHP,...
+            removed_storms.WLP] = chs_timeseries_qaqc(storm2rm,...
+            peaks_data(ad_indx==1).Table_StormData, peaks_data(ad_indx==0).Table_StormData,...
+            timeseries_data(ad_indx_timeseries==1).Table_StormData, timeseries_data(ad_indx_timeseries==0).Table_StormData,...
+            has_WaterElevation, STWAVE_headers_location, WLP_switch, WHP_switch, Tp_special, storm_type);
+    end
     % Display Progress Step
     if strcmp(storm_type,'XC')
-        disp([newline 'Matching CHS extratropical timeseries waves and water levels....']);
+        disp(['Matching CHS extratropical timeseries waves and water levels....']);
     else
-        disp([newline 'Matching CHS tropical timeseries waves and water levels....']);
+        disp(['Matching CHS tropical timeseries waves and water levels....']);
     end
     % Create ADCIRC-STWAVE TimeSeries Dataset
-    [storm.Timeseries] = chs_timeseries_formater(timeseries_data(ad_indx_timeseries==1).Table_StormData,...
+    [storm.Timeseries, ts_storm2rm] = chs_timeseries_formater(timeseries_data(ad_indx_timeseries==1).Table_StormData,...
         timeseries_data(ad_indx_timeseries==0).Table_StormData,...
         removed_storms.Maxima, has_WaterElevation, STWAVE_headers_location, Tp_special);
+    % Use Timeseries Indes If Peaks Are Missing
+    if use_peaks == 0
+        % Remove Bad Storms 
+        storm.Timeseries(ismember(cell2mat(storm.Timeseries(:,1)), ts_storm2rm),:) = [];
+        removed_storms.Maxima = ts_storm2rm;
+    end
 end
 
 %% REMOVE INVALID STORMS & ADJUST PARAMETERS ACCORDINGLY
-if use_timeseries == 1
+if use_timeseries == 1 && use_peaks == 1
     % Maxima Dataset
     % Grab Removed Storm Ids For Maxima Dataset
     storm2rm = unique([storm2rm;removed_storms.Maxima]);
     % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
-    storm.Maxima(ismember(storm.Maxima(:,5),...
+    storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
         removed_storms.Maxima),:) = [];
     % WLP
     if WLP_switch
         % Grab Removed Storm Ids For WLP Dataset
         storm2rm_WLP = removed_storms.WLP;
         % Remove Bad storms
-        storm.WLP(ismember(storm.WLP(:,5),...
+        storm.('Peaks').WLP(ismember(storm.('Peaks').WLP(:,5),...
             removed_storms.WLP),:) = [];
     end
     % WHP
     if WHP_switch
         % Grab Removed Storm Ids For WHP Dataset
         storm2rm_WHP = removed_storms.WHP;
-        % Add Structure Field To Prob Masses
-
         % Remove Bad storms
-        storm.WHP(ismember(storm.WHP(:,5),...
+        storm.('Peaks').WHP(ismember(storm.('Peaks').WHP(:,5),...
             removed_storms.WHP),:) = [];
     end
-else
+elseif use_timeseries == 0 && use_peaks == 1
     % Maxima Dataset
     % Grab Removed Storm Ids For Maxima Dataset
     removed_storms.Maxima = storm2rm;
     % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
-    storm.Maxima(ismember(storm.Maxima(:,5),...
+    storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
         removed_storms.Maxima),:) = [];
 end
 % Adjust storm Type Dependant Fields
@@ -159,18 +191,34 @@ switch storm_type
         %
         prob_mass.smpl1(ismember(prob_mass.smpl1,removed_storms.Maxima)) = [];
         prob_mass.smpl0(ismember(prob_mass.smpl0,removed_storms.Maxima)) = [];
-
         % Define EMpty Var For Outputs
         XC_Nyrs = [];XC_Nstm = [];
     case 'XC' % Extratropical storms
-        % Get TimeStamp Vector
-        tVector = cellstr(num2str(peaks_data(ad_indx==1).Table_StormData.('yyyymmddHHMM')));
-        % Check For NaNs
-        hIndx = sum(cell2mat(cellfun(@(x) ~strcmp(x,{'NaN','         NaN'}),tVector,'UniformOutput',false))==0,2)==0;
-        % Get Most Recent storm Time Stamp
-        [MaxYR,~,~,~,~,~] = datevec(max(datenum(tVector(hIndx),'yyyymmddHHMM')));
-        % Get Oldest storm Time Stamp
-        [MinYR,~,~,~,~,~] = datevec(min(datenum(tVector(hIndx),'yyyymmddHHMM')));
+        % Determine Number Of XCs & Years 
+        if use_peaks == 1
+            % Get TimeStamp Vector
+            tVector = peaks_data(ad_indx==1).Table_StormData.('yyyymmddHHMM');
+            % Check For NaNs
+            hIndx = sum(cell2mat(cellfun(@(x) ~strcmp(x,{'NaN','         NaN'}),tVector,'UniformOutput',false))==0,2)==0;
+            % Get Most Recent storm Time Stamp
+            [MaxYR,~,~,~,~,~] = datevec(max(datenum(tVector(hIndx),'yyyymmddHHMM')));
+            % Get Oldest storm Time Stamp
+            [MinYR,~,~,~,~,~] = datevec(min(datenum(tVector(hIndx),'yyyymmddHHMM')));
+        else
+            % Get TimeStamp Vector
+            tVector = peaks_data(ad_indx==1).Table_StormData.('yyyymmddHHMM');
+            % Check For NaNs
+            hIndx = cellfun(@(x) ~contains(cellstr(x),{'NaN','         NaN'}),tVector,'un',false);
+            % Get Min/Max Of Hydrographs
+            for kk = 1:length(tVector)
+                [MinYR(kk),~,~,~,~,~] = datevec(min(datenum(tVector{kk}(hIndx{kk},:),'yyyymmddHHMM')));
+                [MaxYR(kk),~,~,~,~,~] = datevec(max(datenum(tVector{kk}(hIndx{kk},:),'yyyymmddHHMM')));
+            end
+            % Get Most Recent storm Time Stamp
+            MaxYR = max(MaxYR);
+            % Get Oldest storm Time Stamp
+            MinYR = min(MinYR);
+        end
         % Compute Number Of Years
         XC_Nyrs=MaxYR-MinYR+1;
         % Number Of storms
@@ -208,7 +256,12 @@ if bias_tgr == 1
                 storm.('Timeseries'){kk,2}(:,2) = f_u(storm.('Timeseries'){kk,2}(:,2));
             end
         else
-            eval(['storm.' sNames{ii} '(:,1) = f_u(storm.' sNames{ii} '(:,1));']);
+            % Get Level_2 Fieldnames 
+            level_2 = fieldnames(storm.(sNames{ii}));
+            % Apply Bias Correction
+            for kk = 1:length(level_2)
+                storm.(sNames{ii}).(level_2{kk})(:,1) = f_u(storm.(sNames{ii}).(level_2{kk})(:,1));
+            end
         end
     end
 end

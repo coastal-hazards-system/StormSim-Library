@@ -4,8 +4,9 @@ function project_forcing = rb_forcing_formater(config, sType, storm, prob_mass)
 % Define PROS Analysis Type (RB1, RB3)
 % aType = config.pros_mode;
 use_timeseries = config.use_timeseries;
+use_peaks = config.use_peaks;
 workflow = config.workflow;
-
+storm_duration = config.storm_duration;
 %% GRAB INFORMATION FROM "prob_mass"
 % TC Storm Probability Masses
 if strcmp(sType,'TC')
@@ -31,21 +32,24 @@ end
 %% RESHAPE FORCING PARAMETERS FOR RB1 ANALYSIS
 % Disp
 disp(['Reshaping ' sType ' forcing data for response base analysis....']);
-% Define Filednames In Storm
-fnames = fieldnames(storm);
-% Remove Unwanted Fields
-fnames = fnames(contains(fnames,{'Maxima','WLP','WHP'}));
-% Reshape Peaks Data
-for ii = 1:length(fnames)
-    % Reshape Peaks Data To Be nStorms * normal_discretization
-    project_forcing.('Peaks').(fnames{ii}).SWL = repmat(storm.(fnames{ii})(:,1),1,RandNorm); % SWL
-    project_forcing.('Peaks').(fnames{ii}).Hm0 = repmat(storm.(fnames{ii})(:,2),1,RandNorm); % Hm0
-    project_forcing.('Peaks').(fnames{ii}).Tp = repmat(storm.(fnames{ii})(:,3),1,RandNorm); % Tp
-    % Add No Replicate Fields For Forcing HC Computations
-    if workflow == 1
-        project_forcing.('Peaks').(fnames{ii}).SWL_no_rep = storm.(fnames{ii})(:,1); % SWL
-        project_forcing.('Peaks').(fnames{ii}).Hm0_no_rep = storm.(fnames{ii})(:,2); % Hm0
-        project_forcing.('Peaks').(fnames{ii}).Tp_no_rep = storm.(fnames{ii})(:,3); % Tp
+if use_peaks == 1
+    % Define Filednames In Storm
+    fnames = fieldnames(storm.('Peaks'));
+    % Remove Unwanted Fields
+    fnames = fnames(contains(fnames,{'Maxima','WLP','WHP'}));
+    % Reshape Peaks Data
+    for ii = 1:length(fnames)
+        % Reshape Peaks Data To Be nStorms * normal_discretization
+        project_forcing.('Peaks').(fnames{ii}).SWL = repmat(storm.('Peaks').(fnames{ii})(:,1),1,RandNorm); % SWL
+        project_forcing.('Peaks').(fnames{ii}).Hm0 = repmat(storm.('Peaks').(fnames{ii})(:,2),1,RandNorm); % Hm0
+        project_forcing.('Peaks').(fnames{ii}).Tp = repmat(storm.('Peaks').(fnames{ii})(:,3),1,RandNorm); % Tp
+
+        % Add No Replicate Fields For Forcing HC Computations
+        if workflow == 1
+            project_forcing.('Peaks').(fnames{ii}).SWL_no_rep = storm.('Peaks').(fnames{ii})(:,1); % SWL
+            project_forcing.('Peaks').(fnames{ii}).Hm0_no_rep = storm.('Peaks').(fnames{ii})(:,2); % Hm0
+            project_forcing.('Peaks').(fnames{ii}).Tp_no_rep = storm.('Peaks').(fnames{ii})(:,3); % Tp
+        end
     end
 end
 % Reshape Storm Probability Masses To Be nStorms * normal_discretization

@@ -4,7 +4,7 @@ stypes = fieldnames(storm);
 % For Each Storm Type
 for ii = 1:length(stypes)
     % Grab Peaks Dataset
-    dPeaks = storm.(stypes{ii}).('Maxima'); % [SWL Hm0 Tp wDir stmID timeStamp]
+    dPeaks = storm.(stypes{ii}).('Peaks').('Maxima'); % [SWL Hm0 Tp wDir stmID timeStamp]
     % For Each Storm ID
     for kk = 1:length(dPeaks(:,1))
         % Find Storm ID Entry Row

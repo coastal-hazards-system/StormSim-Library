@@ -80,7 +80,8 @@ function [storm, CHS_Data, prob_mass, config] = call_chs_data_formater(config)
 chs_files_2_convert = config.chs_files_2_convert(:,2);
 % Define CHS Paths
 chs_files_2_convert_paths = config.chs_files_2_convert_path;
-
+% Use Peaks Switch
+use_peaks = config.use_peaks;
 % Use Timeseries Switch
 use_timeseries = config.use_timeseries;
 % Storm Sampling
@@ -93,10 +94,16 @@ whp_switch = config.create_whp;
 project_name = config.project_name;
 % Transect Id
 struc_id = config.struc_id;
-% Define Case  Name 
+% Define Case  Name
 case_name = config.case_name;
 
 %% FILTER OUT FILES (IF NEEDED) BASED ON USER INPUT
+% Filter Out Peaks Files (If Any)
+if use_peaks == 0
+    % Remove Peaks
+    chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,{'Peaks'}));
+    chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,{'Peaks'}));
+end
 % Filter Out Timeseries Files (If Any)
 if use_timeseries == 0
     % Remove Timeseries
@@ -110,27 +117,30 @@ switch storm_sampling
         chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'XC','XH'}));
         chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'XC','XH'}));
         % Keep Track Of File Requirement
-        if use_timeseries == 1
-            min_file_req = 4;
-        else
-            min_file_req = 2;
+        switch sum([use_timeseries,use_peaks])
+            case 1 % Peaks or Timeseries
+                min_file_req = 2;
+            case 2 % Peaks And Timeseries
+                min_file_req = 4;
         end
     case 'TC'
         % Remove XCs
         chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'TC','TS'}));
         chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'TC','TS'}));
         % Keep Track Of File Requirement
-        if use_timeseries == 1
-            min_file_req = 4;
-        else
-            min_file_req = 2;
+        switch sum([use_timeseries,use_peaks])
+            case 1 % Peaks or Timeseries
+                min_file_req = 2;
+            case 2 % Peaks And Timeseries
+                min_file_req = 4;
         end
     case 'CC'
         % Keep Track Of File Requirement
-        if use_timeseries == 1
-            min_file_req = 8;
-        else
-            min_file_req = 4;
+        switch sum([use_timeseries,use_peaks])
+            case 1 % Peaks or Timeseries
+                min_file_req = 4;
+            case 2 % Peaks And Timeseries
+                min_file_req = 8;
         end
 end
 
@@ -185,11 +195,6 @@ end
         Exported .mat file naming convetion is tied to ADCIRC file region
         and save point ID. 
 %}
-% Remove Timeseries Files If Needed
-if use_timeseries == 0
-    chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'Timeseries'));
-    chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'Timeseries'));
-end
 % Remove Unwanted Storm Types
 if strcmp(storm_sampling,'XC')
     chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'TC'));
@@ -219,8 +224,7 @@ if contains(config.storm_sampling,{'TC','CC','TS'})
         prob_mass.TC_Freq, prob_mass.dist, prob_mass.TotalFreq,...
         prob_mass.smpl0, prob_mass.smpl1] = csh_probability_mass_loader(config.region,config.sp_ID);
     % Format And Inspect Storm Peaks Files
-    [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC',...
-        use_timeseries, wlp_switch, whp_switch);
+    [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
 end
 
 %% FORMAT CHS EXRTATROPICALS CYCLONES DATA
@@ -230,15 +234,14 @@ end
 %}
 if contains(config.storm_sampling,{'XC','CC'})
     % Format And Inspect Storm Peaks Files
-    [config, storm.('XC'), storm.('XC').removed_storms, config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC',...
-        use_timeseries, wlp_switch, whp_switch);
-    % Add Fields To Storm 
+    [config, storm.('XC'), storm.('XC').removed_storms, config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC');
+    % Add Fields To Storm
     storm.('XC').Nyrs_XC = config.Nyrs_XC;
     storm.('XC').Nstm_XC = config.Nstm_XC;
 end
 
 %% TIMESERIES SWL PEAK REPLACER
-if use_timeseries == 1
+if use_timeseries == 1 && use_peaks == 1
     storm = chs_timeseries_peak_replacer(storm);
 end
 

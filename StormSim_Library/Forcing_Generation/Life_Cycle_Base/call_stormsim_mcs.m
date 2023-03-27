@@ -78,13 +78,15 @@ number_of_life_cyles = config.mcs_nLC;
 % Simulation Length
 simulation_years = config.mcs_nYears;
 % Create Water Level Priority Switch
-wlp_switch = config.mcs_create_wlp;
+wlp_switch = config.create_wlp;
 % Create Wave Height Priority Switch
-whp_switch = config.mcs_create_whp;
+whp_switch = config.create_whp;
 % Define Number Of Extratropical Storms In Data
 XC_Nstm = config.Nstm_XC;
 % Define Number of Years IN Extratropical Data
 XC_Nyrs = config.Nyrs_XC;
+% Define MCS Sample Method
+sample_method = config.mcs_sampling_mode;
 
 %% DEFINE ADDITIONAL VARIABLES
 % Initialize Life Cycle Storage Vars
@@ -125,7 +127,7 @@ for lc=1:number_of_life_cyles
             project_forcing.('XC').Peaks.Maxima(lc,1).LCNUM,...
             project_forcing.('XC').Peaks.WLP(lc,1).LCNUM,...
             project_forcing.('XC').Peaks.WHP(lc,1).LCNUM] = ...
-            mcs_sample_xc(storm, simulation_years, XC_Nstm, XC_Nyrs, wlp_switch, whp_switch);
+            mcs_sample_xc(storm, simulation_years, XC_Nstm, XC_Nyrs, wlp_switch, whp_switch, sample_method);
     end
 
     %% MONTE CARLO SIMULATION - TROPICAL CYCLONES
@@ -135,7 +137,7 @@ for lc=1:number_of_life_cyles
             project_forcing.('TC').Peaks.TC_iclass(lc,1).LCNUM,...
             project_forcing.('TC').Peaks.WLP(lc,1).LCNUM,...
             project_forcing.('TC').Peaks.WHP(lc,1).LCNUM] = ...
-            mcs_sample_tc(storm, simulation_years, prob_mass, wlp_switch, whp_switch);
+            mcs_sample_tc(storm, simulation_years, prob_mass, wlp_switch, whp_switch, sample_method);
     end
 
     %% COMBINE TROPICAL AND EXTRATROPICAL SAMPLED STORMS

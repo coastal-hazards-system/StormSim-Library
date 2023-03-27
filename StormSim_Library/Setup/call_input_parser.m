@@ -159,6 +159,7 @@ else % Manual Files
     % Need to implement checks to make sure files are h5s and CHS
     % native.
 end
+
 %% Check If This Is Fresh Run Or New Case
 % Project Name
 project_name = config.project_name;
@@ -187,6 +188,14 @@ if ~isempty(dummy) % New Case Run
     end
 else
     file2look = [];
+end
+
+%% FAILSAFES
+% WLP, WHP Require Peaks & Timeseries Files
+if sum([config.use_peaks,config.use_timeseries])~=2
+    % Set WLP, WHP To Off
+    config.create_wlp = 0;
+    config.create_whp = 0;
 end
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment

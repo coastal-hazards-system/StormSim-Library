@@ -1,7 +1,7 @@
 function [INDEX_XC_TS,LC_MCSimOUT_XC,LC_MCSimOUT_XC_WLP,LC_MCSimOUT_XC_WHP] = ...
-        mcs_sample_xc(storm,simulation_years,XC_Nstm,XC_Nyrs,WLP_switch,WHP_switch)
+    mcs_sample_xc(storm, simulation_years, XC_Nstm, XC_Nyrs, WLP_switch, WHP_switch, sample_method)
 
-    %{
+%{
 LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
     Engineer Research and Development Center Coastal and Hydraulics Laboratory
@@ -113,182 +113,93 @@ RELEVANT PUBLICATIONS:
         (01) Gonzalez, Victor M. et. al. 2020. "Alabama Barrier Island Restauration Assesment life-cycle
                 structure response modeling." ERDC/CHL TR-20-5. Vicksburg, MS: US Army Engineer Research
                 and Development Center.
-    %}
+%}
 
-        %% DEFINE INPUTS
-    % Simulation flag, internal. Stops two 'while' loops below to ensure sampled
-    % storms match sampling rate.
-    if simulation_years == 1e5
-        SIM_Flag = 1e-4;
-    else
-        SIM_Flag = 10^-(log10(simulation_years));
-    end
-    % Maxima Dataset
-    storm_peaks = storm.('XC').('Maxima');
-    % WLP Dataset
+%% DEFINE INPUTS
+% Simulation flag, internal. Stops two 'while' loops below to ensure sampled
+% storms match sampling rate.
+if simulation_years == 1e5
+    SIM_Flag = 1e-4;
+else
+    SIM_Flag = 10^-(log10(simulation_years));
+end
+% Maxima Dataset
+storm_peaks = storm.('XC').('Maxima');
+% WLP Dataset
+if WLP_switch == 1
     storm_wlp_peaks = storm.('XC').('WLP');
-    % WHp Datasets
+else
+    storm_wlp_peaks = [];
+end
+% WHP Datasets
+if WHP_switch == 1
     storm_whp_peaks = storm.('XC').('WHP');
-    
-    %% POISSON PROCESS
-    % Rate of extratropical cyclones (storms/year)
-    XC_lambda = XC_Nstm/XC_Nyrs;
-    % Make Distribuition Object
-    XC_pd = makedist('Poisson','lambda',XC_lambda);
-    % Initializing While Loop Exit Trigger
-    XC_EPY=0;
-    % Insert Comment
-    while abs(XC_EPY-XC_lambda)>SIM_Flag %cannot be higher than Nsimulation_years
-        XC_MCS = random(XC_pd,[simulation_years,1]);%sampled number of storms based on Poisson distribution
-        XC_EPY = sum(XC_MCS)/simulation_years;
-    end
+else
+    storm_whp_peaks = [];
+end
 
-    %% SAMPLE EXTRATROPICAL STORMS
-    n=1; clear SimOUT_XC
-    for j = 1:simulation_years
-        if (XC_MCS(j,1)>0)
-            m=1;
-            for k = 1:XC_MCS(j,1)
-                % Storm Year
-                SimOUT_XC(n,1) = j;
-                % Storm Type (0 = Extratropical)
-                SimOUT_XC(n,2) = 0;
-                % Number of Storm In Storm Year
-                SimOUT_XC(n,3) = m;
-                % Sample Random Storm
-                XC_INDEX(n,1) = randsample(storm_peaks(:,5),1);
-                % Increment Storm
-                n=n+1;
-                % Increment Number Of Storm In Storm Year
-                m=m+1;
-            end%for k
-        end%if
-    end%for j
+%% POISSON PROCESS
+% Rate of extratropical cyclones (storms/year)
+XC_lambda = XC_Nstm/XC_Nyrs;
+% Make Distribuition Object
+XC_pd = makedist('Poisson','lambda',XC_lambda);
+% Initializing While Loop Exit Trigger
+XC_EPY=0;
+% Insert Comment
+while abs(XC_EPY-XC_lambda)>SIM_Flag %cannot be higher than Nsimulation_years
+    XC_MCS = random(XC_pd,[simulation_years,1]);%sampled number of storms based on Poisson distribution
+    XC_EPY = sum(XC_MCS)/simulation_years;
+end
 
-    %% SAMPLE EXTRATROPICAL STORM PARAMETERS FROM GAUSSIAN COPULA
-    %% COMPUTE GAUSSIAN COPULA STATISTICAL PARAMETERS
-    % Returns a probability density estimate, f, for each sample data column
-    for k = 1:4
-        % Maximums
-        X(:,k) = ksdensity(storm_peaks(:,k),storm_peaks(:,k),'function','cdf');
-        if WLP_switch == 1
-            % Water Level Priority
-            X_WLP(:,k) = ksdensity(storm_wlp_peaks(:,k),storm_wlp_peaks(:,k),'function','cdf');
-        end
-        if WHP_switch == 1
-            % Wave Height Priority
-            X_WHP(:,k) = ksdensity(storm_whp_peaks(:,k),storm_whp_peaks(:,k),'function','cdf');
-        end
-    end
-
-    % Compute Tau
-    Tau = corr(X,'type','Kendall'); % Maximums
-    % Compute matrix of linear correlations (Rho)
-    Rho = copulaparam('Gaussian',Tau,'type','Kendall'); % Maximums
-    % Compute random values; where 'r' = normal probabilities (pdf)
-    %sample random values from Gaussian copula
-    r = copularnd('Gaussian',Rho,size(SimOUT_XC,1)); % Maximums
-    %%% WLP
-    if WLP_switch == 1
-        % Compute Tau
-        Tau_WLP = corr(X_WLP,'type','Kendall'); % Water Level Priority
-        % Compute matrix of linear correlations (Rho)
-        Rho_WLP = copulaparam('Gaussian',Tau_WLP,'type','Kendall'); % Water Level Priority
-        % Compute random values; where 'r' = normal probabilities (pdf)
-        %sample random values from Gaussian copula
-        r_WLP = copularnd('Gaussian',Rho_WLP,size(SimOUT_XC,1)); % Water Level Priority
-    end
-    %%% WHP
-    if WHP_switch == 1
-        % Compute Tau
-        Tau_WHP = corr(X_WHP,'type','Kendall'); % Wave Height Priority
-        % Compute matrix of linear correlations (Rho)
-        Rho_WHP = copulaparam('Gaussian',Tau_WHP,'type','Kendall'); % Wave Height Priority
-        % Compute random values; where 'r' = normal probabilities (pdf)
-        %sample random values from Gaussian copula
-        r_WHP = copularnd('Gaussian',Rho_WHP,size(SimOUT_XC,1)); % Wave Height Priority
-    end
-
-
-
-
-    % Computes 'inverse cumulative probability' (real values)
-    for k = 1:4
-        % Maximums
-        Y(:,k) = ksdensity(storm_peaks(:,k),r(:,k),'function','icdf');
-        if WLP_switch == 1
-            % Water Level Priority
-            Y_WLP(:,k) = ksdensity(storm_wlp_peaks(:,k),r_WLP(:,k),'function','icdf');
-        end
-        if WHP_switch == 1
-            % Wave Height Priority
-            Y_WHP(:,k) = ksdensity(storm_whp_peaks(:,k),r_WHP(:,k),'function','icdf');
-        end
-    end
-
-    %% SAMPLE STORM PARAMETERS FROM GAUSSIAN COPULA - WORST CASE SCENARIO
-    % Compute Water Level
-    Y(:,1) = Y(:,1)*nanmean(storm_peaks(:,1))/nanmean(Y(:,1));
-    % Compute Wave Height
-    Y(:,2) = Y(:,2)*nanmean(storm_peaks(:,2))/nanmean(Y(:,2));
-    % Compute Wave Period
-    Y(:,3) = Y(:,3)*nanmean(storm_peaks(:,3))/nanmean(Y(:,3));
-    % Compute Wave Direction
-    Y(:,4) = Y(:,4)*nanstd(storm_peaks(:,4))/nanstd(Y(:,4));
-    % Assign Sampled Extratropical Storm Indexes
-    Y(:,5)= XC_INDEX;
-    % Cap sampled waves to positive values
-    Y(Y(:,2)<0.05,2)=0.05;
-
-    %% SAMPLE STORM PARAMETERS FROM GAUSSIAN COPULA - WATER LEVEL PRIORITY
-    if WLP_switch ==  1
-        % Compute Water Level
-        Y_WLP(:,1) =Y_WLP(:,1)*nanmean(storm_wlp_peaks(:,1))/nanmean(Y_WLP(:,1));
-        % Compute Wave Height
-        Y_WLP(:,2) =Y_WLP(:,2)*nanmean(storm_wlp_peaks(:,2))/nanmean(Y_WLP(:,2));
-        % Compute Wave Period
-        Y_WLP(:,3) =Y_WLP(:,3)*nanmean(storm_wlp_peaks(:,3))/nanmean(Y_WLP(:,3));
-        % Compute Wave Direction
-        Y_WLP(:,4) =Y_WLP(:,4)*nanstd(storm_wlp_peaks(:,4))/nanstd(Y_WLP(:,4));
-        % Assign Sampled Extratropical Storm Indexes
-        Y_WLP(:,5)= XC_INDEX;
-        % Cap sampled waves to positive values
-        Y_WLP(Y_WLP(:,2)<0.05,2)=0.05;
-    end
-    %% SAMPLE STORM PARAMETERS FROM GAUSSIAN COPULA - WAVE HEIGHT PRIORITY
-    if WHP_switch == 1
-        % Compute Water Level
-        Y_WHP(:,1) =Y_WHP(:,1)*nanmean(storm_whp_peaks(:,1))/nanmean(Y_WHP(:,1));
-        % Compute Wave Height
-        Y_WHP(:,2) =Y_WHP(:,2)*nanmean(storm_whp_peaks(:,2))/nanmean(Y_WHP(:,2));
-        % Compute Wave Period
-        Y_WHP(:,3) =Y_WHP(:,3)*nanmean(storm_whp_peaks(:,3))/nanmean(Y_WHP(:,3));
-        % Compute Wave Direction
-        Y_WHP(:,4) =Y_WHP(:,4)*nanstd(storm_whp_peaks(:,4))/nanstd(Y_WHP(:,4));
-        % Assign Sampled Extratropical Storm Indexes
-        Y_WHP(:,5)= XC_INDEX;
-        % Cap sampled waves to positive values
-        Y_WHP(Y_WHP(:,2)<0.05,2)=0.05;
-    end
-    %% STORE SAMPLED EXTRATROPICAL STORMS
-    % Monte Carlo Simulation Outputs (Sample Extratropical Storms Peaks)
-    MCSimOUT_XC = [SimOUT_XC(:,1:3),Y]; % Maximums
-    % Sampled Storm Indexes
-    INDEX_XC_TS = [SimOUT_XC(:,1:3),XC_INDEX];
+%% BUILD POT SAMPLE LIST TO SAMPLE FROM (HISTORICALS)
+n=1; clear SimOUT_XC
+for j = 1:simulation_years
+    if (XC_MCS(j,1)>0)
+        m=1;
+        for k = 1:XC_MCS(j,1)
+            % Storm Year
+            SimOUT_XC(n,1) = j;
+            % Storm Type (0 = Extratropical)
+            SimOUT_XC(n,2) = 0;
+            % Number of Storm In Storm Year
+            SimOUT_XC(n,3) = m;
+            % Sample Random Storm
+            XC_INDEX(n,1) = randsample(storm_peaks(:,5),1);
+            % Increment Storm
+            n=n+1;
+            % Increment Number Of Storm In Storm Year
+            m=m+1;
+        end%for k
+    end%if
+end%for j
+% 
+switch sample_method
+    case 0
+        % Grab From Historicals
+        [Y, Y_WLP, Y_WHP] = historical_sampler(storm_peaks, storm_wlp_peaks, storm_whp_peaks, XC_INDEX);
+    case 1 % Probabilistic
+        % Call Copula Sampler
+        [Y, Y_WLP, Y_WHP] = copula_sampler(storm_peaks, storm_wlp_peaks, storm_whp_peaks, XC_INDEX);
+end
+%% STORE SAMPLED EXTRATROPICAL STORMS
+% Monte Carlo Simulation Outputs (Sample Extratropical Storms Peaks)
+MCSimOUT_XC = [SimOUT_XC(:,1:3),Y]; % Maximums
+% Sampled Storm Indexes
+INDEX_XC_TS = [SimOUT_XC(:,1:3),XC_INDEX];
+% Assign Outputs To Life Cycle Data Structure
+LC_MCSimOUT_XC=MCSimOUT_XC; % Maximums
+if WLP_switch == 1
+    MCSimOUT_XC_WLP = [SimOUT_XC(:,1:3),Y_WLP]; % Water Level Priority
     % Assign Outputs To Life Cycle Data Structure
-    LC_MCSimOUT_XC=MCSimOUT_XC; % Maximums
-    if WLP_switch == 1
-        MCSimOUT_XC_WLP = [SimOUT_XC(:,1:3),Y_WLP]; % Water Level Priority
-        % Assign Outputs To Life Cycle Data Structure
-        LC_MCSimOUT_XC_WLP=MCSimOUT_XC_WLP; % Water Level Priority
-    else
-        LC_MCSimOUT_XC_WLP = [];
-    end
-    if WHP_switch == 1
-        MCSimOUT_XC_WHP = [SimOUT_XC(:,1:3),Y_WHP]; % Wave Height Priority
-        % Assign Outputs To Life Cycle Data Structure
-        LC_MCSimOUT_XC_WHP=MCSimOUT_XC_WHP; % Wave Height Priority
-    else
-        LC_MCSimOUT_XC_WHP = [];
-    end
+    LC_MCSimOUT_XC_WLP=MCSimOUT_XC_WLP; % Water Level Priority
+else
+    LC_MCSimOUT_XC_WLP = [];
+end
+if WHP_switch == 1
+    MCSimOUT_XC_WHP = [SimOUT_XC(:,1:3),Y_WHP]; % Wave Height Priority
+    % Assign Outputs To Life Cycle Data Structure
+    LC_MCSimOUT_XC_WHP=MCSimOUT_XC_WHP; % Wave Height Priority
+else
+    LC_MCSimOUT_XC_WHP = [];
+end
 end

@@ -49,5 +49,5 @@ function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_heade
             % Assign NaN's If Needed
             Storm(sum(Storm(:,2:4)==-99999,2)>=1,2:4) = NaN(1,1);
             Storm(sum(Storm(:,2:4)==0,2)>=1,2:4) = NaN(1,1);
-            Storm(:,6) = datenum(num2str(swl_peaks_table.("yyyymmddHHMM")),"yyyymmddHHMM");
+            Storm(:,6) = datenum(swl_peaks_table.("yyyymmddHHMM"),"yyyymmddHHMM");
         end

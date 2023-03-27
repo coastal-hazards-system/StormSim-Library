@@ -399,7 +399,12 @@
                             for DS = 1:length(GDatasets)
                                 % Datasets
                                 try
-                                    DScat(stm,DS) = {h5read(Filein,[info.Groups(stm).Name,'/',GDatasets(DS).Name])};
+                                    if strcmp(GDatasets(DS).Name,{'yyyymmddHHMM'})
+                                        DScat(stm,DS) = {cell2mat(cellfun(@(x) num2str(x),...
+                                            num2cell(h5read(Filein,[info.Groups(stm).Name,'/',GDatasets(DS).Name])), 'un', false))};
+                                    else
+                                        DScat(stm,DS) = {h5read(Filein,[info.Groups(stm).Name,'/',GDatasets(DS).Name])};
+                                    end
                                 catch % Missing Data Filler
                                     DScat(stm,DS) = {'NaN'};
                                 end

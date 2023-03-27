@@ -87,8 +87,8 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
             wlData.("yyyymmddHHMM") = swl_timeseries.('yyyymmddHHMM'){eIndx,1};
             wlData = struct2table(wlData);
             % Correct Date Format In Storm Data
-            wlData.yyyymmddHHMM = num2str(wlData.yyyymmddHHMM);
-            wData.yyyymmddHHMM = num2str(wData.yyyymmddHHMM);
+            wlData.yyyymmddHHMM = wlData.yyyymmddHHMM;
+            wData.yyyymmddHHMM = wData.yyyymmddHHMM;
             % Get STWAVE Time Vector
             tvector = datenum(wData.yyyymmddHHMM,'yyyymmddHHMM');
             % Get Beggining Of Time Window
@@ -148,7 +148,7 @@ This means the values of the peak are more accurate.
                 try
                     % ADCIRC Peak Value (From Peaks File)
                     if sum(eIndx)~=0
-                        helperVar = datenum(num2str(swl_peaks.('yyyymmddHHMM')(eIndx,1)),'yyyymmddHHMM');
+                        helperVar = datenum(swl_peaks.('yyyymmddHHMM')(eIndx,1),'yyyymmddHHMM');
                         % Find STWAVE Timeseries Data Points Withing The +/- Time Window (tdelta)
                         wIndx = find(abs(tvector-helperVar)<=tdelta);
                         %                     if ~isempty(wIndx) % ADCIRC Peak Is Outside STWAVE Temporal Range
@@ -212,13 +212,13 @@ This means the values of the peak are more accurate.
                         % Grab Data
                         WHP_matrix(stm,:) = [hm0_peaks.('Water Elevation')(eIndx,1), hm0_peaks.(STWAVE_headers_location.Hm0)(eIndx,1),...
                             hm0_peaks.(STWAVE_headers_location.Tp)(eIndx,1), hm0_peaks.(STWAVE_headers_location.wDir)(eIndx,1),...
-                            str2double(hm0_peaks.("Storm ID")(eIndx,1)), datenum(num2str(hm0_peaks.('yyyymmddHHMM')(eIndx,1)),'yyyymmddHHMM')];
+                            str2double(hm0_peaks.("Storm ID")(eIndx,1)), datenum(hm0_peaks.('yyyymmddHHMM')(eIndx,1),'yyyymmddHHMM')];
                     catch
                         try
                             % Grab Data
                             WHP_matrix(stm,:) = [hm0_peaks.('WaterElevation')(eIndx,1), hm0_peaks.(STWAVE_headers_location.Hm0)(eIndx,1),...
                                 hm0_peaks.(STWAVE_headers_location.Tp)(eIndx,1), hm0_peaks.(STWAVE_headers_location.wDir)(eIndx,1),...
-                                str2double(hm0_peaks.("Storm ID")(eIndx,1)), datenum(num2str(hm0_peaks.('yyyymmddHHMM')(eIndx,1)),'yyyymmddHHMM')];
+                                str2double(hm0_peaks.("Storm ID")(eIndx,1)), datenum(hm0_peaks.('yyyymmddHHMM')(eIndx,1),'yyyymmddHHMM')];
                         catch % Flag As Bad Storm
                             WHP_matrix(stm,:) = [-99999, -99999, -99999, -99999, stmID(stm), -99999];
                         end
@@ -228,7 +228,7 @@ This means the values of the peak are more accurate.
                     eIndx = str2double(hm0_peaks.("Storm ID"))==stmID(stm);                  
                     if sum(eIndx)~=0 % try
                         % ADCIRC Peak Value (From Peaks File)
-                        helperVar = datenum(num2str(hm0_peaks.('yyyymmddHHMM')(eIndx,1)),'yyyymmddHHMM');
+                        helperVar = datenum(hm0_peaks.('yyyymmddHHMM')(eIndx,1),'yyyymmddHHMM');
                         % Find STWAVE Timeseries Data Points Withing The +/- Time Window (tdelta)
                         wIndx = find(abs(ADCIRC_tvector-helperVar)<=tdelta);
                         % Determine The CLoses Timestamp
@@ -263,7 +263,7 @@ This means the values of the peak are more accurate.
             end
             clearvars('wData','wlData');
         end % end stm
-%         disp(newline);
+        disp('');
         
         %% ADD INVALID STORMS TO STORM REMOVAL INDEX
         % Storms To Remove From Maxima Dataset

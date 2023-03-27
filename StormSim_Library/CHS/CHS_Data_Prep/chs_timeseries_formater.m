@@ -1,4 +1,4 @@
-function [storm_data] = chs_timeseries_formater(swl_timeseries, hm0_timeseries, storms2rm,...
+function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0_timeseries, storms2rm,...
     has_WaterElevation, STWAVE_headers_location, Tp_special)
 %{
     %% DESCRIPTION
@@ -37,6 +37,7 @@ storm_data = cell(length(stmID(:,1)),2);
 storm_data(1:length(storms2rm),:) = [];
 % initialize Counter
 ctr = 1;
+ts_storm2rm = [];
 % Display Completion Progress Initial Print
 fprintf(1,'   Completion Progress: %3d%%\n',0);
 
@@ -92,6 +93,10 @@ for stm = 1:length(stmID)
     % STWAVE
     waves_datestr(sum(waves==-99999,2)>=1)=[];
     waves(sum(waves==-99999,2)>=1,:)=[];
+    % Append To Index Variable
+    if isempty(WL) || isempty(waves)
+        ts_storm2rm = [ts_storm2rm;stmID(stm)];
+    end
 
     %% ADJUST MODEL OUTPUTS (IF NEEDED)
     % Wave Model Has Water Level
@@ -153,7 +158,10 @@ LC_SimOUT_hyd(lc).LCNUM(:,4);   %Date/Time
 
     ctr = ctr + 1;
 end
-    % Print Status
-    fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
-
+% Print Status
+fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
+% Check For Bad Storms
+if ~exist('ts_storm2rm','var')
+    ts_storm2rm = [];
+end
 end

@@ -69,8 +69,10 @@ function project_forcing = call_project_forcing_formater(config, storm, prob_mas
 workflow = config.workflow;
 % Define Storm Type ('XC' or 'TC')
 storm_sampling = config.storm_sampling;
-% Deifne Use Timeseries Flag
+% Define Use Timeseries Flag
 use_timeseries = config.use_timeseries;
+% Define Use Timeseries Flag
+use_peaks = config.use_peaks;
 % Define Save Name
 save_name = [config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
@@ -97,14 +99,29 @@ switch workflow
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
             project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
         end
-    case 3 % StormSim: MCS/CSR (Life-Cycle Base Analysis)
+    case 3 % StormSim: MCS-LC (Life-Cycle Base Analysis)
         % Define Workflow Key Phrase
         wName = 'LCS';
         % Call StormSim: Monte Carlo Storm Sampler
-        [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
-        % Do you want to use timeseries
-        if use_timeseries == 1 % Timeeseries follows the same sampling scheme as Maxima Peaks dataset
-            [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
+        if use_peaks == 1
+            % Get Storm Sampling Using Peaks Files 
+            [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
+            % Do you want to use timeseries
+            if use_timeseries == 1 % Timeeseries follows the same sampling scheme as Maxima Peaks dataset
+                [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
+            end
+        else % Timeseries Only 
+            % Get Storm Types In Data 
+            level_1 = fieldnames(storm);
+            % Create Dummy Peaks Field 
+            for kk = 1:length(level_1)
+                dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
+                storm.(level_1{kk}).('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1))];
+            end
+            % Get Storm Sampling Using Peaks Files 
+            [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
+                    % Do you want to use timeseries
+            [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(aux_var, storm, prob_mass, storm_sampling);
         end
 end
 

@@ -1,5 +1,5 @@
 function [index, MCSimOUT, sampled_intensity,...
-        MCSimOUT_WLP, MCSimOUT_WHP] = mcs_sample_tc(storm, simulation_years, prob_mass, WLP_switch, WHP_switch)
+        MCSimOUT_WLP, MCSimOUT_WHP] = mcs_sample_tc(storm, simulation_years, prob_mass, WLP_switch, WHP_switch, sample_method)
     %{
 LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
@@ -131,9 +131,18 @@ RELEVANT PUBLICATIONS:
         % Maxima Dataset
         storm_peaks = storm.('TC').('Maxima');
         % WLP Dataset
-        storm_wlp_peaks = storm.('TC').('WLP');
-        % WHp Datasets
-        storm_whp_peaks = storm.('TC').('WHP');
+        if WLP_switch == 1
+            storm_wlp_peaks = storm.('TC').('WLP');
+        else
+            storm_wlp_peaks = [];
+        end
+        % WHP Datasets
+        if WHP_switch == 1
+            storm_whp_peaks = storm.('TC').('WHP');
+        else
+            storm_whp_peaks = [];
+        end
+
         
         
         %% POISSON PROCESS
@@ -154,6 +163,7 @@ RELEVANT PUBLICATIONS:
         %% SAMPLE TROPICAL STORMS
         % Initialize Storm Counter
         n=1;
+        SimOUT_TC = zeros(sum(TC_MCS),10);
         % Loop Through Simulation Length
         for j = 1:simulation_years
             %
@@ -174,34 +184,43 @@ RELEVANT PUBLICATIONS:
                     amount of if statements will change once we include the
                     capability of 3 intensitie i.e. Texas
                     %}
-                    if IIdx>=(1-TC_SRR(1,2)/TC_SRR(1,3))
-                        % Low Intensity Index (Maybe?)
-                        SimOUT_TC(n,4) = 0;
-                        % Grab Valid Storm Id List
-                        valid_storms = storm.('TC').Maxima(:,5);
-                        % Find Correcponding Frequency
-                        freq_indx = ismember(valid_storms,smpl0);
-                        % Remove Missing Storms
-                        smpl0 = smpl0(ismember(smpl0,valid_storms));
-                        % Sample Random Low Intensity Storm Index
-                        SimOUT_TC(n,5) = randsample(smpl0,1,true,TC_Freq(freq_indx));
-                        
-                        % Extract Data Corresponding To Sampled Storm (
-                        SimOUT_TC(n,6:11) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
-                    else
-                        % High Intensity Index (Maybe?)
-                        SimOUT_TC(n,4) = 1;
-                        % Grab Valid Storm Id List
-                        valid_storms = storm.('TC').Maxima(:,5);
-                        % Find Correcponding Frequency
-                        freq_indx = ismember(valid_storms,smpl1);
-                        % Remove Missing Storms
-                        smpl1 = smpl1(ismember(smpl1,valid_storms));
-                        % Sample Random High Intensity Storm Index
-                        SimOUT_TC(n,5) = randsample(smpl1,1,true,TC_Freq(freq_indx));
-                        % Extract Data Corresponding To Sampled Storm
-                        SimOUT_TC(n,6:11) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:); % Maximums
-                    end%if
+                    switch sample_method
+                        case 0 % historical
+                            % Define NaN for Intensity
+                            SimOUT_TC(n,4) =  -9;
+                            % Sample Random Storm Index
+                            SimOUT_TC(n,5) =  randsample(storm_peaks(:,5),1);
+                            % Extract Data Corresponding To Sampled Storm (
+                            SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
+                        case 1 % probabilistic
+                            if IIdx>=(1-TC_SRR(1,2)/TC_SRR(1,3))
+                                % Low Intensity Index (Maybe?)
+                                SimOUT_TC(n,4) = 0;
+                                % Grab Valid Storm Id List
+                                valid_storms = storm.('TC').Maxima(:,5);
+                                % Find Correcponding Frequency
+                                freq_indx = ismember(valid_storms,smpl0);
+                                % Remove Missing Storms
+                                smpl0 = smpl0(ismember(smpl0,valid_storms));
+                                % Sample Random Low Intensity Storm Index
+                                SimOUT_TC(n,5) = randsample(smpl0,1,true,TC_Freq(freq_indx));
+                                % Extract Data Corresponding To Sampled Storm (
+                                SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
+                            else
+                                % High Intensity Index (Maybe?)
+                                SimOUT_TC(n,4) = 1;
+                                % Grab Valid Storm Id List
+                                valid_storms = storm.('TC').Maxima(:,5);
+                                % Find Correcponding Frequency
+                                freq_indx = ismember(valid_storms,smpl1);
+                                % Remove Missing Storms
+                                smpl1 = smpl1(ismember(smpl1,valid_storms));
+                                % Sample Random High Intensity Storm Index
+                                SimOUT_TC(n,5) = randsample(smpl1,1,true,TC_Freq(freq_indx));
+                                % Extract Data Corresponding To Sampled Storm
+                                SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:); % Maximums
+                            end%if
+                    end
                     % Increment Storm
                     n=n+1;
                     % Increment Number of Storm In Storm Year
