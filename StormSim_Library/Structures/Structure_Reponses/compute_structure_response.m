@@ -156,7 +156,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2struct(Dn50,'LCNUM');
-            Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
+%             Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
         end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
@@ -171,7 +171,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
-            Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+%             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1

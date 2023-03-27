@@ -7,6 +7,7 @@ storm_sampling = config.storm_sampling;
 % Define Wave Height Priority Switch
 structure_type = config.struc_type;
 %
+use_peaks = config.use_peaks;
 use_timeseries = config.use_timeseries;
 % WLP & WHP Switches
 use_whp = config.create_whp;
@@ -137,20 +138,22 @@ switch workflow
         disp('Computing structure responses with peaks....');
         wName = 'LCS';
         % Scan Peaks Datasets
-        level_2 = fieldnames(project_forcing.(storm_sampling).('Peaks'));
-        level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
-        % Loop Through All Peak Datasets & Storm Types
-        for ii = 1:length(level_2)
-            disp(['   Processing ' level_2{ii} ' dataset....']);
-            % Compute Structure Respose: q, R2%, Dn50, Dn50 LCBW, P1
-            [Resp.(storm_sampling).('Peaks').(level_2{ii}), ~] = compute_structure_response(config, structure, project_forcing.(storm_sampling).('Peaks').(level_2{ii}), emp_coeff, storm_sampling);
-            % Rubblemound Only
-            if structure_type == 3
-                % Compute Structure Response: Peaks Reliability
-                [Resp.(storm_sampling).('Peaks').(level_2{ii}).('PF_Summary'),...
-                    Resp.(storm_sampling).('Peaks').(level_2{ii}).('Reliab_Summary')] = stormsim_csr_peaks(config,...
-                    structure, emp_coeff,...
-                    {project_forcing.(storm_sampling).('Peaks').(level_2{ii}).LCNUM});
+        if use_peaks == 1
+            level_2 = fieldnames(project_forcing.(storm_sampling).('Peaks'));
+            level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
+            % Loop Through All Peak Datasets & Storm Types
+            for ii = 1:length(level_2)
+                disp(['   Processing ' level_2{ii} ' dataset....']);
+                % Compute Structure Respose: q, R2%, Dn50, Dn50 LCBW, P1
+                [Resp.(storm_sampling).('Peaks').(level_2{ii}), ~] = compute_structure_response(config, structure, project_forcing.(storm_sampling).('Peaks').(level_2{ii}), emp_coeff, storm_sampling);
+                % Rubblemound Only
+                if structure_type == 3
+                    % Compute Structure Response: Peaks Reliability
+                    [Resp.(storm_sampling).('Peaks').(level_2{ii}).('PF_Summary'),...
+                        Resp.(storm_sampling).('Peaks').(level_2{ii}).('Reliab_Summary')] = stormsim_csr_peaks(config,...
+                        structure, emp_coeff,...
+                        {project_forcing.(storm_sampling).('Peaks').(level_2{ii}).LCNUM});
+                end
             end
         end
         % Timeseries

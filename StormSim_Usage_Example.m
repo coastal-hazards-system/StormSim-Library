@@ -153,6 +153,7 @@ t4 = tic;
 % Create Project Structure Geometry
 [structure] = create_structure_geometry(config, 1);% Second input argument: 1 - show plot 0 - hide plot
 t4 = toc(t4);
+
 %% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
 %{
 % This functions applies uncertianty to project forcing.
@@ -171,6 +172,7 @@ PROS:
 t5 = tic;
 project_forcing = call_uncertainty_engine(config, project_forcing);
 t5 = toc(t5);
+
 %% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
 % For Response Base Analysis:
 % _no_rep fields are used for SWL, Hm0, Tp, hazard curve calculations

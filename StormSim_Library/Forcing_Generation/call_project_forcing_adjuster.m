@@ -2,7 +2,7 @@ function project_forcing = call_project_forcing_adjuster(config, project_forcing
 %% GRAB INPUTS FROM "config"
 % Define Workflow
 workflow = config.workflow;
-
+use_peaks = config.use_peaks;
 %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
 disp('Adjusting project forcing datasets....')
 % Determine Data Type
@@ -15,8 +15,10 @@ end
 % Grab "project_forcing" Structure Fields
 level_1 = fieldnames(project_forcing);
 % Scan Peaks Datasets
-level_2 = fieldnames(project_forcing.(level_1{1}).('Peaks'));
-level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
+if use_peaks == 1
+    level_2 = fieldnames(project_forcing.(level_1{1}).('Peaks'));
+    level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
+end
 % Scan Peaks And Timeseries Field
 level_3 = fieldnames(project_forcing.(level_1{1}));
 level_3 = level_3(contains(level_3,{'Peaks','Timeseries'}));
