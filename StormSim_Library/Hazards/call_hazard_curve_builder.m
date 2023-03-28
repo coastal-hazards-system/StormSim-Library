@@ -252,6 +252,9 @@ for ii = 1:length(vars_2_get)
     % Increase Counter
     ctr = ctr + 1;
 end
+% Remove Empty Entries (If Any)
+rm_indx = cellfun(@(x) isempty(x), {Output.y_plot}, 'un', false);% Get Logical Index
+Output = Output(~rm_indx);% Keep Valid Fields
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)
 if compute_forcing_hc == 1
@@ -259,75 +262,76 @@ if compute_forcing_hc == 1
         case 2 % Floodwall
             % Find Data Indexes
             sIndx = cell2mat(cellfun(@(x) find(contains({Output.var}',x)==1),{'p1','Hm0','Tp','SWL','q'},'un',false));
-            % Grab Example Save Name
-            outName = strsplit(Output(sIndx(5)).save_name,'q');
-            % Compute Water Depth @ Structure Toe
-            h_plt = toe_elev + Output(sIndx(4)).y_plot;
-            h_tbl = toe_elev + Output(sIndx(4)).y_table;
-            % Compute Water Depth @ Berm
-            if berm_elev == 0 % No Berm 
-                hb_plt = h_plt;
-                hb_tbl = h_tbl;
-            else
-                hb_plt = berm_elev + Output(sIndx(4)).y_plot;
-                hb_tbl = berm_elev + Output(sIndx(4)).y_table;
+            % If All Primary responses Are Valid
+            if length(sIndx)==5
+                % Grab Example Save Name
+                outName = strsplit(Output(sIndx(5)).save_name,'q');
+                % Compute Water Depth @ Structure Toe
+                h_plt = toe_elev + Output(sIndx(4)).y_plot;
+                h_tbl = toe_elev + Output(sIndx(4)).y_table;
+                % Compute Water Depth @ Berm
+                if berm_elev == 0 % No Berm
+                    hb_plt = h_plt;
+                    hb_tbl = h_tbl;
+                else
+                    hb_plt = berm_elev + Output(sIndx(4)).y_plot;
+                    hb_tbl = berm_elev + Output(sIndx(4)).y_table;
+                end
+                % Compute Freeboard
+                Rc_plt = crest_elev - Output(sIndx(4)).y_plot;
+                Rc_tbl = crest_elev - Output(sIndx(4)).y_table;
+                % Compute P2 & P3 Wall Pressures (Plots)
+                [p2dyn_plt, p2sta_plt, p2total_plt,...
+                    p3dyn_plt, p3sta_plt, p3total_plt, pu_plt]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_plot, Output(sIndx(3)).y_plot,...
+                    1.8,0,h_plt,hb_plt,Rc_plt,hw,Output(sIndx(1)).y_plot,rho_w,[1 1]);
+                % Compute P2 & P3 Wall Pressures (Table)
+                [p2dyn_tbl, p2sta_tbl, p2total_tbl,...
+                    p3dyn_tbl, p3sta_tbl, p3total_tbl, pu_tbl]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_table, Output(sIndx(3)).y_table,...
+                    1.8,0,h_tbl,hb_tbl,Rc_tbl,hw,Output(sIndx(1)).y_table,rho_w,[1 1]);
+                % Define Pressure Fields To Append
+                pFields = who('p2*_plt','p3*_plt','pu*_plt');
+                % Define Pressure Fields Y Labels (For Plots)
+                y_labels = {'P_2 (Dynamic) [Pa]', 'P_2 (Static) [Pa]', 'P_2 (Total) [Pa]',...
+                    'P_3 (Dynamic) [Pa]', 'P_3 (Static) [Pa]', 'P_3 (Total) [Pa]',...
+                    'P_u [Pa]'};
+                % Get Last Row Index
+                rIndx = length(Output);
+                % Define Title String Base
+                title_base = Output(rIndx).title;
+                % Loop Through Fieldnames
+                for kk = 1:length(pFields)
+                    % Define Variable Name
+                    sVar = strrep(pFields{kk},'_plt','');
+                    % Define Title String
+                    title_str = title_base;
+                    title_str(2) =  {['' storm_type ' | ' y_labels{kk}]};
+                    % Call Data Appender
+                    Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
+                        Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), 0, [50,prc], [outName{1} sVar outName{2}]);
+                end
+                % Compute Nappe Response (Table)
+                [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
+                % Compute Nappe Response (Plot)
+                [Nappe_plt] = floodwall_nappe_response(Output(sIndx(4)).y_plot, Output(sIndx(2)).y_plot, Output(sIndx(5)).y_plot, hw, rho_w);
+                % Get Filenames
+                pFields = fieldnames(Nappe_tbl);
+                % Define Name & Units, Order Of Fields Is Fixed
+                y_labels = [{'x_L';'\theta_L';'x_U';'\theta_U';'B_x';'x_{c_{surge}}';'\theta_c';'B_{jet}';'V_{jet}';'F_{jet}'},{'m';char(176);'m';char(176);'m';'m';char(176);'m';'m/s';'N/m'}];
+                % Get Last Row Index
+                rIndx = length(Output);
+                % Define Title String Base
+                title_base = Output(rIndx).title;
+                % Loop Through Fieldnames
+                for kk = 1:length(pFields)
+                    % Define Title String
+                    title_str = title_base;
+                    title_str(2) =  {[y_labels{ii,1} ' [' y_labels{ii,2} ']']};
+                    % Call Data Appender
+                    Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
+                        Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}),...
+                        0, [50,prc], [outName{1} pFields{kk} outName{2}]);
+                end
             end
-            % Compute Freeboard
-            Rc_plt = crest_elev - Output(sIndx(4)).y_plot;
-            Rc_tbl = crest_elev - Output(sIndx(4)).y_table;
-            % Compute P2 & P3 Wall Pressures (Plots)
-            [p2dyn_plt, p2sta_plt, p2total_plt,...
-                p3dyn_plt, p3sta_plt, p3total_plt, pu_plt]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_plot, Output(sIndx(3)).y_plot,...
-                1.8,0,h_plt,hb_plt,Rc_plt,hw,Output(sIndx(1)).y_plot,rho_w,[1 1]);
-            % Compute P2 & P3 Wall Pressures (Table)
-            [p2dyn_tbl, p2sta_tbl, p2total_tbl,...
-                p3dyn_tbl, p3sta_tbl, p3total_tbl, pu_tbl]=goda_forces_on_vertical_p2p3(Output(sIndx(2)).y_table, Output(sIndx(3)).y_table,...
-                1.8,0,h_tbl,hb_tbl,Rc_tbl,hw,Output(sIndx(1)).y_table,rho_w,[1 1]);
-            % Define Pressure Fields To Append
-            pFields = who('p2*_plt','p3*_plt','pu*_plt');
-            % Define Pressure Fields Y Labels (For Plots)
-            y_labels = {'P_2 (Dynamic) [Pa]', 'P_2 (Static) [Pa]', 'P_2 (Total) [Pa]',...
-                'P_3 (Dynamic) [Pa]', 'P_3 (Static) [Pa]', 'P_3 (Total) [Pa]',...
-                'P_u [Pa]'};
-            % Get Last Row Index
-            rIndx = length(Output);
-            % Define Title String Base
-            title_base = Output(rIndx).title;
-            % Loop Through Fieldnames
-            for kk = 1:length(pFields)
-                % Define Variable Name
-                sVar = strrep(pFields{kk},'_plt','');
-                % Define Title String
-                title_str = title_base;
-                title_str(2) =  {['' storm_type ' | ' y_labels{kk}]};
-                % Call Data Appender
-                Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
-                    Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), 0, [50,prc], [outName{1} sVar outName{2}]);
-            end
-            % Compute Nappe Response (Table)
-            [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
-            % Compute Nappe Response (Plot)
-            [Nappe_plt] = floodwall_nappe_response(Output(sIndx(4)).y_plot, Output(sIndx(2)).y_plot, Output(sIndx(5)).y_plot, hw, rho_w);
-            % Get Filenames
-            pFields = fieldnames(Nappe_tbl);
-            % Define Name & Units, Order Of Fields Is Fixed
-            y_labels = [{'x_L';'\theta_L';'x_U';'\theta_U';'B_x';'x_{c_{surge}}';'\theta_c';'B_{jet}';'V_{jet}';'F_{jet}'},{'m';char(176);'m';char(176);'m';'m';char(176);'m';'m/s';'N/m'}];
-            % Get Last Row Index
-            rIndx = length(Output);
-            % Define Title String Base
-            title_base = Output(rIndx).title;
-            % Loop Through Fieldnames
-            for kk = 1:length(pFields)
-                % Define Title String
-                title_str = title_base;
-                title_str(2) =  {[y_labels{ii,1} ' [' y_labels{ii,2} ']']};
-                % Call Data Appender
-                Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
-                    Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}),...
-                    0, [50,prc], [outName{1} pFields{kk} outName{2}]);
-            end
-        case 3 % Rubblemound 
-            % Add DN50 LCBW here
     end
 end
 
