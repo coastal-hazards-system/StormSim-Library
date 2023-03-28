@@ -48,6 +48,8 @@ for j = s_indx % SWL and/or Hm0
     % Adjust Figure Output Names
     strrep(cc_resp(ctr).save_name,'JPM','CC');
     cc_resp(ctr).save_name = strrep(cc_resp(ctr).save_name,'JPM','CC');
+    % Define POT
+    cc_resp(ctr).POT = {'Hazard curve computed by combining TC & XC primary responses'};
     % Increase Counter
     ctr = ctr + 1;
 end
@@ -56,57 +58,64 @@ end
 if struc_type == 2
     % Find Data Indexes
     sIndx = cell2mat(cellfun(@(x) find(contains({cc_resp.var}',x)==1),{'p1','Hm0','Tp','SWL','q'},'un',false));
-    % Secondary responses are HCs that are generated as a function of other HC.
-    for j = s_indx2
-        % Grab Example Save Name
-        outName = strsplit(cc_resp(sIndx(5)).save_name,'q');
-        % Compute Water Depth @ Structure Toe
-        h_plt = toe_elev + cc_resp(sIndx(4)).y_plot;
-        h_tbl = toe_elev + cc_resp(sIndx(4)).y_table;
-        % Compute Water Depth @ Berm
-        if berm_elev == 0 % No Berm
-            hb_plt = h_plt;
-            hb_tbl = h_tbl;
-        else
-            hb_plt = berm_elev + cc_resp(sIndx(4)).y_plot;
-            hb_tbl = berm_elev + cc_resp(sIndx(4)).y_table;
-        end
-        % Compute Freeboard
-        Rc_plt = crest_elev - cc_resp(sIndx(4)).y_plot;
-        Rc_tbl = crest_elev - cc_resp(sIndx(4)).y_table;
-        % Compute P2 & P3 Wall Pressures (Plots)
-        [p2dyn_plt, p2sta_plt, p2total_plt,...
-            p3dyn_plt, p3sta_plt, p3total_plt, pu_plt]=goda_forces_on_vertical_p2p3(cc_resp(sIndx(2)).y_plot, cc_resp(sIndx(3)).y_plot,...
-            1.8,0,h_plt,hb_plt,Rc_plt,hw,cc_resp(sIndx(1)).y_plot,rho_w,[1 1]);
-        % Compute P2 & P3 Wall Pressures (Table)
-        [p2dyn_tbl, p2sta_tbl, p2total_tbl,...
-            p3dyn_tbl, p3sta_tbl, p3total_tbl, pu_tbl]=goda_forces_on_vertical_p2p3(cc_resp(sIndx(2)).y_table, cc_resp(sIndx(3)).y_table,...
-            1.8,0,h_tbl,hb_tbl,Rc_tbl,hw,cc_resp(sIndx(1)).y_table,rho_w,[1 1]);
-        % Define Pressure Fields To Append
-        pFields = who('p2*_plt','p3*_plt','pu*_plt');
-        % Loop Through Fieldnames
-        for kk = 1:length(pFields)
-            % Grab Field Name
-            sVar = strrep(pFields{kk},'_plt','');
-            % Find Storage Index
-            v_indx = strcmp(sVar, {cc_resp.var});
-            % Store Values
-            cc_resp(v_indx).y_plot = eval([sVar '_plt']);
-            cc_resp(v_indx).y_table = eval([sVar '_tbl']);
-        end
-        % Compute Nappe Response (Table)
-        [Nappe_tbl] = floodwall_nappe_response(cc_resp(sIndx(4)).y_table, cc_resp(sIndx(2)).y_table, cc_resp(sIndx(5)).y_table, hw, rho_w);
-        % Compute Nappe Response (Plot)
-        [Nappe_plt] = floodwall_nappe_response(cc_resp(sIndx(4)).y_plot, cc_resp(sIndx(2)).y_plot, cc_resp(sIndx(5)).y_plot, hw, rho_w);
-        % Get Filenames
-        pFields = fieldnames(Nappe_tbl);
-        % Loop Through Fieldnames
-        for kk = 1:length(pFields)
-            % Find Storage Index
-            v_indx = strcmp(pFields{kk,1}, {cc_resp.var});
-            % Store Values
-            cc_resp(v_indx).y_plot = Nappe_plt.(pFields{kk});
-            cc_resp(v_indx).y_table = Nappe_tbl.(pFields{kk});
+    % MAke Sure Primary Responses Exist
+    if length(sIndx) == 5
+        % Secondary responses are HCs that are generated as a function of other HC.
+        for j = s_indx2
+            % Grab Example Save Name
+            outName = strsplit(cc_resp(sIndx(5)).save_name,'q');
+            % Compute Water Depth @ Structure Toe
+            h_plt = toe_elev + cc_resp(sIndx(4)).y_plot;
+            h_tbl = toe_elev + cc_resp(sIndx(4)).y_table;
+            % Compute Water Depth @ Berm
+            if berm_elev == 0 % No Berm
+                hb_plt = h_plt;
+                hb_tbl = h_tbl;
+            else
+                hb_plt = berm_elev + cc_resp(sIndx(4)).y_plot;
+                hb_tbl = berm_elev + cc_resp(sIndx(4)).y_table;
+            end
+            % Compute Freeboard
+            Rc_plt = crest_elev - cc_resp(sIndx(4)).y_plot;
+            Rc_tbl = crest_elev - cc_resp(sIndx(4)).y_table;
+            % Compute P2 & P3 Wall Pressures (Plots)
+            [p2dyn_plt, p2sta_plt, p2total_plt,...
+                p3dyn_plt, p3sta_plt, p3total_plt, pu_plt]=goda_forces_on_vertical_p2p3(cc_resp(sIndx(2)).y_plot, cc_resp(sIndx(3)).y_plot,...
+                1.8,0,h_plt,hb_plt,Rc_plt,hw,cc_resp(sIndx(1)).y_plot,rho_w,[1 1]);
+            % Compute P2 & P3 Wall Pressures (Table)
+            [p2dyn_tbl, p2sta_tbl, p2total_tbl,...
+                p3dyn_tbl, p3sta_tbl, p3total_tbl, pu_tbl]=goda_forces_on_vertical_p2p3(cc_resp(sIndx(2)).y_table, cc_resp(sIndx(3)).y_table,...
+                1.8,0,h_tbl,hb_tbl,Rc_tbl,hw,cc_resp(sIndx(1)).y_table,rho_w,[1 1]);
+            % Define Pressure Fields To Append
+            pFields = who('p2*_plt','p3*_plt','pu*_plt');
+            % Loop Through Fieldnames
+            for kk = 1:length(pFields)
+                % Grab Field Name
+                sVar = strrep(pFields{kk},'_plt','');
+                % Find Storage Index
+                v_indx = strcmp(sVar, {cc_resp.var});
+                % Store Values
+                cc_resp(v_indx).y_plot = eval([sVar '_plt']);
+                cc_resp(v_indx).y_table = eval([sVar '_tbl']);
+                % Define POT
+                cc_resp(v_indx).POT = {'Derived from primary responses hazard curves'};
+            end
+            % Compute Nappe Response (Table)
+            [Nappe_tbl] = floodwall_nappe_response(cc_resp(sIndx(4)).y_table, cc_resp(sIndx(2)).y_table, cc_resp(sIndx(5)).y_table, hw, rho_w);
+            % Compute Nappe Response (Plot)
+            [Nappe_plt] = floodwall_nappe_response(cc_resp(sIndx(4)).y_plot, cc_resp(sIndx(2)).y_plot, cc_resp(sIndx(5)).y_plot, hw, rho_w);
+            % Get Filenames
+            pFields = fieldnames(Nappe_tbl);
+            % Loop Through Fieldnames
+            for kk = 1:length(pFields)
+                % Find Storage Index
+                v_indx = strcmp(pFields{kk,1}, {cc_resp.var});
+                % Store Values
+                cc_resp(v_indx).y_plot = Nappe_plt.(pFields{kk});
+                cc_resp(v_indx).y_table = Nappe_tbl.(pFields{kk});
+                % Define POT
+                cc_resp(v_indx).POT = {'Derived from primary responses hazard curves'};
+            end
         end
     end
 end

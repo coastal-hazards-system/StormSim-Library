@@ -170,7 +170,7 @@ PROS:
 
 %}
 t5 = tic;
-project_forcing = call_uncertainty_engine(config, project_forcing);
+[project_forcing, config] = call_uncertainty_engine(config, project_forcing);
 t5 = toc(t5);
 
 %% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
@@ -179,7 +179,7 @@ t5 = toc(t5);
 % Hence will not have depth limitation applied. Hm0 @ Savepoint Depth 
 % SLR, Rand Tide, Depth Limitation
 t6 = tic;
-project_forcing = call_project_forcing_adjuster(config, project_forcing, structure);
+[project_forcing, config] = call_project_forcing_adjuster(config, project_forcing, structure);
 t6 = toc(t6);
 
 %% STEP 6: COMPUTE  RESPONSE 

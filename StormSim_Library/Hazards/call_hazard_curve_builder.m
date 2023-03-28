@@ -210,7 +210,7 @@ for ii = 1:length(vars_2_get)
                 % Store SST Outputs
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
                     dummy.HC_plt_x(s_indx), dummy.SST_output.HC_plt(:, s_indx)',...
-                    dummy.HC_tbl_x', dummy.SST_output.HC_tbl',...
+                    dummy.HC_tbl_x', dummy.SST_output.HC_tbl', input_data.data_values,...
                     0, [50,prc], [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']);
                 % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
@@ -224,8 +224,6 @@ for ii = 1:length(vars_2_get)
             end
         case 'TC'
             disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
-            % JPM Expects Data Matrix
-            input_data.data_values = input_data.data_values;
             try
                 [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm);
                 % Define Limtis For Frequency/Probability Vectors
@@ -236,7 +234,7 @@ for ii = 1:length(vars_2_get)
                 % Store/Format JPM Outputs
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
                     dummy.HC_plt_x(s_indx), dummy.HC_data.HC_plt_y(s_indx, :),...
-                    dummy.HC_tbl_x', dummy.HC_data.HC_tbl_y,...
+                    dummy.HC_tbl_x', dummy.HC_data.HC_tbl_y, input_data.data_values,...
                     0, [50,prc], [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']);
                 % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
@@ -253,7 +251,7 @@ for ii = 1:length(vars_2_get)
     ctr = ctr + 1;
 end
 % Remove Empty Entries (If Any)
-rm_indx = cellfun(@(x) isempty(x), {Output.y_plot}, 'un', false);% Get Logical Index
+rm_indx = cell2mat(cellfun(@(x) isempty(x), {Output.y_plot}, 'un', false));% Get Logical Index
 Output = Output(~rm_indx);% Keep Valid Fields
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)
@@ -307,7 +305,8 @@ if compute_forcing_hc == 1
                     title_str(2) =  {['' storm_type ' | ' y_labels{kk}]};
                     % Call Data Appender
                     Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
-                        Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), 0, [50,prc], [outName{1} sVar outName{2}]);
+                        Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), {'Derived from primary responses hazard curves'},...
+                        0, [50,prc], [outName{1} sVar outName{2}]);
                 end
                 % Compute Nappe Response (Table)
                 [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
@@ -328,7 +327,7 @@ if compute_forcing_hc == 1
                     title_str(2) =  {[y_labels{ii,1} ' [' y_labels{ii,2} ']']};
                     % Call Data Appender
                     Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
-                        Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}),...
+                        Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}), {'Derived from primary responses hazard curves'},...
                         0, [50,prc], [outName{1} pFields{kk} outName{2}]);
                 end
             end
@@ -336,7 +335,7 @@ if compute_forcing_hc == 1
 end
 
 %% AUX FUNCTIONS (CONSOLIDATE LINES OF CODE)
-    function Output =  rb_response_appender(Output, rIndx, sVar, y_label, title_str, x_plt, y_plt, x_tbl, y_tbl, y_log_scale, CL, outName)
+    function Output =  rb_response_appender(Output, rIndx, sVar, y_label, title_str, x_plt, y_plt, x_tbl, y_tbl, POT, y_log_scale, CL, outName)
         % Initialize Entry
         %         if ~isempty(Output)
         %             Output(rIndx) = Output(end);
@@ -348,6 +347,7 @@ end
         Output(rIndx).('y_plot') = y_plt;
         Output(rIndx).('x_table') = x_tbl;
         Output(rIndx).('y_table') = y_tbl;
+        Output(rIndx).('POT') = POT;
         Output(rIndx).('y_label') = y_label;
         Output(rIndx).('title') = title_str;
         Output(rIndx).y_log_scale = y_log_scale; % Y Log Scale For Overtopping
