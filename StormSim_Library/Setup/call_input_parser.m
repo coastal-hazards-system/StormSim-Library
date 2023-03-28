@@ -197,6 +197,11 @@ if sum([config.use_peaks,config.use_timeseries])~=2
     config.create_wlp = 0;
     config.create_whp = 0;
 end
+% Uncertainty Engine Field Initialization
+config.u_engine = 0;
+% Forcing Adjustments Field Initialization
+config.f_adjust = 0;
+
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
 config = call_environment_setup(config, isempty(file2look));

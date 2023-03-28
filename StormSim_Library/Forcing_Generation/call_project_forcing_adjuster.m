@@ -1,9 +1,12 @@
-function project_forcing = call_project_forcing_adjuster(config, project_forcing, structure)
+function [project_forcing, config] = call_project_forcing_adjuster(config, project_forcing, structure)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
 workflow = config.workflow;
 use_peaks = config.use_peaks;
+f_adjust = config.f_adjust;
+
 %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
+if f_adjust == 0
 disp('Adjusting project forcing datasets....')
 % Determine Data Type
 switch workflow
@@ -41,6 +44,11 @@ for jj = 1:length(level_1)
             project_forcing.(level_1{jj}).('Timeseries') = adjust_project_forcing(config, structure, aux_var, level_1{jj}, wName);
         end
     end
+end
+config.f_adjust = 1;
+else
+    % Display Status Message
+    disp('Project forcing has already been adjusted, skipping....');
 end
 end
 
