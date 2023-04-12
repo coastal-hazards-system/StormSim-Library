@@ -10,7 +10,7 @@ apply_DL = config.apply_depth_limitation;
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Toe Elevation (<0 below datum zero)
-toe_elev = structure.toe_elevation*-1; % Flip convention
+toe_elev = structure.toe_elevation; % Flip convention
 
 %% ADJUST PROJECT FORCING DATA - RESPONSE BASE
 switch data_type
@@ -35,14 +35,14 @@ switch data_type
         %------ Hm0 ADJUSTMENTS -----
         if ~iscell(project_forcing.('SWL'))  % Peaks
             % Compute Water Depth @ Toe
-            h = project_forcing.('SWL') + toe_elev;
+            h = project_forcing.('SWL') - toe_elev;
             % Apply Depth Limitation
             if apply_DL == 1
                 project_forcing.('Hm0') = apply_depth_limitation(project_forcing.('Hm0'), project_forcing.('Tp'), h);
             end
         else % Timeseries
             % Compute Water Depth @ Toe
-            h = cellfun(@(x) x + toe_elev,project_forcing.('SWL'), 'un', false);
+            h = cellfun(@(x) x - toe_elev,project_forcing.('SWL'), 'un', false);
             % Apply Depth Limitation
             if apply_DL == 1
                 project_forcing.('Hm0') = cellfun(@(x, y, z) apply_depth_limitation(x, y, z), project_forcing.('Hm0'), project_forcing.('Tp'), h,'un',false);
@@ -66,7 +66,7 @@ switch data_type
         %------ Hm0 ADJUSTMENTS -----
         if size(project_forcing(1).LCNUM,2)==8  % Peaks
             % Compute Water Depth @ Toe
-            h = cellfun(@(x) x(:,4) + toe_elev,{project_forcing.LCNUM}, 'un', false);
+            h = cellfun(@(x) x(:,4) - toe_elev,{project_forcing.LCNUM}, 'un', false);
             % Apply Depth Limitation
             if apply_DL == 1
                 for kk = 1:length(h)
@@ -76,7 +76,7 @@ switch data_type
             end
         else % Timeseries
             % Compute Water Depth @ Toe
-            h = cellfun(@(x) x(:,5) + toe_elev,{project_forcing.LCNUM}, 'un', false);
+            h = cellfun(@(x) x(:,5) - toe_elev,{project_forcing.LCNUM}, 'un', false);
             % Apply Depth Limitation
             if apply_DL == 1
                 for kk = 1:length(h)

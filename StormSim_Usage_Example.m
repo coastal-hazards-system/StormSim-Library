@@ -1,6 +1,6 @@
 clc;clear all;
 addpath(genpath('StormSim_Library'));
-diary 'Log.txt';
+% diary 'Log.txt';
 %% USER INPUTS
 %{
 MCS/CSR Requires:
@@ -25,6 +25,7 @@ t1 = tic;
 % Parse StormSim Configuration File  
 config = call_input_parser(stormsim_input_file);
  t1 = toc(t1);
+ 
 %% STEP 1: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
 %{
  Description:
@@ -191,7 +192,7 @@ t7 = tic;
 Resp = call_project_response(config, project_forcing, structure);
 t7 = toc(t7);
 sum([t1,t2,t3,t4,t5,t6,t7])/60
-diary 'off';
+% diary 'off';
 
 
 

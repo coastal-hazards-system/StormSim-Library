@@ -13,9 +13,9 @@ workflow = config.workflow;
 % Define Structure Crest Elevation
 crest_elev = structure.crest_elevation;
 % Define Structure Toe Elevation (<0 below datum zero)
-toe_elev = structure.toe_elevation*-1; % Flip convention
+toe_elev = structure.toe_elevation; % Flip convention
 % Berm Elevation (<0 Below Datum Zero)
-berm_elev = structure.berm_elevation*-1; %
+berm_elev = structure.berm_elevation; %
 % Berm Width
 berm_width = structure.berm_width;
 % Seaside Slope (cot(alpha))
@@ -42,14 +42,14 @@ switch workflow
             SWL = {project_forcing.(storm_type).SWL}; % SWL
             Hm0 = {project_forcing.(storm_type).Hm0}; % Hm0
             Tp = {project_forcing.(storm_type).Tp}; % Tp
-            h = {project_forcing.(storm_type).SWL + toe_elev};
+            h = {project_forcing.(storm_type).SWL - toe_elev};
             Rc = {crest_elev - project_forcing.(storm_type).SWL};
             dflat = 1;
         else
             SWL = project_forcing.(storm_type).SWL; % SWL
             Hm0 = project_forcing.(storm_type).Hm0; % Hm0
             Tp = project_forcing.(storm_type).Tp; % Tp
-            h = cellfun(@(x) x + toe_elev, SWL, 'un', false);
+            h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
             Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
             dflat = 3;
         end
@@ -63,7 +63,7 @@ switch workflow
         SWL = cellfun(@(x) x(:,swl_indx),{project_forcing.LCNUM},'un',false); % SWL
         Hm0 = cellfun(@(x) x(:,swl_indx+1),{project_forcing.LCNUM},'un',false); % Hm0
         Tp = cellfun(@(x) x(:,swl_indx+2),{project_forcing.LCNUM},'un',false); % Tp
-        h = cellfun(@(x) x + toe_elev, SWL, 'un', false);
+        h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
         dflat = 2;
 end
@@ -83,7 +83,7 @@ if workflow ~= 2
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
             % Compute Water Depth @ Berm
-            hb = cellfun(@(x) berm_elev + x, SWL,'un',false);
+            hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
             % Compute P1 Only
             p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
                 zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
@@ -118,7 +118,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = Dn50{:}; % Median Stone Size
-            Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
+%             Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1

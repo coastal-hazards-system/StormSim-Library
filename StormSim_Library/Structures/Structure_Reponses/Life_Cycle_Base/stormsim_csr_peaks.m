@@ -185,7 +185,7 @@ for lcS=1:size(LC_MCSimOUT,2)
     % deep water wave length based on mean wave period
     Lm0 = (g*Tm.^2)/(2*pi);
     % Compute Water Col
-    h = depth + WL; h(h<0) = 0.01;
+    h = WL - toe_elevation; h(h<0) = 0.01;
 
     %% SEASIDE STABILITY LIMIT STATE (MELBY AND KOBAYASHI 2011)
     % Fourrier Solution Coefficient
@@ -209,7 +209,7 @@ for lcS=1:size(LC_MCSimOUT,2)
     % for constant wave conditions
     r = 6;
     % Freeboard Leeside
-    Rc_ls = crest_elevation+depth-h;
+    Rc_ls = crest_elevation-toe_elevation-h;
     % Empirical Coefficient
     c0 = 1.45;
     % Empirical Coefficient

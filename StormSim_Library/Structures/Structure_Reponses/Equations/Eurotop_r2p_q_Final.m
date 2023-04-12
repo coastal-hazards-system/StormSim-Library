@@ -258,7 +258,7 @@ else  % If the slope cota = 1 ------> Vertical walls
     % Franco equation (for reference)
     % q = sqrt(g.*Hm0.^3).*0.2.*exp(-4.7.*Rc_corrt./Hm0);
     % Sumberged depth of wall
-    w_depth= wall_toe+SWL;
+    w_depth= SWL-wall_toe;
     % depth above toe mound./berm in front of vertical wall
     d_wall = Rc_corrt- w_depth;
     % Initialize

@@ -78,7 +78,7 @@ switch workflow
                     end
                     % Call StormSim: PROS RB1
                     helper_var = stormsim_pros(config,...
-                        aux_var, structure, emp_coeff, [subDir 'RB1_' level_2{ii}], 0);
+                        aux_var, structure, emp_coeff, [subDir 'RB1_' level_2{ii}]);
                     % Add Additional Layer To Data Structure For Peaks Alt Datasets
                     for jj = 1:length(level_1)
                         Resp.(level_1{jj}).('Peaks').(level_2{ii}) = helper_var.(level_1{jj}).('Peaks');

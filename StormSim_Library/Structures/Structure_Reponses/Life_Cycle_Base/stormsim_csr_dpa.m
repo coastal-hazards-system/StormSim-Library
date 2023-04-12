@@ -181,8 +181,6 @@ sFields = fieldnames(structure);
 for ii = 1:length(sFields)
     eval([sFields{ii} ' = structure.(sFields{ii});']);
 end
-% Reference Elevation Used For Water Depth Computation (h)
-depth = -1*toe_elevation;
 % Armor Stone Specific Gravity
 SG = 1 + armor_delta;
 % Armor Stone Density [kg/m^3]
@@ -211,7 +209,7 @@ K_ss = Ksp;
 % Extract Water Level
 WL = cellfun(@(x) x(:,5),LC_SimOUT_hyd,'un',false);
 % Compute Water Column
-h = cellfun(@(x) x+depth,WL,'un',false);
+h = cellfun(@(x) x-toe_elevation,WL,'un',false);
 % Compute Freeboard
 Rc = cellfun(@(x,y) crest_elevation - x,WL,'un',false);
 % Extract Wave Height

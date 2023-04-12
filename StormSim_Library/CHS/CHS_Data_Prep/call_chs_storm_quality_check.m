@@ -128,9 +128,9 @@ if use_timeseries == 1
     end
     % Display Progress Step
     if strcmp(storm_type,'XC')
-        disp(['Matching CHS extratropical timeseries waves and water levels....']);
+        disp([newline 'Matching CHS extratropical timeseries waves and water levels....']);
     else
-        disp(['Matching CHS tropical timeseries waves and water levels....']);
+        disp([newline 'Matching CHS tropical timeseries waves and water levels....']);
     end
     % Create ADCIRC-STWAVE TimeSeries Dataset
     [storm.Timeseries, ts_storm2rm] = chs_timeseries_formater(timeseries_data(ad_indx_timeseries==1).Table_StormData,...
@@ -138,7 +138,7 @@ if use_timeseries == 1
         removed_storms.Maxima, has_WaterElevation, STWAVE_headers_location, Tp_special);
     % Use Timeseries Indes If Peaks Are Missing
     if use_peaks == 0
-        % Remove Bad Storms 
+        % Remove Bad Storms
         storm.Timeseries(ismember(cell2mat(storm.Timeseries(:,1)), ts_storm2rm),:) = [];
         removed_storms.Maxima = ts_storm2rm;
     end
@@ -164,13 +164,13 @@ if use_timeseries == 1 && use_peaks == 1
     % WHP
     if WHP_switch
         % Grab Removed Storm Ids For WHP Dataset
-        storm2rm_WHP = removed_storms.WHP       
+        storm2rm_WHP = removed_storms.WHP;
         % Remove Bad storms
         storm.('Peaks').WHP(ismember(storm.('Peaks').WHP(:,5),...
             removed_storms.WHP),:) = [];
     end
 elseif use_timeseries == 1 && use_peaks == 0
-    % 
+    %
     storm2rm = removed_storms.Maxima;
     % Remove Bad storms
     storm.('Timeseries')(ismember(cell2mat(storm.('Timeseries')(:,1)),...
@@ -192,7 +192,7 @@ switch storm_type
         % Define EMpty Var For Outputs
         XC_Nyrs = [];XC_Nstm = [];
     case 'XC' % Extratropical storms
-        % Determine Number Of XCs & Years 
+        % Determine Number Of XCs & Years
         if use_peaks == 1
             % Get TimeStamp Vector
             tVector = peaks_data(ad_indx==1).Table_StormData.('yyyymmddHHMM');
@@ -254,7 +254,7 @@ if bias_tgr == 1
                 storm.('Timeseries'){kk,2}(:,2) = f_u(storm.('Timeseries'){kk,2}(:,2));
             end
         else
-            % Get Level_2 Fieldnames 
+            % Get Level_2 Fieldnames
             level_2 = fieldnames(storm.(sNames{ii}));
             % Apply Bias Correction
             for kk = 1:length(level_2)
