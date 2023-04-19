@@ -59,7 +59,7 @@ switch dType
             end
         end
     case 2 % LC
-        if size(project_forcing(1).LCNUM,2) == 8 % Peaks
+        if size(project_forcing(1).LCNUM,2) == 8 || size(project_forcing(1).LCNUM,2) == 9 % Peaks
             swl_indx = 4;
         elseif size(project_forcing(1).LCNUM,2) == 10 % Timeseries
             swl_indx = 5;

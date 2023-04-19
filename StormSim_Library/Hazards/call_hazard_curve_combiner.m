@@ -19,9 +19,11 @@ rho_w = structure.water_density;
 if use_aep == 1
     rp_out = tc_resp(1).x_table;
     x_plot_tc = tc_resp(1).x_plot;
+    x_tbl_tc = tc_resp(1).x_table;
 else
     rp_out = aef2aep(tc_resp(1).x_table);
     x_plot_tc = aef2aep(tc_resp(1).x_plot);
+    x_tbl_tc = aef2aep(tc_resp(1).x_table);
 end
 % Find Primary Responses Indexes
 s_indx = 1:length(tc_resp);%find(cellfun(@length,{tc_resp.tbl_rsp_x})~=0);
@@ -38,7 +40,7 @@ for j = s_indx % SWL and/or Hm0
     disp(['               Combining ' tc_resp(j).var ' hazard curves....']);
     % Combine HCs To Create Table
     cc_resp(ctr).y_table = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
-        xc_resp(j).tbl_rsp_y, x_plot_tc);
+        xc_resp(j).tbl_rsp_y, x_tbl_tc);
     % Combine HCs To Create Plot
     cc_resp(ctr).y_plot = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
         xc_resp(j).tbl_rsp_y, x_plot_tc);

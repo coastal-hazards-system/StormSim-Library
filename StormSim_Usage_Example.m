@@ -1,6 +1,6 @@
 clc;clear all;
 addpath(genpath('StormSim_Library'));
-% diary 'Log.txt';
+diary 'Log.txt';
 %% USER INPUTS
 %{
 MCS/CSR Requires:
@@ -83,6 +83,7 @@ t2 = tic;
 % Call CHS Set-up Function 
 [storm, ~, prob_mass, config] = call_chs_data_formater(config);
 t2 = toc(t2);
+
 %% STEP 2: CREATE STORM FORCING 
 %{
  Description:
@@ -93,7 +94,7 @@ t2 = toc(t2);
    approach or doing a life cycle simulation (LCS) using
    peaks and timeseries. Option 3 computes structure response (S, R2p, q) after
    performing MCS storm sampling. Forcing generation options can be changed
-   in input file by changing row with "cast_workflow" as Model Variable
+   in input file by changing row with "workflow" as Model Variable
    Symbol.
 
 Inputs:
@@ -150,26 +151,35 @@ t3 = tic;
 t3 = toc(t3);
  
 %% STEP 3: CREATE STRUCTURE GEOMETRY
+%{
+ Description:
+   Extracts relevant Protective System Element (PSE) geometry and
+   properties. Currently supports the following PSE's:
+    1. Levee
+    2. Flodwall w/o Berm
+    3. Rubble mound
+
+Inputs:
+   Vars:
+    1. config
+    2. figure visibility: 1 - show plot 0 - hide plot (PSE cross-section)
+
+Outputs: 
+  MATLAB data structure with all relevant structural parameters based on
+  specified PSE.
+
+Files (.png & .mat):
+    1. PSE cross-section image  -> exported to project_folder/Transect_ID/Case_name 
+    2. Formated structural parameters are appended to config .mat -> exported to project_folder/Transect_ID/Case_name 
+Vars:
+    1. structure: Contains parsed structural information from config | 1 x 1 | with nFields 
+%}
 t4 = tic;
 % Create Project Structure Geometry
 [structure] = create_structure_geometry(config, 1);% Second input argument: 1 - show plot 0 - hide plot
 t4 = toc(t4);
 
 %% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
-%{
-% This functions applies uncertianty to project forcing.
-
-Things to fix:
-MCS-LC:
-- Forcing uncertainty follows latest PCHA guidelines
-- Response uncertainty has not been incorporated.
-PROS:
-- Forcing unceratinty follows the lates PCHA method
-- There is no uncertainty applied to structural parameters. Why?
-    Uncertainty is applied to the response, hence no need to double account
-    for uncertainty
-
-%}
 t5 = tic;
 [project_forcing, config] = call_uncertainty_engine(config, project_forcing);
 t5 = toc(t5);
@@ -183,16 +193,14 @@ t6 = tic;
 [project_forcing, config] = call_project_forcing_adjuster(config, project_forcing, structure);
 t6 = toc(t6);
 
-%% STEP 6: COMPUTE  RESPONSE 
-% MCS-CSR Peaks is working, need to sort out uncertainty. Needs to be
-% accompanied by report to address the selection of storm duration.
-% MCS-LC Its working but need to change K_ss in line 212 of
-% stormsim_csr_dpa.m. Also, need to update damage functions to latest.
+%% STEP 6: COMPUTE  PROJECT RESPONSES 
 t7 = tic;
 Resp = call_project_response(config, project_forcing, structure);
 t7 = toc(t7);
-sum([t1,t2,t3,t4,t5,t6,t7])/60
-% diary 'off';
+
+%% PRINT TIME 
+disp(['Simulation Completed. Total run time: ' num2str(round(sum([t1,t2,t3,t4,t5,t6,t7])/60,2)) ' mins...']);
+diary 'off';
 
 
 

@@ -124,16 +124,16 @@ else
     SIM_Flag = 10^-(log10(simulation_years));
 end
 % Maxima Dataset
-storm_peaks = storm.('XC').('Maxima');
+storm_peaks = storm.('XC').('Peaks').('Maxima');
 % WLP Dataset
 if WLP_switch == 1
-    storm_wlp_peaks = storm.('XC').('WLP');
+    storm_wlp_peaks = storm.('XC').('Peaks').('WLP');
 else
     storm_wlp_peaks = [];
 end
 % WHP Datasets
 if WHP_switch == 1
-    storm_whp_peaks = storm.('XC').('WHP');
+    storm_whp_peaks = storm.('XC').('Peaks').('WHP');
 else
     storm_whp_peaks = [];
 end

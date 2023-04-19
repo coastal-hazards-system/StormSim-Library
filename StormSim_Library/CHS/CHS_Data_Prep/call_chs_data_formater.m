@@ -97,158 +97,183 @@ struc_id = config.struc_id;
 % Define Case  Name
 case_name = config.case_name;
 
-%% FILTER OUT FILES (IF NEEDED) BASED ON USER INPUT
-% Filter Out Peaks Files (If Any)
-if use_peaks == 0
-    % Remove Peaks
-    chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,{'Peaks'}));
-    chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,{'Peaks'}));
-end
-% Filter Out Timeseries Files (If Any)
-if use_timeseries == 0
-    % Remove Timeseries
-    chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'Peaks'}));
-    chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'Peaks'}));
-end
-% Filter Out Files According To Sampling Scheme
-switch storm_sampling
-    case 'XC'
-        % Remove TCs
-        chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'XC','XH'}));
-        chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'XC','XH'}));
-        % Keep Track Of File Requirement
-        switch sum([use_timeseries,use_peaks])
-            case 1 % Peaks or Timeseries
-                min_file_req = 2;
-            case 2 % Peaks And Timeseries
-                min_file_req = 4;
-        end
-    case 'TC'
-        % Remove XCs
-        chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'TC','TS'}));
-        chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'TC','TS'}));
-        % Keep Track Of File Requirement
-        switch sum([use_timeseries,use_peaks])
-            case 1 % Peaks or Timeseries
-                min_file_req = 2;
-            case 2 % Peaks And Timeseries
-                min_file_req = 4;
-        end
-    case 'CC'
-        % Keep Track Of File Requirement
-        switch sum([use_timeseries,use_peaks])
-            case 1 % Peaks or Timeseries
-                min_file_req = 4;
-            case 2 % Peaks And Timeseries
-                min_file_req = 8;
-        end
+
+
+%% Check If This Is Fresh Run Or New Case
+% Define
+file2look = [project_name filesep struc_id filesep...
+    project_name '_' struc_id '_CHS_' config.region '_SP*'];
+% Look For File
+dummy_o = dir(file2look);
+% Remove Raw Files Mat
+dummy = dummy_o(~contains({dummy_o.name},{'raw_files'}));
+dummy_2 = dummy_o(contains({dummy_o.name},{'raw_files'}));
+if ~isempty(dummy) % New Case Run
+    % Build File Path
+    file2look = fullfile(dummy.folder,dummy.name);
+    file2look_2 = fullfile(dummy_2.folder,dummy_2.name);
+    disp(['Project forcing detected. Loading processed SP data....']);
+    % Load Storm File
+    load(file2look, 'storm', 'prob_mass');
+    load(file2look_2, 'CHS_Data');
+else
+    file2look = [];
 end
 
-%% VERIFY FOR MINIMUM FILE REQUIREMENTS
-%{
+%% FILTER OUT FILES (IF NEEDED) BASED ON USER INPUT
+if isempty(file2look) % Process SP Data
+    % Filter Out Peaks Files (If Any)
+    if use_peaks == 0
+        % Remove Peaks
+        chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,{'Peaks'}));
+        chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,{'Peaks'}));
+    end
+    % Filter Out Timeseries Files (If Any)
+    if use_timeseries == 0
+        % Remove Timeseries
+        chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'Peaks'}));
+        chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'Peaks'}));
+    end
+    % Filter Out Files According To Sampling Scheme
+    switch storm_sampling
+        case 'XC'
+            % Remove TCs
+            chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'XC','XH'}));
+            chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'XC','XH'}));
+            % Keep Track Of File Requirement
+            switch sum([use_timeseries,use_peaks])
+                case 1 % Peaks or Timeseries
+                    min_file_req = 2;
+                case 2 % Peaks And Timeseries
+                    min_file_req = 4;
+            end
+        case 'TC'
+            % Remove XCs
+            chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert,{'TC','TS'}));
+            chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert,{'TC','TS'}));
+            % Keep Track Of File Requirement
+            switch sum([use_timeseries,use_peaks])
+                case 1 % Peaks or Timeseries
+                    min_file_req = 2;
+                case 2 % Peaks And Timeseries
+                    min_file_req = 4;
+            end
+        case 'CC'
+            % Keep Track Of File Requirement
+            switch sum([use_timeseries,use_peaks])
+                case 1 % Peaks or Timeseries
+                    min_file_req = 4;
+                case 2 % Peaks And Timeseries
+                    min_file_req = 8;
+            end
+    end
+
+    %% VERIFY FOR MINIMUM FILE REQUIREMENTS
+    %{
     PROS
         2 XC Peaks and/or 2 TC Peaks Files (ADCIRC + STWAVE/WAM/SWAN)
     MCS/CSR
         2 XC Peaks and/or 2 TC Peaks Files (ADCIRC + STWAVE/WAM/SWAN)
         Optional
         Corresponding timeseries files (4 or 8 total files)
-%}
-if length(chs_files_2_convert)~=min_file_req
-    error('Error ID: 001 | call_chs_data_parser.missing_dependency | Minimum CHS storm data requirements not met for specified inputs.');
-end
+    %}
+    if length(chs_files_2_convert)~=min_file_req
+        error('Error ID: 001 | call_chs_data_parser.missing_dependency | Minimum CHS storm data requirements not met for specified inputs.');
+    end
 
-%% EXTRACT SAVEPOINT ATTRIBUTES
-%{
+    %% EXTRACT SAVEPOINT ATTRIBUTES
+    %{
         Grab savepoint dependant attributes such as: depth, regional study
         , ID, etc.
-%}
-% Grab ADCIRC Files
-CHS_file_ref = chs_files_2_convert(contains(chs_files_2_convert,{'ADCIRC'}));
-% Keep Only One File For Attributes
-CHS_file_ref = CHS_file_ref{1};
-try
-    % Get H5 Info
-    sp_depth = h5info(CHS_file_ref);
-    % Need To Access Attributes Of First Storm
-    sp_depth = sp_depth.Groups.Attributes;
-    % Grab Save Point Depth
-    config.chs_sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
-end
-% Extract Filename
-[~,CHS_file_ref,~] = fileparts(CHS_file_ref);
-% Split Into CHS Identifiers
-CHS_file_ref = strsplit(CHS_file_ref,'_');
-% Grab Savepoint ID
-config.sp_ID = str2double(CHS_file_ref{5}(3:end));
-% Grab CHS Region
-config.region = CHS_file_ref{1};
-% Correct For NACCS
-if strcmp(config.region,'CHS-NA')
-    config.region = 'NACCS';
-end
+    %}
+    % Grab ADCIRC Files
+    CHS_file_ref = chs_files_2_convert(contains(chs_files_2_convert,{'ADCIRC'}));
+    % Keep Only One File For Attributes
+    CHS_file_ref = CHS_file_ref{1};
+    try
+        % Get H5 Info
+        sp_depth = h5info(CHS_file_ref);
+        % Need To Access Attributes Of First Storm
+        sp_depth = sp_depth.Groups.Attributes;
+        % Grab Save Point Depth
+        config.chs_sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
+    end
+    % Extract Filename
+    [~,CHS_file_ref,~] = fileparts(CHS_file_ref);
+    % Split Into CHS Identifiers
+    CHS_file_ref = strsplit(CHS_file_ref,'_');
+    % Grab Savepoint ID
+    config.sp_ID = str2double(CHS_file_ref{5}(3:end));
+    % Grab CHS Region
+    config.region = CHS_file_ref{1};
+    % Correct For NACCS
+    if strcmp(config.region,'CHS-NA')
+        config.region = 'NACCS';
+    end
 
-%% CONVERT CHS DATA
-%{
+    %% CONVERT CHS DATA
+    %{
         Run provided CHS h5 files through h5 to MATLAB converter.
         Additionally, extract ADCIRC save point: depth, region, ID.
         Converted CHS data gets exported as .mats in CHS_Data folder.
         Exported .mat file naming convetion is tied to ADCIRC file region
         and save point ID. 
-%}
-% Remove Unwanted Storm Types
-if strcmp(storm_sampling,'XC')
-    chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'TC'));
-    chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'TC'));
-end
-if strcmp(storm_sampling,'TC')
-    chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'XC'));
-    chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'XC'));
-end
-% Append Filenames With Paths
-full_file_path = cellfun(@(x,y) [x filesep y],chs_files_2_convert_paths,chs_files_2_convert,'un',false);
-%
-disp('Begin CHS h5 file conversion....');
-% Convert CHS Data
-CHS_Data = call_chs_h5_converter(full_file_path);
-% Export Data
-save([project_name filesep struc_id filesep project_name '_'...
-    struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '_raw_files.mat'],'CHS_Data');
+    %}
+    % Remove Unwanted Storm Types
+    if strcmp(storm_sampling,'XC')
+        chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'TC'));
+        chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'TC'));
+    end
+    if strcmp(storm_sampling,'TC')
+        chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'XC'));
+        chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'XC'));
+    end
+    % Append Filenames With Paths
+    full_file_path = cellfun(@(x,y) [x filesep y],chs_files_2_convert_paths,chs_files_2_convert,'un',false);
+    %
+    disp('Begin CHS h5 file conversion....');
+    % Convert CHS Data
+    CHS_Data = call_chs_h5_converter(full_file_path);
+    % Export Data
+    save([project_name filesep struc_id filesep project_name '_'...
+        struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '_raw_files.mat'],'CHS_Data');
 
-%% FORMAT AND INSPECT CHS TROPICALS CYCLONES PEAKS DATA
-%{
+    %% FORMAT AND INSPECT CHS TROPICALS CYCLONES PEAKS DATA
+    %{
     Extracts SWL, Hm0, Tp And wave direction from CHS "Peaks" storm files.
-%}
-if contains(config.storm_sampling,{'TC','CC','TS'})
-    % Load Storm Probability Massess
-    [prob_mass.Param, prob_mass.TC_SRR,...
-        prob_mass.TC_Freq, prob_mass.dist, prob_mass.TotalFreq,...
-        prob_mass.smpl0, prob_mass.smpl1] = csh_probability_mass_loader(config.region,config.sp_ID);
-    % Format And Inspect Storm Peaks Files
-    [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
-end
+    %}
+    if contains(config.storm_sampling,{'TC','CC','TS'})
+        % Load Storm Probability Massess
+        [prob_mass.Param, prob_mass.TC_SRR,...
+            prob_mass.TC_Freq, prob_mass.dist, prob_mass.TotalFreq,...
+            prob_mass.smpl0, prob_mass.smpl1] = csh_probability_mass_loader(config.region,config.sp_ID);
+        % Format And Inspect Storm Peaks Files
+        [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
+    end
 
-%% FORMAT CHS EXRTATROPICALS CYCLONES DATA
-%{
+    %% FORMAT CHS EXRTATROPICALS CYCLONES DATA
+    %{
     Extracts SWL, Hm0, Tp And wave direction from CHS "Peaks" storm files.
    
-%}
-if contains(config.storm_sampling,{'XC','CC'})
-    % Format And Inspect Storm Peaks Files
-    [config, storm.('XC'), storm.('XC').removed_storms, config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC');
-    % Add Fields To Storm
-    storm.('XC').Nyrs_XC = config.Nyrs_XC;
-    storm.('XC').Nstm_XC = config.Nstm_XC;
-end
+    %}
+    if contains(config.storm_sampling,{'XC','CC'})
+        % Format And Inspect Storm Peaks Files
+        [config, storm.('XC'), storm.('XC').removed_storms, config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC');
+        % Add Fields To Storm
+        storm.('XC').Nyrs_XC = config.Nyrs_XC;
+        storm.('XC').Nstm_XC = config.Nstm_XC;
+    end
 
-%% TIMESERIES SWL PEAK REPLACER
-if use_timeseries == 1 && use_peaks == 1
-    storm = chs_timeseries_peak_replacer(storm);
-end
+    %% TIMESERIES SWL PEAK REPLACER
+    if use_timeseries == 1 && use_peaks == 1
+        storm = chs_timeseries_peak_replacer(storm);
+    end
 
-%% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
-% Export Project Forcing
-save([project_name filesep struc_id filesep project_name '_' struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'],...
-    'storm', 'prob_mass');
-save([project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' config.case_name '_config_file.mat'],...
-    'config');
+    %% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
+    % Export Project Forcing
+    save([project_name filesep struc_id filesep project_name '_' struc_id '_CHS_' config.region '_SP' num2str(config.sp_ID) '.mat'],...
+        'storm', 'prob_mass');
+    save([project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' config.case_name '_config_file.mat'],...
+        'config');
+end
 end

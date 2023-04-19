@@ -1,6 +1,6 @@
 function [index, MCSimOUT, sampled_intensity,...
-        MCSimOUT_WLP, MCSimOUT_WHP] = mcs_sample_tc(storm, simulation_years, prob_mass, WLP_switch, WHP_switch, sample_method)
-    %{
+    MCSimOUT_WLP, MCSimOUT_WHP] = mcs_sample_tc(storm, simulation_years, prob_mass, WLP_switch, WHP_switch, sample_method)
+%{
 LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
     Engineer Research and Development Center Coastal and Hydraulics Laboratory
@@ -111,160 +111,172 @@ RELEVANT PUBLICATIONS:
         (01) Gonzalez, Victor M. et. al. 2020. "Alabama Barrier Island Restauration Assesment life-cycle
                 structure response modeling." ERDC/CHL TR-20-5. Vicksburg, MS: US Army Engineer Research
                 and Development Center.
-        %}
-        
-        
-        %% DEFINE INPUTS
-        smpl0 = prob_mass.smpl0;
-        smpl1 = prob_mass.smpl1;
-        % Storm Probability Masses
-        TC_SRR = prob_mass.TC_SRR;
-        % Storm Frequency
-        TC_Freq = prob_mass.TC_Freq;
-        % Simulation flag, internal. Stops two 'while' loops below to ensure sampled
-        % storms match sampling rate.
-        if simulation_years == 1e5
-            SIM_Flag = 1e-4;
-        else
-            SIM_Flag = 10^-(log10(simulation_years));
-        end
-        % Maxima Dataset
-        storm_peaks = storm.('TC').('Maxima');
-        % WLP Dataset
-        if WLP_switch == 1
-            storm_wlp_peaks = storm.('TC').('WLP');
-        else
-            storm_wlp_peaks = [];
-        end
-        % WHP Datasets
-        if WHP_switch == 1
-            storm_whp_peaks = storm.('TC').('WHP');
-        else
-            storm_whp_peaks = [];
-        end
+%}
 
-        
-        
-        %% POISSON PROCESS
-        % Assing SRR for all intensities as lambda
-        TC_lambda = TC_SRR(1,3);
-        % Make Distribuition Object
-        TC_pd = makedist('Poisson','lambda',TC_lambda);
-        % Initializing While Loop Exit Trigger
-        TC_EPY=0;
-        % Insert Comment
-        while abs(TC_EPY-TC_lambda)>SIM_Flag %cannot be higher than NSIMyrs
-            % Sample Number Of TCs Sampled For The Simulation Year.
-            TC_MCS = random(TC_pd,[simulation_years,1]);
-            % Recomputes The Storm Rate Of The Simulation Period To Check Against SRR.
-            TC_EPY = sum(TC_MCS)/simulation_years;
-        end
-        
-        %% SAMPLE TROPICAL STORMS
-        % Initialize Storm Counter
-        n=1;
-        SimOUT_TC = zeros(sum(TC_MCS),10);
-        % Loop Through Simulation Length
-        for j = 1:simulation_years
-            %
-            if (TC_MCS(j,1)>0)
-                m=1;
-                for k = 1:TC_MCS(j,1)
-                    % Storm Year
-                    SimOUT_TC(n,1) = j;
-                    % Storm Type (1 = Tropical)
-                    SimOUT_TC(n,2) = 1;
-                    % Number of Storm In Storm Year
-                    SimOUT_TC(n,3) = m;
-                    % Random Number from 0 - 1
-                    IIdx = rand;
-                    %{
+
+%% DEFINE INPUTS
+smpl0 = prob_mass.smpl0;
+smpl1 = prob_mass.smpl1;
+% Storm Probability Masses
+TC_SRR = prob_mass.TC_SRR;
+% Storm Frequency
+TC_Freq = prob_mass.TC_Freq;
+% Simulation flag, internal. Stops two 'while' loops below to ensure sampled
+% storms match sampling rate.
+if simulation_years == 1e5
+    SIM_Flag = 1e-4;
+else
+    SIM_Flag = 10^-(log10(simulation_years));
+end
+% Maxima Dataset
+storm_peaks = storm.('TC').('Peaks').('Maxima');
+% WLP Dataset
+if WLP_switch == 1
+    storm_wlp_peaks = storm.('TC').('Peaks').('WLP');
+else
+    storm_wlp_peaks = [];
+end
+% WHP Datasets
+if WHP_switch == 1
+    storm_whp_peaks = storm.('TC').('Peaks').('WHP');
+else
+    storm_whp_peaks = [];
+end
+
+
+
+%% POISSON PROCESS
+% Assing SRR for all intensities as lambda
+TC_lambda = TC_SRR(1,3);
+% Make Distribuition Object
+TC_pd = makedist('Poisson','lambda',TC_lambda);
+% Initializing While Loop Exit Trigger
+TC_EPY=0;
+% Insert Comment
+while abs(TC_EPY-TC_lambda)>SIM_Flag %cannot be higher than NSIMyrs
+    % Sample Number Of TCs Sampled For The Simulation Year.
+    TC_MCS = random(TC_pd,[simulation_years,1]);
+    % Recomputes The Storm Rate Of The Simulation Period To Check Against SRR.
+    TC_EPY = sum(TC_MCS)/simulation_years;
+end
+
+%% SAMPLE TROPICAL STORMS
+% Initialize Storm Counter
+n=1;
+if sample_method == 0
+    SimOUT_TC = zeros(sum(TC_MCS),11);
+else
+    SimOUT_TC = zeros(sum(TC_MCS),10);
+end
+
+% Loop Through Simulation Length
+for j = 1:simulation_years
+    %
+    if (TC_MCS(j,1)>0)
+        m=1;
+        for k = 1:TC_MCS(j,1)
+            % Storm Year
+            SimOUT_TC(n,1) = j;
+            % Storm Type (1 = Tropical)
+            SimOUT_TC(n,2) = 1;
+            % Number of Storm In Storm Year
+            SimOUT_TC(n,3) = m;
+            % Random Number from 0 - 1
+            IIdx = rand;
+            %{
                     (1-TC_SRR(1,2)/TC_SRR(1,3)) = proportionality of low
                     intensity.
                     amount of if statements will change once we include the
                     capability of 3 intensitie i.e. Texas
-                    %}
-                    switch sample_method
-                        case 0 % historical
-                            % Define NaN for Intensity
-                            SimOUT_TC(n,4) =  -9;
-                            % Sample Random Storm Index
-                            SimOUT_TC(n,5) =  randsample(storm_peaks(:,5),1);
-                            % Extract Data Corresponding To Sampled Storm (
-                            SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
-                        case 1 % probabilistic
-                            if IIdx>=(1-TC_SRR(1,2)/TC_SRR(1,3))
-                                % Low Intensity Index (Maybe?)
-                                SimOUT_TC(n,4) = 0;
-                                % Grab Valid Storm Id List
-                                valid_storms = storm.('TC').Maxima(:,5);
-                                % Find Correcponding Frequency
-                                freq_indx = ismember(valid_storms,smpl0);
-                                % Remove Missing Storms
-                                smpl0 = smpl0(ismember(smpl0,valid_storms));
-                                % Sample Random Low Intensity Storm Index
-                                SimOUT_TC(n,5) = randsample(smpl0,1,true,TC_Freq(freq_indx));
-                                % Extract Data Corresponding To Sampled Storm (
-                                SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
-                            else
-                                % High Intensity Index (Maybe?)
-                                SimOUT_TC(n,4) = 1;
-                                % Grab Valid Storm Id List
-                                valid_storms = storm.('TC').Maxima(:,5);
-                                % Find Correcponding Frequency
-                                freq_indx = ismember(valid_storms,smpl1);
-                                % Remove Missing Storms
-                                smpl1 = smpl1(ismember(smpl1,valid_storms));
-                                % Sample Random High Intensity Storm Index
-                                SimOUT_TC(n,5) = randsample(smpl1,1,true,TC_Freq(freq_indx));
-                                % Extract Data Corresponding To Sampled Storm
-                                SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:); % Maximums
-                            end%if
-                    end
-                    % Increment Storm
-                    n=n+1;
-                    % Increment Number of Storm In Storm Year
-                    m=m+1;
-                end% for k
-            end% if
-        end% for j
-        
-        
-        %% STORE SAMPLED TROPICAL STORMS
-        % Monte Carlo Simulation Outputs (Sample Tropical Storms Peaks) - Maximums
-        MCSimOUT = SimOUT_TC(:,[1 2 3 6 7 8 9 10]); % (Headers in script header)
-        % Sampled Storm Indexes
-        index = SimOUT_TC(:,[1 2 3 10]); % (Headers in script header)
-        % Store Sampled Storms Intensity Index
-        sampled_intensity = SimOUT_TC(:,4);
-        
-        %% REPLICATE TROPICAL STROM SAMPLING WITH ALTERNATE DATASETS
-        % Wave height Priority
-        if WHP_switch == 1
-            % Search For Storm IDs
-            search_indx = arrayfun(@(x) find(storm_whp_peaks(:,5)==x),SimOUT_TC(:,5),'un',false);
-            % Check For Unmatched Storms
-            match_indx = ~cellfun(@isempty,search_indx);
-            % Extract Data Corresponding To Storm
-            SimOUT_TC_WHP = SimOUT_TC;
-            SimOUT_TC_WHP(match_indx,6:end) = storm_whp_peaks(cell2mat(search_indx),:);
-            % Monte Carlo Simulation Outputs (Sample Tropical Storms Peaks) - Wave Height Priority
-            MCSimOUT_WHP = SimOUT_TC_WHP(:,[1 2 3 6 7 8 9 10]); % (Headers in script header)
-        else
-            MCSimOUT_WHP = [];
-        end
-        % Water Level Priority
-        if WLP_switch == 1
-            % Search For Storm IDs
-            search_indx = arrayfun(@(x) find(storm_wlp_peaks(:,5)==x),SimOUT_TC(:,5),'un',false);
-            % Check For Unmatched Storms
-            match_indx = ~cellfun(@isempty,search_indx);
-            % Extract Data Corresponding To Storm
-            SimOUT_TC_WLP = SimOUT_TC;
-            SimOUT_TC_WLP(match_indx,6:end) = storm_wlp_peaks(cell2mat(search_indx),:);
-            % Monte Carlo Simulation Outputs (Sample Tropical Storms Peaks) - Water Level Priority
-            MCSimOUT_WLP = SimOUT_TC_WLP(:,[1 2 3 6 7 8 9 10]); % (Headers in script header)
-        else
-            MCSimOUT_WLP = [];
-        end
+            %}
+            switch sample_method
+                case 0 % historical
+                    % Define NaN for Intensity
+                    SimOUT_TC(n,4) =  -9;
+                    % Sample Random Storm Index
+                    SimOUT_TC(n,5) =  randsample(storm_peaks(:,5),1);
+                    % Extract Data Corresponding To Sampled Storm (
+                    SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
+                case 1 % probabilistic
+                    if IIdx>=(1-TC_SRR(1,2)/TC_SRR(1,3))
+                        % Low Intensity Index (Maybe?)
+                        SimOUT_TC(n,4) = 0;
+                        % Grab Valid Storm Id List
+                        valid_storms = storm.('TC').('Peaks').Maxima(:,5);
+                        % Find Correcponding Frequency
+                        freq_indx = ismember(valid_storms,smpl0);
+                        % Remove Missing Storms
+                        smpl0 = smpl0(ismember(smpl0,valid_storms));
+                        % Sample Random Low Intensity Storm Index
+                        SimOUT_TC(n,5) = randsample(smpl0,1,true,TC_Freq(freq_indx));
+                        % Extract Data Corresponding To Sampled Storm (
+                        SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),1:end-1);
+                    else
+                        % High Intensity Index (Maybe?)
+                        SimOUT_TC(n,4) = 1;
+                        % Grab Valid Storm Id List
+                        valid_storms = storm.('TC').('Peaks').Maxima(:,5);
+                        % Find Correcponding Frequency
+                        freq_indx = ismember(valid_storms,smpl1);
+                        % Remove Missing Storms
+                        smpl1 = smpl1(ismember(smpl1,valid_storms));
+                        % Sample Random High Intensity Storm Index
+                        SimOUT_TC(n,5) = randsample(smpl1,1,true,TC_Freq(freq_indx));
+                        % Extract Data Corresponding To Sampled Storm
+                        SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),1:end-1); % Maximums
+                    end%if
+            end
+            % Increment Storm
+            n=n+1;
+            % Increment Number of Storm In Storm Year
+            m=m+1;
+        end% for k
+    end% if
+end% for j
+
+
+%% STORE SAMPLED TROPICAL STORMS
+% Monte Carlo Simulation Outputs (Sample Tropical Storms Peaks) - Maximums
+if sample_method == 0 %historical
+    sort_indx = [1 2 3 6 7 8 9 10 11];
+    store_indx = 1:6;
+else
+    sort_indx = [1 2 3 6 7 8 9 10];
+    store_indx = 1:5;
+end
+MCSimOUT = SimOUT_TC(:,sort_indx); % (Headers in script header)
+% Sampled Storm Indexes
+index = SimOUT_TC(:,[1 2 3 10]); % (Headers in script header)
+% Store Sampled Storms Intensity Index
+sampled_intensity = SimOUT_TC(:,4);
+
+%% REPLICATE TROPICAL STROM SAMPLING WITH ALTERNATE DATASETS
+% Wave height Priority
+if WHP_switch == 1
+    % Search For Storm IDs
+    search_indx = arrayfun(@(x) find(storm_whp_peaks(:,5)==x),SimOUT_TC(:,5),'un',false);
+    % Check For Unmatched Storms
+    match_indx = ~cellfun(@isempty,search_indx);
+    % Extract Data Corresponding To Storm
+    SimOUT_TC_WHP = SimOUT_TC;
+    SimOUT_TC_WHP(match_indx,6:end) = storm_whp_peaks(cell2mat(search_indx),store_indx);
+    % Monte Carlo Simulation Outputs (Sample Tropical Storms Peaks) - Wave Height Priority
+    MCSimOUT_WHP = SimOUT_TC_WHP(:,sort_indx); % (Headers in script header)
+else
+    MCSimOUT_WHP = [];
+end
+% Water Level Priority
+if WLP_switch == 1
+    % Search For Storm IDs
+    search_indx = arrayfun(@(x) find(storm_wlp_peaks(:,5)==x),SimOUT_TC(:,5),'un',false);
+    % Check For Unmatched Storms
+    match_indx = ~cellfun(@isempty,search_indx);
+    % Extract Data Corresponding To Storm
+    SimOUT_TC_WLP = SimOUT_TC;
+    SimOUT_TC_WLP(match_indx,6:end) = storm_wlp_peaks(cell2mat(search_indx),store_indx);
+    % Monte Carlo Simulation Outputs (Sample Tropical Storms Peaks) - Water Level Priority
+    MCSimOUT_WLP = SimOUT_TC_WLP(:,sort_indx); % (Headers in script header)
+else
+    MCSimOUT_WLP = [];
+end
 end

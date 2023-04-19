@@ -11,24 +11,30 @@ ax_label_fnt = title_fnt-2;
 % TickLabel Font
 ax_tick_fnt = ax_label_fnt - 2;
 
-%% CREATE OUTPUT DIR
-% Make Dir
-if ~exist(outpath,'dir')
-    mkdir(outpath);
+%% Define XTick Labels And XTicks
+if use_aep == 1
+    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
+    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
+    x_lim = [10^-3, 1];
 else
-    delete([outpath filesep '*.png']);
+    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
+    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
+    x_lim = [10^-4 1];
 end
+
 
 %% DETERMINE ABSOLUTE MIN/MAX
 % Scan Peak Datasets
 pDatasets = fieldnames(Resp);
+% Compute Logical Vector 
+s_lim_indx = Resp.(pDatasets{1})(1).x_plot>=x_lim(1);
 
 for ii = 1:length(pDatasets)
     for jj = 1:length(Resp.(pDatasets{ii}))
         % Get Min
-        dmin = min(Resp.(pDatasets{ii})(jj).y_plot,[],'all','omitnan');
+        dmin = min(Resp.(pDatasets{ii})(jj).y_plot(s_lim_indx, :),[],'all','omitnan');
         % Get Max
-        dmax = max(Resp.(pDatasets{ii})(jj).y_plot,[],'all','omitnan');
+        dmax = max(Resp.(pDatasets{ii})(jj).y_plot(s_lim_indx, :),[],'all','omitnan');
         % Store Absolute Min For Dataset/Response
         y_min_list(jj,ii) = dmin;
         % Store Absolute Max For Dataset/Response
@@ -60,17 +66,7 @@ switch orientation
         title_indx = 1;
         xticks_label = 3;
 end
-%% Define XTick Labels And XTicks
-if use_aep == 1
-    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
-    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
-    x_lim = [10^-3, 1];
-else
-    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
-    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
-    x_lim = [10^-4 1];
 
-end
 %% PLOT EACH RESPONSE FOR EACH DATASET
 
 % For Each Variable In PLOT
@@ -164,7 +160,7 @@ for k = 1:length(Resp.(pDatasets{1}))
         case 'CC'
             modelstr = 'CC';
     end
-    saveas(Figure0,[outpath '_StormSim_Peaks_' modelstr '_' plt(k).var '_Hazard_Curve_Comparison'],'png');
+    saveas(Figure0,[outpath filesep  'RB1_StormSim_Peaks_' modelstr '_' plt(k).var '_Hazard_Curve_Comparison'],'png');
     close all;
 end
 

@@ -278,7 +278,7 @@ rIndx = Hm0<=0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);
 % Do not calculate structure response if no storm forcing
 q(rIndx) = NaN;
 R2p(rIndx) = NaN;
-% COmpute R2p + SWL
+% Compute R2p + SWL
 R2p_SWL = R2p + SWL;
 % Reshape
 q = reshape(q,data_dims);

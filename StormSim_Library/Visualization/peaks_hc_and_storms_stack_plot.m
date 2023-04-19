@@ -80,6 +80,17 @@ if ~exist(outpath,'dir')
 else
     delete([outpath filesep '*.png']);
 end
+%% DEFINE XTICKS
+if use_aep == 1
+    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
+    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
+    x_lim = [10^-3, 1];
+else
+    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
+    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
+    x_lim = [10^-4 1];
+end
+
 
 %% DETERMINE ABSOLUTE MIN/MAX
 y_limit = [];
@@ -87,19 +98,22 @@ for jj = 1:length(pDatasets)
     for kk = 1:length(resp_indx)
         % Get Min/Max
         if isfield(hcData,'XC')
+            % Compute Logical Vector 
+s_lim_indx = hcData.('XC').(pDatasets{jj})(kk).x_plot>=x_lim(1);
             % Min
-            dmin = min(hcData.('XC').(pDatasets{jj})(kk).y_plot,[],'all','omitnan');
+            dmin = min(hcData.('XC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
             % Get Max
-            dmax = max(hcData.('XC').(pDatasets{jj})(kk).y_plot,[],'all','omitnan');
+            dmax = max(hcData.('XC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
         else
             dmin = [];
             dmax = [];
         end
         if isfield(hcData,'TC')
+            s_lim_indx = hcData.('TC').(pDatasets{jj})(kk).x_plot>=x_lim(1);
             % Min
-            dmin2 = min(hcData.('TC').(pDatasets{jj})(kk).y_plot,[],'all','omitnan');
+            dmin2 = min(hcData.('TC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
             % Get Max
-            dmax2 = max(hcData.('TC').(pDatasets{jj})(kk).y_plot,[],'all','omitnan');
+            dmax2 = max(hcData.('TC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
         else
             dmin2 = [];
             dmax2 = [];
@@ -116,16 +130,6 @@ for jj = 1:length(pDatasets)
 end
 
 
-%% DEFINE XTICKS
-if use_aep == 1
-    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
-    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
-    x_lim = [10^-3, 1];
-else
-    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
-    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
-    x_lim = [10^-4 1];
-end
 
 %% PLOT EACH RESPONSE FOR EACH DATASET
 % For Each Peaks Dataset (Maxima, WLP, WHP)

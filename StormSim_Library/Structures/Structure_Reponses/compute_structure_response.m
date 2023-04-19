@@ -18,6 +18,8 @@ toe_elev = structure.toe_elevation; % Flip convention
 berm_elev = structure.berm_elevation; %
 % Berm Width
 berm_width = structure.berm_width;
+% Berm Slope
+berm_slope = structure.berm_slope;
 % Seaside Slope (cot(alpha))
 slope = structure.seaside_slope;
 % Rubblemound Fields
@@ -28,6 +30,8 @@ if struc_type == 3
     S = structure.seaside_limit_S;
     % CEM P
     P = structure.cem_P;
+elseif struc_type == 2
+    wall_bottom_elev = structure.wall_bottom_elevation;
 end
 % Water Density kg/m^3
 rho_w = structure.water_density;
@@ -72,22 +76,27 @@ end
 if workflow ~= 2
     % Call Eurotop Influence Factors
     gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
-    % Compute runup & Overtopping
-    [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
-        slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
-        toe_elev,berm_width, struc_type),...
-        Hm0, Tp, SWL, Rc, gammas,'un',false);
     % Compute Structure Type Dependant Responses
     switch struc_type
         case 2 % Floodwall
+            % Compute runup & Overtopping
+            [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+                berm_slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+                wall_bottom_elev, berm_width, struc_type),...
+                Hm0, Tp, SWL, Rc, gammas,'un',false);
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
             % Compute Water Depth @ Berm
-            hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
+            hb = cellfun(@(x) x - abs(berm_elev), SWL,'un',false);
             % Compute P1 Only
             p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
                 zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
         case {1,3} % Levees & Rubblemound
+            % Compute runup & Overtopping
+            [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+                slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+                toe_elev, berm_width, struc_type),...
+                Hm0, Tp, SWL, Rc, gammas,'un',false);
             % Compute Mean Period
             Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
             % Compute Stone SIze Using S Limit State
@@ -118,7 +127,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = Dn50{:}; % Median Stone Size
-%             Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
+            %             Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
@@ -156,7 +165,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2struct(Dn50,'LCNUM');
-%             Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
+            %             Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
         end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
@@ -171,7 +180,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
-%             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+            %             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1

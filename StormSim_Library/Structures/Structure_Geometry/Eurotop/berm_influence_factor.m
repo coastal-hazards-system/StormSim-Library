@@ -3,7 +3,7 @@ function [gamma_b] = berm_influence_factor(berm_width,berm_elevation,Hm0,SWL,slo
 if berm_width~=0
     B = berm_width; % Berm width
     Lberm = B + 2*Hm0.*slope;
-    dBerm = berm_elevation-SWL;
+    dBerm = SWL+berm_elevation;
 
     rB = B ./ Lberm;
     R2p_Est = 2*Hm0; % Esimated per EurOtop for runup - could be refined more using r2p eq

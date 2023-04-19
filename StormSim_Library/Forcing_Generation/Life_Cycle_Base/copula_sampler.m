@@ -72,6 +72,7 @@ WHP_switch = ~isempty(storm_whp_peaks);
     Y(:,5)= storm_indexes;
     % Cap sampled waves to positive values
     Y(Y(:,2)<0.05,2)=0.05;
+    % 
 
     %% SAMPLE STORM PARAMETERS FROM GAUSSIAN COPULA - WATER LEVEL PRIORITY
     if WLP_switch ==  1

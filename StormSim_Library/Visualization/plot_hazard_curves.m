@@ -15,8 +15,8 @@ else
     xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
     xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
     x_lim = [10^-4 1];
-
 end
+
 % Initialize Figure Handle
 Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
 % Initialize Axes Handle
@@ -39,6 +39,8 @@ for k = 1:length(plt)
     colorstr = {'k-','b-.','r-.','r--','b--'};
     % Enabel Box
     box(ax,'on');
+    % Compute Logical Vector 
+s_lim_indx = plt(k).x_plot>=x_lim(1);
     % For Each CL
     for i = 1:length(plt(k).y_plot(1,:))
         % Define Curve Name
@@ -48,14 +50,14 @@ for k = 1:length(plt)
             DataName = [num2str(prc(i)) '%'];
         end
         % PLot CL into Axes
-        p = plot(ax,plt(k).x_plot(:,1),plt(k).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+        p = plot(ax,plt(k).x_plot(s_lim_indx,1),plt(k).y_plot(s_lim_indx,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
         % Update Data Tip
-        row = dataTipTextRow('RowID', 1:length(plt(k).x_plot(:,1)));
+        row = dataTipTextRow('RowID', 1:length(plt(k).x_plot(s_lim_indx,1)));
         % Append Neew Data Tip
         p.DataTipTemplate.DataTipRows(end+1) = row;
     end
     % Define Y Lim
-    ax.YLim = [min(plt(k).y_plot,[],'all','omitnan'),max(plt(k).y_plot,[],'all','omitnan')];
+    ax.YLim = [min(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan'),max(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan')];
     % Set XTicks
     ax.XTick = xticks_data;
     ax.XTickLabel = xticks_data_lbl;

@@ -79,18 +79,35 @@ switch workflow
                     % Call StormSim: PROS RB1
                     helper_var = stormsim_pros(config,...
                         aux_var, structure, emp_coeff, [subDir 'RB1_' level_2{ii}]);
+                    % Check If XC & TC Exist
+                    level_a = fieldnames(helper_var);
+                    % Create Subdirectory
+                    if ~exist([subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections'],'dir')
+                        mkdir([subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections']);
+                    else % Directory Exist
+                        % Delete Existing Files
+                        delete([subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections' filesep '*.png']);
+                    end
                     % Add Additional Layer To Data Structure For Peaks Alt Datasets
-                    for jj = 1:length(level_1)
-                        Resp.(level_1{jj}).('Peaks').(level_2{ii}) = helper_var.(level_1{jj}).('Peaks');
+                    for jj = 1:length(level_a)
+                        Resp.(level_a{jj}).('Peaks').(level_2{ii}) = helper_var.(level_a{jj}).('Peaks');
+                        % Plot Cross-section For Each Storm Type
+                        plot_structure_and_forcing(config, Resp.(level_a{jj}).('Peaks').(level_2{ii}),...
+                            structure, level_a{jj},[subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections']);
                     end
                     % Clear Aux Var
                     clearvars('aux_var');
                 end
             end
-            % Check If XC & TC Exist
-            level_a = fieldnames(Resp);
+
             % Only If there Is 2 Or More Peaks Datasets
             if length(fieldnames(Resp.(level_a{1}).('Peaks')))>=2
+                % Make Dir
+                if ~exist([subDir 'RB1_Comparison'],'dir')
+                    mkdir([subDir 'RB1_Comparison']);
+                else
+                    delete([subDir 'RB1_Comparison' filesep '*.png']);
+                end
                 % Create RB1 Peak Dataset HC Comparison Figures
                 for ii = 1:length(level_a)
                     % Create Comparison Figure
@@ -124,13 +141,56 @@ switch workflow
                     aux_var.(level_1{jj}).('TC_Prob') = project_forcing.(level_1{jj}).('TC_Prob');
                 end
             end
+            % Create Subdirectory
+            if ~exist([subDir 'RB3_Hazards_Cross-Sections'],'dir')
+                mkdir([subDir 'RB3_Hazards_Cross-Sections']);
+            else % Directory Exist
+                % Delete Existing Files
+                delete([subDir 'RB3_Hazards_Cross-Sections' filesep '*.png']);
+            end
             % Call StormSim: PROS RB3
-            Resp = stormsim_pros(config,...
-                aux_var, structure, emp_coeff, [subDir 'RB3']);
+            if use_peaks == 1 % Append To Existing
+                aux_var = stormsim_pros(config,...
+                    aux_var, structure, emp_coeff, [subDir 'RB3']);
+                % Assign Results
+                for ii = 1:length(level_a)
+                    Resp.(level_a{ii}).Timeseries = aux_var.(level_a{ii}).Timeseries;
+                    % Plot Cross-section For Each Storm Type
+                    plot_structure_and_forcing(config, Resp.(level_a{ii}).('Timeseries'),...
+                        structure, level_a{ii},[subDir 'RB3_Hazards_Cross-Sections']);
+                end
+            else % Create Resp Variable
+                Resp = stormsim_pros(config,...
+                    aux_var, structure, emp_coeff, [subDir 'RB3']);
+                % Add Additional Layer To Data Structure For Peaks Alt Datasets
+                for jj = 1:length(level_a)
+                    % Plot Cross-section For Each Storm Type
+                    plot_structure_and_forcing(config, Resp.(level_a{jj}).('Timeseries'),...
+                        structure, level_a{jj},[subDir 'RB3_Hazards_Cross-Sections']);
+                end
+            end
             % Create Project Forcing + HC Comparison Figure
             if compute_forcing_hc == 1 || workflow == 2
                 % Create Figures
                 peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 1, [subDir 'RB3_Project_Forcing_Comparison']);
+            end
+        end
+
+        % RB1 vs RB3
+        if use_peaks == 1 && use_timeseries == 1
+            % Only If there Is 2 Or More Peaks Datasets
+            % Create RB1 Peak Dataset HC Comparison Figures
+            for jj = 1:length(level_2)
+                % Make Dir
+                if ~exist([subDir 'RB1_' level_2{jj} '_RB3_Comparison'],'dir')
+                    mkdir([subDir 'RB1_' level_2{jj} '_RB3_Comparison']);
+                else
+                    delete([subDir 'RB1_' level_2{jj} '_RB3_Comparison' filesep '*.png']);
+                end
+                for ii = 1:length(level_a)
+                    % Create Comparison Figure
+                    response_base_comparison(Resp.(level_a{ii}).('Peaks').(level_2{jj}), Resp.(level_a{ii}).('Timeseries'), level_a{ii}, use_aep, 'h', [subDir 'RB1_' level_2{jj} '_RB3_Comparison']);
+                end
             end
         end
     case 3 % CSR
@@ -165,7 +225,7 @@ switch workflow
                 % Call StormSim: CSR Damage Progression Analysis
                 [Resp.(storm_sampling).('Timeseries').S] = stormsim_csr_dpa(config, structure, emp_coeff, {project_forcing.(storm_sampling).('Timeseries').LCNUM});
                 % Generate Plot Structure
-                S_damage_plotter(config, Resp.(storm_sampling).Timeseries.S, 1, 0);
+                S_damage_plotter(config, Resp.(storm_sampling).Timeseries.S, 0, 0);
                 % Create Subdirectory
                 if ~exist([subDir 'LCS_DPA'],'dir')
                     mkdir([subDir 'LCS_DPA']);

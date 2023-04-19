@@ -90,12 +90,16 @@ if use_aep == 1
 else
     x_lim = num2str(10^-4);
 end
+% Define Default Log Scale
+y_scale_log = 0;
 
 %% COMPUTE HAZARD CURVES WITH STORMSIM: SST/JPM
 % Initialize Counter
 ctr = 1;Output = [];
 % Loop Through All Stations
 for ii = 1:length(vars_2_get)
+    % Define Default Log Scale
+    y_scale_log = 0;
     % Define Station ID
     staID = vars_2_get{ii};
     % Assign Uncertainty Based On Station
@@ -166,6 +170,7 @@ for ii = 1:length(vars_2_get)
             unit_label = 'm^3/s per m';
             y_label = ['q [ ' unit_label ']'];
             var_name = 'q';
+            y_scale_log = 1;
     end
     % Assign Input Data
     if contains(staID,{'SWL','Hm0','Tp'}) && ~contains(staID,'R2p_SWL')
@@ -211,12 +216,14 @@ for ii = 1:length(vars_2_get)
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
                     dummy.HC_plt_x(s_indx), dummy.SST_output.HC_plt(:, s_indx)',...
                     dummy.HC_tbl_x', dummy.SST_output.HC_tbl', input_data.data_values,...
-                    0, [50,prc], [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']);
+                    y_scale_log, [50,prc], [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']);
                 % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
                     Output(ctr).tbl_rsp_x = dummy.SST_output.HC_tbl_rsp_x'; % x here implies Responses, AEP/AEF -> Responses
+                    Output(ctr).x_table_ARI = ceil(1./aep2aef(Output(ctr).x_table_ARI));
                 else
                     Output(ctr).tbl_rsp_x = aef2aep(dummy.SST_output.HC_tbl_rsp_x');
+                    Output(ctr).x_table_ARI = ceil(1./Output(ctr).x_table_ARI);
                 end
                 Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
             catch
@@ -235,12 +242,14 @@ for ii = 1:length(vars_2_get)
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
                     dummy.HC_plt_x(s_indx), dummy.HC_data.HC_plt_y(s_indx, :),...
                     dummy.HC_tbl_x', dummy.HC_data.HC_tbl_y, input_data.data_values,...
-                    0, [50,prc], [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']);
+                    y_scale_log, [50,prc], [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']);
                 % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
                     Output(ctr).tbl_rsp_x = dummy.HC_data.HC_tbl_rsp_x;
+                    Output(ctr).x_table_ARI = ceil(1./aep2aef(Output(ctr).x_table_ARI));
                 else
                     Output(ctr).tbl_rsp_x = aef2aep(dummy.HC_data.HC_tbl_rsp_x);
+                    Output(ctr).x_table_ARI = ceil(1./Output(ctr).x_table_ARI);
                 end
                 Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
             catch
@@ -306,7 +315,7 @@ if compute_forcing_hc == 1
                     % Call Data Appender
                     Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
                         Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), {'Derived from primary responses hazard curves'},...
-                        0, [50,prc], [outName{1} sVar outName{2}]);
+                        y_scale_log, [50,prc], [outName{1} sVar outName{2}]);
                 end
                 % Compute Nappe Response (Table)
                 [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
@@ -328,7 +337,7 @@ if compute_forcing_hc == 1
                     % Call Data Appender
                     Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
                         Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}), {'Derived from primary responses hazard curves'},...
-                        0, [50,prc], [outName{1} pFields{kk} outName{2}]);
+                        y_scale_log, [50,prc], [outName{1} pFields{kk} outName{2}]);
                 end
             end
     end
@@ -347,6 +356,7 @@ end
         Output(rIndx).('y_plot') = y_plt;
         Output(rIndx).('x_table') = x_tbl;
         Output(rIndx).('y_table') = y_tbl;
+        Output(rIndx).('x_table_ARI') = x_tbl;
         Output(rIndx).('POT') = POT;
         Output(rIndx).('y_label') = y_label;
         Output(rIndx).('title') = title_str;
