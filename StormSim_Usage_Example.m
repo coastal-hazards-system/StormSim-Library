@@ -1,6 +1,6 @@
 clc;clear all;
 addpath(genpath('StormSim_Library'));
-diary 'Log.txt';
+% diary 'Log.txt';
 %% USER INPUTS
 %{
 MCS/CSR Requires:

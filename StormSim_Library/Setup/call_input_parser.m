@@ -173,7 +173,7 @@ file2look = [project_name filesep struc_id filesep...
 % Look For File
 dummy = dir(file2look);
 % Remove Raw Files Mat
-dummy = dummy(~contains({dummy.name},{'raw_files'}));
+dummy = dummy(~contains({dummy.name},{'raw_files',num2str(config.sp_ID)}));
 if ~isempty(dummy) % New Case Run
     % Build File Path
     file2look = fullfile(dummy.folder,dummy.name);
