@@ -11,7 +11,7 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
         are described in the sections below.
     
     %% INPUTS
-        storm2rm: Identified NaN's in "Maxima" peaks dataset. (row id) | double | number_of_bad_storms x 1
+        storm2rm: Identified NaN's in "Maxima" peaks dataset. (storm id) | double | number_of_bad_storms x 1
         swl_peaks: CHS ADCIRC Peaks data. | table | number_of_storms x nFields
         hm0_peaks: CHS STWAVE/WAM/SWAN Peaks data. | table | number_of_storms x nFields
         swl_timeseries: CHS ADCIRC Tiemseries data. | table | number_of_storms x nFields
@@ -39,7 +39,7 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
         % Get Storm IDs
         stmID = unique(str2double(swl_timeseries.("Storm ID")));
         % Remove Missing Storms
-        stmID(storm2rm) = [];
+        stmID(ismember(stmID,storm2rm)) = [];
         % Pre-Allocate Peaks Storage Variable
         storm_matrix = [zeros(length(stmID),4),stmID,zeros(length(stmID),1)]; % Water Level Priority Failsafe
         WLP_matrix = storm_matrix; % Water Level Priority
