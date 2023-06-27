@@ -163,10 +163,10 @@ switch workflow
                 Resp = stormsim_pros(config,...
                     aux_var, structure, emp_coeff, [subDir 'RB3']);
                 % Add Additional Layer To Data Structure For Peaks Alt Datasets
-                for jj = 1:length(level_a)
+                for jj = 1:length(level_1)
                     % Plot Cross-section For Each Storm Type
-                    plot_structure_and_forcing(config, Resp.(level_a{jj}).('Timeseries'),...
-                        structure, level_a{jj},[subDir 'RB3_Hazards_Cross-Sections']);
+                    plot_structure_and_forcing(config, Resp.(level_1{jj}).('Timeseries'),...
+                        structure, level_1{jj},[subDir 'RB3_Hazards_Cross-Sections']);
                 end
             end
             % Create Project Forcing + HC Comparison Figure

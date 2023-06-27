@@ -86,10 +86,6 @@ use_peaks = config.use_peaks;
 use_timeseries = config.use_timeseries;
 % Storm Sampling
 storm_sampling = config.storm_sampling;
-% Water Level Priority Switch
-wlp_switch = config.create_wlp;
-% Wave Height Priority Switch
-whp_switch = config.create_whp;
 % Project Name
 project_name = config.project_name;
 % Transect Id

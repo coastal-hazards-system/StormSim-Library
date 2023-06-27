@@ -68,18 +68,6 @@ if run_flag == 1
         case 4 % Any External Workflow
             % Do Nothing
         otherwise % StormSim Workflow
-            % Check For Function Library
-            chk1 = exist('StormSim_Library','dir')==7;
-            % Verify Results
-            if chk1 % Library Found
-                % Add Library To Path
-                addpath(genpath('StormSim_Library'));
-                % Display Status
-                disp('StormSim library found...');
-            else % Library not Found
-                % Throw Error Message
-                error('Error ID: 001: | call_environment_setup.missing_dependency | StormSim library not found....');
-            end
             % Check For TC Probabilities Dependencies
             chk2 = exist('MCSim_Inputs','dir')==7;
             % Verify Results
