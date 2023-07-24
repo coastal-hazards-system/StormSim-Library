@@ -91,7 +91,7 @@ switch workflow
         end
         % Tropical Cyclones
         if contains(storm_sampling,{'TC','CC'})
-            % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
+            % Reshape Forcing Parameters For RB Analysis (nStorms * noyrmal_discretizations)
             project_forcing.('TC') = rb_forcing_formater(config, 'TC', storm.('TC'), prob_mass);
         end
         % Extratropical Storms
@@ -104,23 +104,23 @@ switch workflow
         wName = 'LCS';
         % Call StormSim: Monte Carlo Storm Sampler
         if use_peaks == 1
-            % Get Storm Sampling Using Peaks Files 
+            % Get Storm Sampling Using Peaks Files
             [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
             % Do you want to use timeseries
             if use_timeseries == 1 % Timeeseries follows the same sampling scheme as Maxima Peaks dataset
                 [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
             end
-        else % Timeseries Only 
-            % Get Storm Types In Data 
+        else % Timeseries Only
+            % Get Storm Types In Data
             level_1 = fieldnames(storm);
-            % Create Dummy Peaks Field 
+            % Create Dummy Peaks Field
             for kk = 1:length(level_1)
                 dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
                 storm.(level_1{kk}).('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1))];
             end
-            % Get Storm Sampling Using Peaks Files 
+            % Get Storm Sampling Using Peaks Files
             [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
-                    % Do you want to use timeseries
+            % Do you want to use timeseries
             [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(aux_var, storm, prob_mass, storm_sampling);
         end
 end

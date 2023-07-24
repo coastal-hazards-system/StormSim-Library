@@ -43,9 +43,15 @@ LC_SimOUT_hyd = [];
 % Loop Through All LCs
 for nLC = 1:length(sampled_storms_indx)
     % Loop Through Each Storm in LC
+    if ~isempty(tc_intensity)
     data_2 = arrayfun(@(w,x,y,z) mcs_timeseries_life_cycle_formater(w,x,y,z,storm,prob_mass,tc_intensity(nLC).LCNUM),...
         sampled_storms_indx(nLC).LCNUM(:,1),sampled_storms_indx(nLC).LCNUM(:,2),...
         sampled_storms_indx(nLC).LCNUM(:,3),sampled_storms_indx(nLC).LCNUM(:,4),'un',false);
+    else
+    data_2 = arrayfun(@(w,x,y,z) mcs_timeseries_life_cycle_formater(w,x,y,z,storm,prob_mass,[]),...
+        sampled_storms_indx(nLC).LCNUM(:,1),sampled_storms_indx(nLC).LCNUM(:,2),...
+        sampled_storms_indx(nLC).LCNUM(:,3),sampled_storms_indx(nLC).LCNUM(:,4),'un',false);
+    end
     %
     LC_SimOUT_hyd(nLC,1).LCNUM = cell2mat(data_2);
     %% PROGRESS BAR
