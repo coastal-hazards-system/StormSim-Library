@@ -57,7 +57,7 @@ end
 %% COMBINE HAZARD CURVES
 if strcmp(storm_sampling,'CC')
     disp('         Combining project primary responses hazard curves...');
-    HC_out.('CC').(f_str) = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);    
+    [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);    
     % 3. Plot Outputs
     disp('            Plotting hazard curves....');
     plot_hazard_curves(HC_out.('CC').(f_str), use_aep);

@@ -95,10 +95,12 @@ for k = 1:length(Resp_RB1)
             p.DataTipTemplate.DataTipRows(end+1) = row;
         end
         % Define Y Lim
-        if ll ~= 3
-            ax.YLim = [y_min_list(k) y_max_list(k)];
-        else
-            ax.YLim = [min(plt(kk).y_plot(s_lim_indx, :),[],'all','omitnan') max(plt(kk).y_plot(s_lim_indx, :),[],'all','omitnan')];
+        try
+            if ll ~= 3
+                ax.YLim = [y_min_list(k) y_max_list(k)];
+            else
+                ax.YLim = [min(plt(kk).y_plot(s_lim_indx, :),[],'all','omitnan') max(plt(kk).y_plot(s_lim_indx, :),[],'all','omitnan')];
+            end
         end
         % Set XTicks
         if ll~=3

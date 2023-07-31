@@ -54,8 +54,7 @@ region = config.region;
 % ADCIRC SP ID
 sp_ID = config.sp_ID;
 % Wave Model Savepoint
-sp_ID_wave = strsplit(config.chs_tc_hm0_peaks{:},{'_','SP'});
-sp_ID_wave = str2double(sp_ID_wave{5});
+sp_ID_wave = config.sp_ID_wave;
 % Vertical Datum
 datum = config.project_datum;
 % Are HC In AEP or AEF

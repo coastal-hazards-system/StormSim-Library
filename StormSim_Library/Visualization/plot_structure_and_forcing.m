@@ -18,6 +18,8 @@ color_str = {'-b','-g','-y','-r'};
 legend_str = {'20','50','100','500'};
 % Toe_elevation
 toe_elevation = structure.toe_elevation;
+%
+crest_elevation = structure.crest_elevation;
 % Define Project Name
 project_name = config.project_name;
 % Define Prject Datum
@@ -38,7 +40,7 @@ f_indx = ismember(v_freq,s_years);
 
 f_data = SWL.y_table(f_indx,:);
 f_data2 = R2p.y_table(f_indx,:);
-
+y_lim_ax = max(max([f_data,f_data2],[],'all','omitnan'),crest_elevation);
 % Define CLs
 CLs = SWL.CL;
 % Loop Through Each CL
@@ -49,6 +51,8 @@ for ii = 1:length(CLs)
     fig.Position = [0 0 1 1];
     ax = gca;hold(ax,'on');box on;
     ax.Color = [0.8 0.8 0.8];
+    ext_left = ax.Children(2).Shape.Vertices(2,1);
+    ext_right = ax.Children(2).Shape.Vertices(3,1);
     ylabel(['Elevation [',project_datum,', m]']);
     xlabel('X [m]');
     % Add Save Point Depth
@@ -57,19 +61,20 @@ for ii = 1:length(CLs)
     % Add SWL HC Data
     dummy = [];
     for gg = 1:length(f_data(:,1))
-        pp = plot(gca, [0 2], [f_data(gg,ii) f_data(gg,ii)],color_str{gg},'LineWidth',1.5);
+        pp = plot(gca, [0 ext_left], [f_data(gg,ii) f_data(gg,ii)],color_str{gg},'LineWidth',1.5);
         dummy = [dummy,pp];
     end
     % R2p
     plot(ax, [ax.XLim(2)-1 ax.XLim(2)-1], [toe_elevation max(f_data2(:,ii),[],'all','omitnan')],'-k','LineWidth',1.5);
     for gg = 1:length(f_data(:,1))
-        plot(gca, [ax.XLim(2)-2 ax.XLim(2)], [f_data2(gg,ii) f_data2(gg,ii)],color_str{gg},'LineWidth',1.5);
+        plot(gca, [ext_right ax.XLim(2)], [f_data2(gg,ii) f_data2(gg,ii)],color_str{gg},'LineWidth',1.5);
     end
     % Change Title
     lg = legend([dummy,sp] ,[legend_str,{['SP Depth: ' num2str(sp_depth) '[m]']}],...
         'Orientation','horizontal','NumColumns',2,'Location','northwest','Color','w');
     title(lg, 'ARI [yrs]');
-    ylim(ax, [toe_elevation-0.5 max([f_data,f_data2],[],'all','omitnan')+0.1]);
+
+    ylim(ax, [toe_elevation-0.5 y_lim_ax+0.1]);
     t_str = ax.Title.String;
     t_str(1) = {strrep([strrep(t_str{1}, '_', ' ') ' | Case Name: ' case_name],'_',' ')};
     t_str(2) = {['CL: ' num2str(CLs(ii)) ' % | ' storm_type ' | SWL (left) | R_{2%} (right)']};
@@ -78,7 +83,9 @@ for ii = 1:length(CLs)
     close all;
 end
 
+%% Hm0
 f_data = Hm0.y_table(f_indx,:);
+y_lim_ax = max(max([f_data,f_data2],[],'all','omitnan'),crest_elevation);
 % Loop Through Each CL
 for ii = 1:length(CLs)
     % Create Figure (Sturcture) Cross-Section
@@ -87,6 +94,8 @@ for ii = 1:length(CLs)
     fig.Position = [0 0 1 1];
     ax = gca;hold(ax,'on');box on;
     ax.Color = [0.8 0.8 0.8];
+    ext_left = ax.Children(2).Shape.Vertices(2,1);
+    ext_right = ax.Children(2).Shape.Vertices(3,1);
     ylabel(['Elevation [',project_datum,', m]']);
     xlabel('X [m]');
     % Add Save Point Depth
@@ -95,19 +104,21 @@ for ii = 1:length(CLs)
     % Add SWL HC Data
     dummy = [];
     for gg = 1:length(f_data(:,1))
-        pp = plot(gca, [0 2], [f_data(gg,ii) f_data(gg,ii)],color_str{gg},'LineWidth',1.5);
+        % pp = plot(gca, [0 2], [f_data(gg,ii) f_data(gg,ii)],color_str{gg},'LineWidth',1.5);
+        pp = plot(gca, [0 ext_left], [f_data(gg,ii) f_data(gg,ii)],color_str{gg},'LineWidth',1.5);
         dummy = [dummy,pp];
     end
     % R2p
     plot(ax, [ax.XLim(2)-1 ax.XLim(2)-1], [toe_elevation max(f_data2(:,ii),[],'all','omitnan')],'-k','LineWidth',1.5);
     for gg = 1:length(f_data(:,1))
-        plot(gca, [ax.XLim(2)-2 ax.XLim(2)], [f_data2(gg,ii) f_data2(gg,ii)],color_str{gg},'LineWidth',1.5);
+        %plot(gca, [ax.XLim(2)-2 ax.XLim(2)], [f_data2(gg,ii) f_data2(gg,ii)],color_str{gg},'LineWidth',1.5);
+        plot(gca, [ext_right ax.XLim(2)], [f_data2(gg,ii) f_data2(gg,ii)],color_str{gg},'LineWidth',1.5);
     end
     % Change Title
     lg = legend([dummy,sp] ,[legend_str,{['SP Depth: ' num2str(sp_depth) '[m]']}],...
         'Orientation','horizontal','NumColumns',2,'Location','northwest','Color','w');
     title(lg, 'ARI [yrs]');
-    ylim(ax, [toe_elevation-0.5 max([f_data,f_data2],[],'all','omitnan')+0.1]);
+    ylim(ax, [toe_elevation-0.5 y_lim_ax+0.1]);
     t_str = ax.Title.String;
     t_str(1) = {strrep([strrep(t_str{1}, '_', ' ') ' | Case Name: ' case_name],'_',' ')};
     t_str(2) = {['CL: ' num2str(CLs(ii)) ' | Hm0 (left) | R_{2%} (right)']};

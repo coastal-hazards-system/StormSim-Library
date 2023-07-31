@@ -57,7 +57,9 @@ s_lim_indx = plt(k).x_plot>=x_lim(1);
         p.DataTipTemplate.DataTipRows(end+1) = row;
     end
     % Define Y Lim
-    ax.YLim = [min(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan'),max(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan')];
+    if numel(plt(k).y_plot(s_lim_indx, :))~=sum(isnan(plt(k).y_plot(s_lim_indx, :)),'all')
+        ax.YLim = [min(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan'),max(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan')];
+    end
     % Set XTicks
     ax.XTick = xticks_data;
     ax.XTickLabel = xticks_data_lbl;
