@@ -21,6 +21,8 @@ project_name = config.project_name;
 struc_id = config.struc_id;
 % Define Case  Name
 case_name = config.case_name;
+% Probability Masses 
+PM_path = config.prob_mass_source;
 % OutDir
 outDir = [project_name filesep struc_id filesep case_name];
 % Project And Transect ID Folder And Subfolder
@@ -69,9 +71,9 @@ if run_flag == 1
             % Do Nothing
         otherwise % StormSim Workflow
             % Check For TC Probabilities Dependencies
-            chk2 = exist('MCSim_Inputs','dir')==7;
+            chk2 = exist(PM_path);
             % Verify Results
-            if chk2
+            if chk2 ~= 0
                 disp('CHS tropical cylcones probability masses found...');
             else
                 disp('CHS tropical cylcones probability masses not found...');

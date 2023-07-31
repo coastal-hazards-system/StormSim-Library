@@ -1,19 +1,19 @@
 function config = call_input_parser(input_filename)
 %{
-%% DESCRIPTION
-This function parses StormSim's project input file and creates "config"
-data structure. Variable names are controlled by symbols in "str_ref"
-column.
-
-%% INPUTS
-fname: StormSim project input file name.
-
-%% OUTPUTS
-config: MATLAB data structure containing input file data parsed out as
-individual strucutre fields.
-
-%R DEV SIGNATURE
-Developed by: Fabian A. Garcia Moreno ERDC-CHL
+    %% DESCRIPTION
+    This function parses StormSim's project input file and creates "config"
+    data structure. Variable names are controlled by symbols in "str_ref"
+    column.
+    
+    %% INPUTS
+    fname: StormSim project input file name.
+    
+    %% OUTPUTS
+    config: MATLAB data structure containing input file data parsed out as
+    individual strucutre fields.
+    
+    %R DEV SIGNATURE
+    Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
 
 
@@ -26,7 +26,6 @@ anchor_offset = 1;
 input_file = readcell(input_filename);
 % Add Filename To Config
 config.stormsim_input_file = input_filename;
-
 
 %% PARSE INPUT FILE AND CREATE CONFIG STRUCTURE
 % Find Row And Column Index For "str_ref" In "input_file"
@@ -86,90 +85,140 @@ for ii= 1:length(row_indx)
         end
     end
 end
-
-%% CHS ZIP OR MANUAL FILES
-if exist(config.chs_zip,'file')==2 % Valid Zip Folder Detected
-    % Create Temp Folder
-    if exist('Temp','dir')~=7
-        mkdir('Temp');
-    else
-        rmdir('Temp','s');
-        mkdir('Temp');
-    end
-    % Decompress Zip Folder
-    unzip(config.chs_zip,'Temp');
-    % Scan Unzip Directory
-    temp_dir = dir(['Temp' filesep '**' filesep '*.h5']);
-    % Sort File List
-    sorted_list = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
-    % Add CHS Files 2 Convert In Cell Array
-    config.chs_files_2_convert = sorted_list(:,2);
-    % Add CHS Files Path
-    config.chs_files_2_convert_path = sorted_list(:,1);
-    % Grab Peaks Files
-    peaks_files = {temp_dir(contains({temp_dir.name},{'Peaks'})).name};
-    % Grab Timeseries files
-    timeseries_files = {temp_dir(contains({temp_dir.name},{'Timeseries'})).name};
-    % Grab Files According To "storm_sampling"
-    if contains(config.storm_sampling,{'TC','CC'})
-        % Grab TC Peaks Files
-        peaks_files_tc = peaks_files(contains(peaks_files,{'TC','TS'}));
-        % Grab TC Timeseries Files
-        timeseries_files_tc = timeseries_files(contains(timeseries_files,{'TC','TS'}));
-        % Assign ADCIRC TC Peaks File To Config
-        config.('chs_tc_swl_peaks') = peaks_files_tc(contains(peaks_files_tc,{'ADCIRC'}));
-        % Assign ADCIRC TC Timeseries File To Config
-        config.('chs_tc_swl_timeseries') = timeseries_files_tc(contains(timeseries_files_tc,{'ADCIRC'}));
-        % Assign Waves TC Peaks File To Config
-        config.('chs_tc_hm0_peaks') = peaks_files_tc(contains(peaks_files_tc,{'STWAVE','SWAN','WAM'}));
-        % Assign Waves TC Timeseries File To Config
-        config.('chs_tc_hm0_timeseries') = timeseries_files_tc(contains(timeseries_files_tc,{'STWAVE','SWAN','WAM'}));
-    end
-
-    if contains(config.storm_sampling,{'XC','CC'})
-        % Grab TC Peaks Files
-        peaks_files_xc = peaks_files(contains(peaks_files,{'XC','XH'}));
-        % Grab TC Timeseries Files
-        timeseries_files_xc = timeseries_files(contains(timeseries_files,{'XC','XH'}));
-        % Assign ADCIRC TC Peaks File To Config
-        config.('chs_xc_swl_peaks') = peaks_files_xc(contains(peaks_files_xc,{'ADCIRC'}));
-        % Assign ADCIRC TC Timeseries File To Config
-        config.('chs_xc_swl_timeseries') = timeseries_files_xc(contains(timeseries_files_xc,{'ADCIRC'}));
-        % Assign Waves TC Peaks File To Config
-        config.('chs_xc_hm0_peaks') = peaks_files_xc(contains(peaks_files_xc,{'STWAVE','SWAN','WAM'}));
-        % Assign Waves TC Timeseries File To Config
-        config.('chs_xc_hm0_timeseries') = timeseries_files_xc(contains(timeseries_files_xc,{'STWAVE','SWAN','WAM'}));
-    end
-    % Add Field To config
-    config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
-    % Add h5 Files Path To Config
-    config.chs_zip_path = 1;
-    % Grab CHS Identifiers
-    chs_ident = strsplit(config.chs_files_2_convert{1,2},'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
-    % Add CHS Region
-    if contains(chs_ident{1},'CHS-NA')
-        config.region = 'NACCS';
-    else
-        config.region = chs_ident{1};
-    end
-    % Add CHS SP
-    config.sp_ID = str2double(chs_ident{5}(3:end));
-
-else % Manual Files
-    % Need to implement checks to make sure files are h5s and CHS
-    % native.
-end
-
-%% Check If This Is Fresh Run Or New Case
 % Project Name
 project_name = config.project_name;
 % Transect Id
 struc_id = config.struc_id;
-% Define Case  Name
-case_name = config.case_name;
-% Define
-file2look = [project_name filesep struc_id filesep...
-    project_name '_' struc_id '_CHS_' config.region '_SP*'];
+
+%% DETERMINE FORCING DATA SOURCE CASE
+% Get File Extension For "config.chs_zip"
+[~,~,fext] = fileparts(config.chs_zip);
+% Evaluate Case Based On File Type
+switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) == 1)
+    case 1 % Zip Folder -> Native CHS Data
+        if exist(config.chs_zip,'file')==2 % Valid Zip Folder Detected
+            % Create Temp Folder
+            if exist('Temp','dir')~=7
+                mkdir('Temp');
+            else
+                rmdir('Temp','s');
+                mkdir('Temp');
+            end
+            % Decompress Zip Folder
+            unzip(config.chs_zip,'Temp');
+            % Scan Unzip Directory
+            temp_dir = dir(['Temp' filesep '**' filesep '*.h5']);
+            % Add Field To config
+            config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
+            % Add h5 Files Path To Config
+            config.chs_zip_path = 1;
+            % Grab CHS Identifiers
+            chs_ident = strsplit(config.chs_files_2_convert{1,2},'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
+            % Add CHS Region
+            if contains(chs_ident{1},'CHS-NA')
+                config.region = 'NACCS';
+            else
+                config.region = chs_ident{1};
+            end
+            % Add CHS SP
+            config.sp_ID = str2double(chs_ident{5}(3:end));
+            % Grab ADCIRC Files
+            CHS_file_ref = temp_dir(contains({temp_dir.name},{'ADCIRC'}));
+            % Keep Only One File For Attributes
+            CHS_file_ref = CHS_file_ref(1);
+            try
+                % Get H5 Info
+                sp_depth = h5info([CHS_file_ref(1).folder filesep CHS_file_ref(1).name]);
+                % Need To Access Attributes Of First Storm
+                sp_depth = sp_depth.Groups.Attributes;
+                % Grab Save Point Depth
+                config.chs_sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
+            end
+            % Grab ADCIRC Files
+            CHS_file_ref = temp_dir(~contains({temp_dir.name},{'ADCIRC'}));
+            % Keep Only One File For Attributes
+            CHS_file_ref = CHS_file_ref(1);
+            % Grab CHS Identifiers
+            chs_ident = strsplit(CHS_file_ref,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
+            % Add CHS Wave SP
+            config.sp_ID_wave = str2double(chs_ident{5}(3:end));
+        else
+            error('Error ID: 001 | call_input_parser.missing_dependency | CHS zip folder not found. Please verify file path...');
+        end
+        % Create String Pattern For Naming Convention
+        config.name_prefix = [project_name filesep struc_id filesep...
+            project_name '_' struc_id '_CHS_' config.region];
+        % Define Naming Convention
+        file2look = [config.name_prefix '_SP*'];
+    case 2 % .mat -> CSTORM or Other
+        switch config.forcing_type % CHS/CSTORM Or External Models
+            case 0 % CSTORM Or CHS Type Data (Has Unique Identifiers in Name)
+                % Load In .mat With CHS_Data
+                load(config.chs_zip,'CHS_Data');
+                % Grab First File As Template
+                [a,~,c] = fileparts(CHS_Data(1).Filename);
+                % Create Path Vector
+                sorted_list = repmat({a},length(CHS_Data),1);
+                % Add File Names In Additional Column
+                sorted_list(:,2) = cellfun(@(x) x(length(a)+2:end),{CHS_Data.Filename},'un',false)';
+                % Sort File List Based On Filename
+                sorted_list = sortrows(sorted_list,2,'ascend');
+                % Add CHS Files 2 Convert In Cell Array
+                config.chs_files_2_convert = sorted_list;
+                % Find ADCIRC File
+                adcirc_indx = find(contains(sorted_list(:,2),'ADCIRC'));
+                % Find Wave File
+                stwave_indx = find(~contains(sorted_list(:,2),'ADCIRC'));
+                % Get File Extension Of Files
+                [~,fname,~] = fileparts(CHS_Data(adcirc_indx(1)).Filename);
+                % Grab CHS Identifiers
+                chs_ident = strsplit(fname,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
+                % Add CHS Region
+                if contains(chs_ident{1},'CHS-NA')
+                    config.region = 'NACCS';
+                else
+                    config.region = chs_ident{1};
+                end
+                % Add CHS ADCIRC SP
+                config.sp_ID = str2double(chs_ident{5}(3:end));
+                % Get File Extension Of Files
+                [~,fname,~] = fileparts(CHS_Data(stwave_indx(1)).Filename);
+                % Grab CHS Identifiers
+                chs_ident = strsplit(fname,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
+                % Add CHS ADCIRC SP
+                config.sp_ID_wave = str2double(chs_ident{5}(3:end));
+                % Create String Pattern For Naming Convention
+                config.name_prefix = [project_name filesep struc_id filesep...
+                    project_name '_' struc_id '_CHS_' config.region];
+                % Define Naming Convention
+                file2look = [config.name_prefix '_SP*'];
+            case 1 % Custom Modeling (External Model) (Lacking Identifiers)
+                % Load In .mat With CHS_Data
+                load(config.chs_zip,'CHS_Data');
+                % Grab First File As Template
+                [a,~,c] = fileparts(CHS_Data(1).Filename);
+                % Create Path Vector
+                sorted_list = repmat({a},length(CHS_Data),1);
+                % Add File Names In Additional Column
+                sorted_list(:,2) = cellfun(@(x) x(length(a)+2:end),{CHS_Data.Filename},'un',false)';
+                % Sort File List Based On Filename
+                sorted_list = sortrows(sorted_list,2,'ascend');
+                % Add CHS Files 2 Convert In Cell Array
+                config.chs_files_2_convert = sorted_list;
+                % Define Save Point ID As Empty
+                config.sp_ID = [];
+                config.sp_ID_wave = [];
+                % Define Region As Empty
+                config.region = [];
+                % Create String Pattern For Naming Convention
+                config.name_prefix = [project_name filesep struc_id filesep...
+                    project_name '_' struc_id '_Custom_Modeling'];
+                % Define Naming Convention
+                file2look = [config.name_prefix ''];
+        end
+end
+
+%% Check If This Is Fresh Run Or New Case
 % Look For File
 dummy = dir(file2look);
 % Remove Raw Files Mat
@@ -205,4 +254,4 @@ config.f_adjust = 0;
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
 config = call_environment_setup(config, isempty(file2look));
-end
+end % End of Function

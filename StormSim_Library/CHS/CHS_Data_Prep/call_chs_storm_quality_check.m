@@ -125,6 +125,15 @@ if use_timeseries == 1
             peaks_data(ad_indx==1).Table_StormData, peaks_data(ad_indx==0).Table_StormData,...
             timeseries_data(ad_indx_timeseries==1).Table_StormData, timeseries_data(ad_indx_timeseries==0).Table_StormData,...
             has_WaterElevation, STWAVE_headers_location, WLP_switch, WHP_switch, Tp_special, storm_type);
+        % Remove Alternate Datasets If Empty
+        if WLP_switch == 0
+            storm.('Peaks') = rmfield(storm.('Peaks'),'WLP');
+            removed_storms =  rmfield(removed_storms,'WLP');
+        end
+        if WHP_switch == 0
+            storm.('Peaks') = rmfield(storm.('Peaks'),'WHP');
+            removed_storms =  rmfield(removed_storms,'WHP');
+        end
     end
     % Display Progress Step
     if strcmp(storm_type,'XC')
