@@ -7,7 +7,7 @@ MCS/CSR Requires:
     MCSim_Inputs -> TC Storm Probability Masses 
 %}
 % Define StormSim Input File Name
-stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
+stormsim_input_file = ['prob_mass_from_MB_SP2243' filesep 'StormSim_Inputs_2243_plus2.xlsx']; % Include relative path if not in parent directory
 
 %% STEP 0: SET-UP ENVIRONMENT
 %{
@@ -22,10 +22,13 @@ stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in 
     
 %}
 t1 = tic;
-% Parse StormSim Configuration File  
+% Parse StormSim Configuration File
 config = call_input_parser(stormsim_input_file);
- t1 = toc(t1);
- 
+t1 = toc(t1);
+config.use_peaks = 1;
+config.create_wlp = 1;
+config.create_whp = 1;
+
 %% STEP 1: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
 %{
  Description:
@@ -200,7 +203,7 @@ t7 = toc(t7);
 
 %% PRINT TIME 
 disp(['Simulation Completed. Total run time: ' num2str(round(sum([t1,t2,t3,t4,t5,t6,t7])/60,2)) ' mins...']);
-diary 'off';
+% diary 'off';
 
 
 
