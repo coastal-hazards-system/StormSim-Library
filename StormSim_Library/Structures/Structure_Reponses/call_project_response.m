@@ -41,7 +41,7 @@ switch workflow
                 level_1 = {'TC','XC'};
             otherwise % TC or XC
                 % Define First Structure Level
-                level_1 = storm_sampling;
+                level_1 = {storm_sampling};
         end
         % Define Workflow Name
         wName = 'RB';

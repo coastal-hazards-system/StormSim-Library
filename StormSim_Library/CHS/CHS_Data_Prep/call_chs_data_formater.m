@@ -170,6 +170,8 @@ if ~isempty(dummy) % New Case Run
                 end
             end
         end
+    else
+        chk2 = false;
     end
     % Verify Timeseries
     if use_timeseries == 1
@@ -177,7 +179,7 @@ if ~isempty(dummy) % New Case Run
         chk3 = contains('Timeseries',dummy_2);
     end
     % Determine If Pre-Processing Needs To Be Run
-    if sum([chk1, chk2, chk3]) == 3
+    if sum([chk1, chk2, chk3]) == 1 + sum([use_timeseries, use_peaks])
         % .mats Have The Necessary information For Requested Config. Do Nothing.
         disp(['Project forcing detected. Loading processed SP data....']);
     else % .mats Do Not Have Required Data For Requested Config
@@ -191,12 +193,48 @@ if ~isempty(dummy) % New Case Run
         [min_file_req, ~, ~] = minimum_file_requirement_check(chs_files_2_convert_paths, chs_files_2_convert,....
             storm_sampling, use_peaks, use_timeseries);
         % Compare With Loaded Dataset
-        if length(CHS_Data) ~= min_file_req
+        if length(CHS_Data) < min_file_req
             file2look = [];
         end
     end
     if isempty(file2look)
+        % Display MEssage To User
         disp(['Project forcing does not have neccesary dependencies. Restarting import process....']);
+    else
+        % Clean-up Fields If Needed
+        % Storm Type
+        switch storm_sampling
+            case 'TC'
+                if isfield(storm,'XC')
+                    storm = rmfield(storm,'XC');
+                end
+            case 'XC'
+                if isfield(storm,'TC')
+                    storm = rmfield(storm,'TC');
+                end
+        end
+        % Get Latest Storm Sampling Type
+        dummy = fieldnames(storm);
+        % For Each Storm Type
+        for kk = 1:length(dummy)
+            % Timeseries
+            if use_timeseries == 0 &&  isfield(storm.(dummy{kk}),'Timeseries')
+                storm.(dummy{kk}) = rmfield(storm.(dummy{kk}),'Timeseries');
+            end
+            % Peaks
+            if use_peaks == 0 && isfield(storm.(dummy{kk}),'Peaks')
+                storm.(dummy{kk}) = rmfield(storm.(dummy{kk}),'Peaks');
+            else
+                % WLP
+                if create_wlp == 0 && isfield(storm.(dummy{kk}).('Peaks'),'WLP')
+                    storm.(dummy{kk}).('Peaks') = rmfield(storm.(dummy{kk}).('Peaks'),'WLP');
+                end
+                % WHP
+                if create_whp == 0 && isfield(storm.(dummy{kk}).('Peaks'),'WHP')
+                    storm.(dummy{kk}).('Peaks') = rmfield(storm.(dummy{kk}).('Peaks'),'WHP');
+                end
+            end
+        end
     end
 else
     file2look = [];
@@ -291,6 +329,8 @@ if isempty(file2look) % Process SP Data
         end
         % Format And Inspect Storm Peaks Files
         [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
+    else
+        prob_mass = [];
     end
 
     %% FORMAT CHS EXRTATROPICALS CYCLONES DATA

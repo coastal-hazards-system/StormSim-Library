@@ -76,7 +76,7 @@ if run_flag == 1
             if chk2 ~= 0
                 disp('CHS tropical cylcones probability masses found...');
             else
-                disp('CHS tropical cylcones probability masses not found...');
+                disp('CHS tropical cyclones probability masses not found...');
                 % Throw Error Message
                 warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
                 % Update Config
