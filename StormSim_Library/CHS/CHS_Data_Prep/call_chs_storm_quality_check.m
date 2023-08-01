@@ -238,13 +238,17 @@ bias_tgr = 1;
 % Load Bias Correction Data For CHS Region
 switch chs_region
     case 'NACCS'
-        % Load Bias Correction File
-        load(chs_bias_file);
-        % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
-        B_a_SWL=Comb.B_a(spID); B_r_SWL=Comb.B_r(spID);
-        % Overwrite Manual Value
-        config.chs_swl_u_a = Comb.U_a(spID); % SWL absolute uncertainty
-        config.chs_swl_u_r = Comb.U_r(spID); % SWL Proportional uncertainty
+        try
+            % Load Bias Correction File
+            load(chs_bias_file);
+            % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
+            B_a_SWL=Comb.B_a(spID); B_r_SWL=Comb.B_r(spID);
+            % Overwrite Manual Value
+            config.chs_swl_u_a = Comb.U_a(spID); % SWL absolute uncertainty
+            config.chs_swl_u_r = Comb.U_r(spID); % SWL Proportional uncertainty
+        catch
+            bias_tgr = 0;
+        end
     otherwise
         bias_tgr = 0;
 end
