@@ -111,49 +111,52 @@ struc_id = config.struc_id;
 case_name = config.case_name;
 
 %% Check If This Is Fresh Run Or New Case
+% Define Filename Prefix Based On Data Source 
 if ~isempty(sp_ID)
-    file2look = [name_prefix '_SP*'];
+    file2look = [name_prefix '_SP*']; % CHS/CSTORM Related Data
 else
-    file2look = [name_prefix '*'];
+    file2look = [name_prefix '*']; % External Model 
 end
-% Look For File
-dummy_o = dir(file2look);
-% Remove Raw Files Mat
-dummy = dummy_o(~contains({dummy_o.name},{'raw_files'}));
-dummy_2 = dummy_o(contains({dummy_o.name},{'raw_files'}));
-if ~isempty(dummy) % New Case Run
+% Scan Project Directory For Checkpoints
+h5_list = dir(file2look); 
+% Grab "storm" Filename
+storm_data_filename = h5_list(~contains({h5_list.name},{'raw_files'}));
+% Grab "CHS_Data" Filename
+chs_data_filename = h5_list(contains({h5_list.name},{'raw_files'}));
+% Create New Case For Current Transect 
+if ~isempty(storm_data_filename) % New Case Run
     % Build File Path
-    file2look = fullfile(dummy.folder,dummy.name);
-    file2look_2 = fullfile(dummy_2.folder,dummy_2.name);
+    file2look = fullfile(storm_data_filename.folder,storm_data_filename.name); % storm, prob_mass
+    file2look_2 = fullfile(chs_data_filename.folder,chs_data_filename.name); % CHS_Data
     % Load Storm File
     load(file2look, 'storm', 'prob_mass');
     load(file2look_2, 'CHS_Data');
     % Verify Contents And Requested Config (chk needs to be 1 after all checks)
     % Check Storm Sampling
-    dummy = fieldnames(storm);
+    storm_level_1 = fieldnames(storm);
     % Check Timeseries & Peaks
-    dummy_2 = fieldnames(storm.(dummy{1}));
-    dummy_2 = dummy_2(contains(dummy_2,{'Peaks','Timeseries'}));
-    % Verify Storm Sampling
+    storm_level_2 = fieldnames(storm.(storm_level_1{1}));
+    storm_level_2 = storm_level_2(contains(storm_level_2,{'Peaks','Timeseries'}));
+    % Verify Storm Sampling 
     switch storm_sampling
         case 'CC'
-            chk1 = contains('TC',dummy) && contains('XC',dummy);
+            chk1 = contains('TC',storm_level_1) && contains('XC',storm_level_1);
         case 'XC'
-            chk1 = contains('XC',dummy);
+            chk1 = contains('XC',storm_level_1);
         case 'TC'
-            chk1 = contains('TC',dummy);
+            chk1 = contains('TC',storm_level_1);
     end
     % Verify Peaks
     if use_peaks == 1
         % Check If Peaks Exist In storm
-        chk2 = contains('Peaks',dummy_2);
+        chk2 = contains('Peaks',storm_level_2);
         % If Peaks Exist Then Verify Datasets
         if chk2
             % Grab Field names For Peaks
-            dummy_3 = fieldnames(storm.(dummy{1}).('Peaks'));
+            storm_level_3 = fieldnames(storm.(storm_level_1{1}).('Peaks'));
             % Verify WLP
             if create_wlp == 1
-                chk4 = contains('WLP',dummy_3);
+                chk4 = contains('WLP',storm_level_3);
                 % If WLP dDoes Not Exist
                 if ~chk4
                     % Check Failed
@@ -162,7 +165,7 @@ if ~isempty(dummy) % New Case Run
             end
             % Verify WHP
             if create_whp == 1
-                chk5 = contains('WHP',dummy_3);
+                chk5 = contains('WHP',storm_level_3);
                 % If WHP dDoes Not Exist
                 if ~chk5
                     % Check Failed
@@ -176,7 +179,7 @@ if ~isempty(dummy) % New Case Run
     % Verify Timeseries
     if use_timeseries == 1
         % Check If Timeseries Exist In storm
-        chk3 = contains('Timeseries',dummy_2);
+        chk3 = contains('Timeseries',storm_level_2);
     end
     % Determine If Pre-Processing Needs To Be Run
     if sum([chk1, chk2, chk3]) == 1 + sum([use_timeseries, use_peaks])
@@ -214,24 +217,24 @@ if ~isempty(dummy) % New Case Run
                 end
         end
         % Get Latest Storm Sampling Type
-        dummy = fieldnames(storm);
+        storm_level_1 = fieldnames(storm);
         % For Each Storm Type
-        for kk = 1:length(dummy)
+        for kk = 1:length(storm_level_1)
             % Timeseries
-            if use_timeseries == 0 &&  isfield(storm.(dummy{kk}),'Timeseries')
-                storm.(dummy{kk}) = rmfield(storm.(dummy{kk}),'Timeseries');
+            if use_timeseries == 0 &&  isfield(storm.(storm_level_1{kk}),'Timeseries')
+                storm.(storm_level_1{kk}) = rmfield(storm.(storm_level_1{kk}),'Timeseries');
             end
             % Peaks
-            if use_peaks == 0 && isfield(storm.(dummy{kk}),'Peaks')
-                storm.(dummy{kk}) = rmfield(storm.(dummy{kk}),'Peaks');
+            if use_peaks == 0 && isfield(storm.(storm_level_1{kk}),'Peaks')
+                storm.(storm_level_1{kk}) = rmfield(storm.(storm_level_1{kk}),'Peaks');
             else
                 % WLP
-                if create_wlp == 0 && isfield(storm.(dummy{kk}).('Peaks'),'WLP')
-                    storm.(dummy{kk}).('Peaks') = rmfield(storm.(dummy{kk}).('Peaks'),'WLP');
+                if create_wlp == 0 && isfield(storm.(storm_level_1{kk}).('Peaks'),'WLP')
+                    storm.(storm_level_1{kk}).('Peaks') = rmfield(storm.(storm_level_1{kk}).('Peaks'),'WLP');
                 end
                 % WHP
-                if create_whp == 0 && isfield(storm.(dummy{kk}).('Peaks'),'WHP')
-                    storm.(dummy{kk}).('Peaks') = rmfield(storm.(dummy{kk}).('Peaks'),'WHP');
+                if create_whp == 0 && isfield(storm.(storm_level_1{kk}).('Peaks'),'WHP')
+                    storm.(storm_level_1{kk}).('Peaks') = rmfield(storm.(storm_level_1{kk}).('Peaks'),'WHP');
                 end
             end
         end
@@ -240,21 +243,14 @@ else
     file2look = [];
 end
 
-%% FILTER OUT FILES (IF NEEDED) BASED ON USER INPUT
+%% CONVERT AND PROCESS CHS_Data 
+% Execute Pre-Processing If Needed
 if isempty(file2look) % Process SP Data
+    % Determine Minimum File Requirement For config
     [min_file_req, chs_files_2_convert,...
         chs_files_2_convert_paths] = minimum_file_requirement_check(chs_files_2_convert_paths, chs_files_2_convert,....
         storm_sampling, use_peaks, use_timeseries);
-
-    %% VERIFY FOR MINIMUM FILE REQUIREMENTS
-    %{
-    PROS
-        2 XC Peaks and/or 2 TC Peaks Files (ADCIRC + STWAVE/WAM/SWAN)
-    MCS/CSR
-        2 XC Peaks and/or 2 TC Peaks Files (ADCIRC + STWAVE/WAM/SWAN)
-        Optional
-        Corresponding timeseries files (4 or 8 total files)
-    %}
+    % Throw Error If Minimum Is Not Met
     if length(chs_files_2_convert)~=min_file_req
         error('Error ID: 001 | call_chs_data_formater.missing_dependency | Minimum CHS storm data requirements not met for specified inputs.');
     end
