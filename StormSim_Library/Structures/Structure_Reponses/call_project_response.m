@@ -89,11 +89,13 @@ switch workflow
                     % Check If XC & TC Exist
                     level_a = fieldnames(helper_var);
                     % Create Subdirectory
-                    if ~exist([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections'],'dir')
-                        mkdir([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
-                    else % Directory Exist
-                        % Delete Existing Files
-                        delete([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections' filesep '*.png']);
+                    if structure_type ~=2
+                        if ~exist([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections'],'dir')
+                            mkdir([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
+                        else % Directory Exist
+                            % Delete Existing Files
+                            delete([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections' filesep '*.png']);
+                        end
                     end
                     % Add Additional Layer To Data Structure For Peaks Alt Datasets
                     for jj = 1:length(level_a)
@@ -151,11 +153,13 @@ switch workflow
                 end
             end
             % Create Subdirectory
-            if ~exist([subDir wName '3_Hazards_Cross-Sections'],'dir')
-                mkdir([subDir wName '3_Hazards_Cross-Sections']);
-            else % Directory Exist
-                % Delete Existing Files
-                delete([subDir wName '3_Hazards_Cross-Sections' filesep '*.png']);
+            if structure_type ~=2
+                if ~exist([subDir wName '3_Hazards_Cross-Sections'],'dir')
+                    mkdir([subDir wName '3_Hazards_Cross-Sections']);
+                else % Directory Exist
+                    % Delete Existing Files
+                    delete([subDir wName '3_Hazards_Cross-Sections' filesep '*.png']);
+                end
             end
             % Call StormSim: PROS RB3
             if use_peaks == 1 % Append To Existing
