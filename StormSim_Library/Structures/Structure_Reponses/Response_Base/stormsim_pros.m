@@ -25,7 +25,6 @@ elseif isfield(project_forcing,'TC')
     end
 end
 
-
 %% EXTRATROPICAL STORMS
 % Apply Workflow
 if any(contains(fieldnames(project_forcing),{'XC'}))
@@ -57,12 +56,17 @@ end
 %% COMBINE HAZARD CURVES
 if strcmp(storm_sampling,'CC')
     disp('         Combining project primary responses hazard curves...');
-    [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);    
+    [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);
     % 3. Plot Outputs
     disp('            Plotting hazard curves....');
     plot_hazard_curves(HC_out.('CC').(f_str), use_aep);
 end
 
+%% COMPUTE FREQUENCY BASED RESPONSES (IF NEEDED)
+if workflow == 4
+        disp('         Computing & Plotting frequency base responses...');
+    HC_out = compute_frequency_base_responses(config, structure, emp_coeff, HC_out, f_str, use_aep);
+end
 %% REMOVE UNWANTED FIELDS FROM OUTPUT VAR
 if any(contains(fieldnames(project_forcing),{'TC'}))
     HC_out.('TC').(f_str) = rmfield(HC_out.('TC').(f_str), {'tbl_rsp_x','tbl_rsp_y'});
@@ -72,4 +76,6 @@ if any(contains(fieldnames(project_forcing),{'XC'}))
 end
 
 warning('on');
+
+
 end

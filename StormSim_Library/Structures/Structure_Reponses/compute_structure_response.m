@@ -40,7 +40,7 @@ rho_w = structure.water_density;
 g = 9.81; % Gravity
 % Grab Workflow Specific Fields
 switch workflow
-    case {1,2} % RB
+    case {1,2,4} % RB
         % Create Forcing Variables For Simplicity
         if ~iscell(project_forcing.(storm_type).SWL)
             SWL = {project_forcing.(storm_type).SWL}; % SWL
@@ -73,7 +73,7 @@ switch workflow
 end
 
 %% COMPUTE STRUCTURE RESPONSE
-if workflow ~= 2
+if ~ismember(workflow,[2,4]) 
     % Call Eurotop Influence Factors
     gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
     % Compute Structure Type Dependant Responses

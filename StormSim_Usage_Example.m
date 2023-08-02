@@ -25,7 +25,9 @@ t1 = tic;
 % Parse StormSim Configuration File
 config = call_input_parser(stormsim_input_file);
 t1 = toc(t1);
-
+config.use_peaks = 1;
+config.create_whp = 1;
+config.create_wlp = 1;
 %% STEP 1: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
 %{
  Description:

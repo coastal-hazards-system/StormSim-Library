@@ -28,8 +28,14 @@ disp('            Building hazard curves....');
 try
     Nyrs_XC = config.Nyrs_XC;
 end
+% Get Workflow
+workflow = config.workflow;
 % Compute Forcing Hazard Curves Switch
-compute_forcing_hc = config.pros_compute_forcing_HC;
+if ismember(workflow,[2,4])
+    compute_forcing_hc = 1; % EVA & FB
+else
+    compute_forcing_hc = config.pros_compute_forcing_HC;
+end
 % Grab Percentiles
 try
     prc = [cellfun(@str2double,strsplit(config.project_CLs(2:end-1),{' '}))];

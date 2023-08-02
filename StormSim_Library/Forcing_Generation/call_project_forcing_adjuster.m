@@ -10,7 +10,7 @@ if f_adjust == 0
 disp('Adjusting project forcing datasets....')
 % Determine Data Type
 switch workflow
-    case {1,2}
+    case {1,2,4}
         wName = 'RB';
     case 3
         wName = 'LCS';

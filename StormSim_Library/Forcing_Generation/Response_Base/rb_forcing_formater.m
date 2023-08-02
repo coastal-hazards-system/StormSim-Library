@@ -14,7 +14,7 @@ if strcmp(sType,'TC')
 end
 
 %% LOAD NORMAL DISCRETIZATION BASED ON STORM TYPE
-if workflow == 2
+if workflow == 2 || workflow == 4 
     % Only Computing Forcing HC
     RandNorm = 1;
 else

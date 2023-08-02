@@ -82,12 +82,15 @@ save_name = [config.project_name, filesep, config.struc_id, filesep,...
 disp('Preping project forcing data....');
 % Define Events Per Case
 switch workflow
-    case {1,2} % StormSim: PROS (Ressonse Base (RB1) Analysis)
+    case {1,2,4} % StormSim: PROS (Ressonse Base (RB1) Analysis)
         % Define Workflow Key Phrase
-        if workflow == 1 % PROS
+        switch workflow
+            case 1 % PROS - RB 
             wName = 'RB';
-        else % EVA
+            case 2 % PROS - EVA
             wName = 'RB-EVA';
+            case 4 % PROS - FB
+            wName = 'FB';
         end
         % Tropical Cyclones
         if contains(storm_sampling,{'TC','CC'})

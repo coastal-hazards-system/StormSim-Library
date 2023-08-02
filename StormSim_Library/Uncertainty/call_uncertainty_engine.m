@@ -64,7 +64,7 @@ if u_engine == 0
                     end
                 end
             end
-        case 2 % SST/JPM for Forcing Only Using RB1 & RB3 Approach
+        case {2,4} % SST/JPM for Forcing Only Using RB1 & RB3 Approach
             % Do nothing, Uncertainty is incorporated inside SST/JPM
         case 3 % LCS
             %% LIFE CYCLE BASE

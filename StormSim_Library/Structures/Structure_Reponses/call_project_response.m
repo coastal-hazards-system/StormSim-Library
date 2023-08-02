@@ -32,8 +32,16 @@ use_aep = config.pros_use_aep;
 
 %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
 switch workflow
-    case {1,2} % PROS
+    case {1,2,4} % PROS
         %% STORMSIM: PROS
+        % Define Workflow ID String
+        if workflow == 4
+            % Define Workflow Name
+            wName = 'FB';
+        else
+            % Define Workflow Name
+            wName = 'RB';
+        end
         % Grab "project_forcing" Structure Fields
         switch storm_sampling
             case 'CC' % Combined Storm Sampling
@@ -43,8 +51,7 @@ switch workflow
                 % Define First Structure Level
                 level_1 = {storm_sampling};
         end
-        % Define Workflow Name
-        wName = 'RB';
+
         % Process Peaks Datasets: RB1
         if use_peaks == 1
             % Scan Peaks Datasets
@@ -60,11 +67,11 @@ switch workflow
                     % Disp
                     disp(['   Processing ' level_2{ii} ' dataset....']);
                     % Create Subdirectory
-                    if ~exist([subDir 'RB1_' level_2{ii}],'dir')
-                        mkdir([subDir 'RB1_' level_2{ii}]);
+                    if ~exist([subDir wName '1_' level_2{ii}],'dir')
+                        mkdir([subDir wName '1_' level_2{ii}]);
                     else % Directory Exist
                         % Delete Existing Files
-                        delete([subDir 'RB1_' level_2{ii} filesep '*.png']);
+                        delete([subDir wName '1_' level_2{ii} filesep '*.png']);
                     end
                     % Create Helper Var (Removes One Layer Of Classification)
                     for jj = 1:length(level_1)
@@ -78,22 +85,22 @@ switch workflow
                     end
                     % Call StormSim: PROS RB1
                     helper_var = stormsim_pros(config,...
-                        aux_var, structure, emp_coeff, [subDir 'RB1_' level_2{ii}]);
+                        aux_var, structure, emp_coeff, [subDir wName '1_' level_2{ii}]);
                     % Check If XC & TC Exist
                     level_a = fieldnames(helper_var);
                     % Create Subdirectory
-                    if ~exist([subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections'],'dir')
-                        mkdir([subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections']);
+                    if ~exist([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections'],'dir')
+                        mkdir([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
                     else % Directory Exist
                         % Delete Existing Files
-                        delete([subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections' filesep '*.png']);
+                        delete([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections' filesep '*.png']);
                     end
                     % Add Additional Layer To Data Structure For Peaks Alt Datasets
                     for jj = 1:length(level_a)
                         Resp.(level_a{jj}).('Peaks').(level_2{ii}) = helper_var.(level_a{jj}).('Peaks');
                         % Plot Cross-section For Each Storm Type
                         plot_structure_and_forcing(config, Resp.(level_a{jj}).('Peaks').(level_2{ii}),...
-                            structure, level_a{jj},[subDir 'RB1_' level_2{ii} '_Hazards_Cross-Sections']);
+                            structure, level_a{jj},[subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
                     end
                     % Clear Aux Var
                     clearvars('aux_var');
@@ -103,21 +110,21 @@ switch workflow
             % Only If there Is 2 Or More Peaks Datasets
             if length(fieldnames(Resp.(level_a{1}).('Peaks')))>=2
                 % Make Dir
-                if ~exist([subDir 'RB1_Comparison'],'dir')
-                    mkdir([subDir 'RB1_Comparison']);
+                if ~exist([subDir wName '1_Comparison'],'dir')
+                    mkdir([subDir wName '1_Comparison']);
                 else
-                    delete([subDir 'RB1_Comparison' filesep '*.png']);
+                    delete([subDir wName '1_Comparison' filesep '*.png']);
                 end
                 % Create RB1 Peak Dataset HC Comparison Figures
                 for ii = 1:length(level_a)
                     % Create Comparison Figure
-                    peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', [subDir 'RB1_Comparison']);
+                    peaks_hc_stack_plot(Resp, level_a{ii}, use_aep, 'h', [subDir wName '1_Comparison']);
                 end
             end
             % Create Project Forcing + HC Comparison Figure
             if compute_forcing_hc == 1 || workflow == 2
                 % Create Figures
-                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 0, [subDir 'RB1_Project_Forcing_Comparison']);
+                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 0, [subDir wName '1_Project_Forcing_Comparison']);
             end
         end
         % RB3
@@ -125,11 +132,11 @@ switch workflow
             % Disp
             disp('Computing structure responses using timeseries....');
             % Create Subdirectory
-            if ~exist([subDir 'RB3'],'dir')
-                mkdir([subDir 'RB3']);
+            if ~exist([subDir wName '3'],'dir')
+                mkdir([subDir wName '3']);
             else % Directory Exist
                 % Delete Existing Files
-                delete([subDir 'RB3' filesep '*.png']);
+                delete([subDir wName '3' filesep '*.png']);
             end
             % Create Helper Var (Removes One Layer Of Classification)
             for jj = 1:length(level_1)
@@ -142,37 +149,37 @@ switch workflow
                 end
             end
             % Create Subdirectory
-            if ~exist([subDir 'RB3_Hazards_Cross-Sections'],'dir')
-                mkdir([subDir 'RB3_Hazards_Cross-Sections']);
+            if ~exist([subDir wName '3_Hazards_Cross-Sections'],'dir')
+                mkdir([subDir wName '3_Hazards_Cross-Sections']);
             else % Directory Exist
                 % Delete Existing Files
-                delete([subDir 'RB3_Hazards_Cross-Sections' filesep '*.png']);
+                delete([subDir wName '3_Hazards_Cross-Sections' filesep '*.png']);
             end
             % Call StormSim: PROS RB3
             if use_peaks == 1 % Append To Existing
                 aux_var = stormsim_pros(config,...
-                    aux_var, structure, emp_coeff, [subDir 'RB3']);
+                    aux_var, structure, emp_coeff, [subDir wName '3']);
                 % Assign Results
                 for ii = 1:length(level_a)
                     Resp.(level_a{ii}).Timeseries = aux_var.(level_a{ii}).Timeseries;
                     % Plot Cross-section For Each Storm Type
                     plot_structure_and_forcing(config, Resp.(level_a{ii}).('Timeseries'),...
-                        structure, level_a{ii},[subDir 'RB3_Hazards_Cross-Sections']);
+                        structure, level_a{ii},[subDir wName '3_Hazards_Cross-Sections']);
                 end
             else % Create Resp Variable
                 Resp = stormsim_pros(config,...
-                    aux_var, structure, emp_coeff, [subDir 'RB3']);
+                    aux_var, structure, emp_coeff, [subDir wName '3']);
                 % Add Additional Layer To Data Structure For Peaks Alt Datasets
                 for jj = 1:length(level_1)
                     % Plot Cross-section For Each Storm Type
                     plot_structure_and_forcing(config, Resp.(level_1{jj}).('Timeseries'),...
-                        structure, level_1{jj},[subDir 'RB3_Hazards_Cross-Sections']);
+                        structure, level_1{jj},[subDir wName '3_Hazards_Cross-Sections']);
                 end
             end
             % Create Project Forcing + HC Comparison Figure
             if compute_forcing_hc == 1 || workflow == 2
                 % Create Figures
-                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 1, [subDir 'RB3_Project_Forcing_Comparison']);
+                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, 1, [subDir wName '3_Project_Forcing_Comparison']);
             end
         end
 
@@ -182,14 +189,14 @@ switch workflow
             % Create RB1 Peak Dataset HC Comparison Figures
             for jj = 1:length(level_2)
                 % Make Dir
-                if ~exist([subDir 'RB1_' level_2{jj} '_RB3_Comparison'],'dir')
-                    mkdir([subDir 'RB1_' level_2{jj} '_RB3_Comparison']);
+                if ~exist([subDir wName '1_' level_2{jj} '_' wName '3_Comparison'],'dir')
+                    mkdir([subDir wName '1_' level_2{jj} '_' wName '3_Comparison']);
                 else
-                    delete([subDir 'RB1_' level_2{jj} '_RB3_Comparison' filesep '*.png']);
+                    delete([subDir wName '1_' level_2{jj} '_' wName '3_Comparison' filesep '*.png']);
                 end
                 for ii = 1:length(level_a)
                     % Create Comparison Figure
-                    response_base_comparison(Resp.(level_a{ii}).('Peaks').(level_2{jj}), Resp.(level_a{ii}).('Timeseries'), level_a{ii}, use_aep, 'h', [subDir 'RB1_' level_2{jj} '_RB3_Comparison']);
+                    response_base_comparison(Resp.(level_a{ii}).('Peaks').(level_2{jj}), Resp.(level_a{ii}).('Timeseries'), level_a{ii}, use_aep, 'h', [subDir wName '1_' level_2{jj} '_' wName '3_Comparison']);
                 end
             end
         end
