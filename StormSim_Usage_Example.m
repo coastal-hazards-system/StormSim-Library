@@ -28,6 +28,7 @@ t1 = toc(t1);
 config.use_peaks = 1;
 config.create_whp = 1;
 config.create_wlp = 1;
+
 %% STEP 1: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
 %{
  Description:
