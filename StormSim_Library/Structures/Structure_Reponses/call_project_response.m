@@ -99,8 +99,10 @@ switch workflow
                     for jj = 1:length(level_a)
                         Resp.(level_a{jj}).('Peaks').(level_2{ii}) = helper_var.(level_a{jj}).('Peaks');
                         % Plot Cross-section For Each Storm Type
-                        plot_structure_and_forcing(config, Resp.(level_a{jj}).('Peaks').(level_2{ii}),...
-                            structure, level_a{jj},[subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
+                        if structure_type ~=2
+                            plot_structure_and_forcing(config, Resp.(level_a{jj}).('Peaks').(level_2{ii}),...
+                                structure, level_a{jj},[subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
+                        end
                     end
                     % Clear Aux Var
                     clearvars('aux_var');
@@ -163,8 +165,10 @@ switch workflow
                 for ii = 1:length(level_a)
                     Resp.(level_a{ii}).Timeseries = aux_var.(level_a{ii}).Timeseries;
                     % Plot Cross-section For Each Storm Type
-                    plot_structure_and_forcing(config, Resp.(level_a{ii}).('Timeseries'),...
-                        structure, level_a{ii},[subDir wName '3_Hazards_Cross-Sections']);
+                    if structure_type ~=2
+                        plot_structure_and_forcing(config, Resp.(level_a{ii}).('Timeseries'),...
+                            structure, level_a{ii},[subDir wName '3_Hazards_Cross-Sections']);
+                    end
                 end
             else % Create Resp Variable
                 Resp = stormsim_pros(config,...
@@ -172,8 +176,10 @@ switch workflow
                 % Add Additional Layer To Data Structure For Peaks Alt Datasets
                 for jj = 1:length(level_1)
                     % Plot Cross-section For Each Storm Type
-                    plot_structure_and_forcing(config, Resp.(level_1{jj}).('Timeseries'),...
-                        structure, level_1{jj},[subDir wName '3_Hazards_Cross-Sections']);
+                    if structure_type ~=2
+                        plot_structure_and_forcing(config, Resp.(level_1{jj}).('Timeseries'),...
+                            structure, level_1{jj},[subDir wName '3_Hazards_Cross-Sections']);
+                    end
                 end
             end
             % Create Project Forcing + HC Comparison Figure

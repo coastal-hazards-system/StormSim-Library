@@ -270,7 +270,7 @@ rm_indx = cell2mat(cellfun(@(x) isempty(x), {Output.y_plot}, 'un', false));% Get
 Output = Output(~rm_indx);% Keep Valid Fields
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)
-if compute_forcing_hc == 1
+if compute_forcing_hc == 1 && ~ismember(workflow,[2,4])
     switch struc_type
         case 2 % Floodwall
             % Find Data Indexes

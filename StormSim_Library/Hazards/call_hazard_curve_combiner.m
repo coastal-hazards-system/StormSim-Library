@@ -1,6 +1,7 @@
 function cc_resp = call_hazard_curve_combiner(config, structure, tc_resp, xc_resp, use_aep)
 %% GRAB DETAILS FORM "config"
 struc_type = config.struc_type;
+workflow = config.workflow;
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -57,7 +58,7 @@ for j = s_indx % SWL and/or Hm0
 end
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES (P2, P3, Pu, Nappe)
-if struc_type == 2
+if struc_type == 2 && ~ismember(workflow,[2,4])
     % Find Data Indexes
     sIndx = cell2mat(cellfun(@(x) find(contains({cc_resp.var}',x)==1),{'p1','Hm0','Tp','SWL','q'},'un',false));
     % MAke Sure Primary Responses Exist
