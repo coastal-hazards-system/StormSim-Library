@@ -160,15 +160,17 @@ switch structure_type
         % Point 5
         xs(5) = xs(1);ys(5) = ys(1);
 end
-% Horizontal Shift (Make Structure Centralized)
-xs = xs + 4;
 
 %% FORMAT AXIS LIMITS AND PLOT GEOMETRIES
 % Define Axis Limits
 if structure_type~=2
+    % Horizontal Shift (Make Structure Centralized)
+    xs = xs + 4;
+    % Define Limits
     ax.XLim = [0 max(xs)+1];
 else
     xs_berm = xs_berm + 1;
+    xs = xs + 1;
     ax.XLim = [0 max([xs;xs_berm],[],'all')];
     % Create Berm Geo
     berm_geo = polyshape(xs_berm,ys_berm);
