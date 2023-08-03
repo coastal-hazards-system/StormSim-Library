@@ -38,9 +38,12 @@ switch workflow
         if workflow == 4
             % Define Workflow Name
             wName = 'FB';
+            subDir = [subDir filesep 'Frequency_Base_Plots' filesep];
+
         else
             % Define Workflow Name
             wName = 'RB';
+            subDir = [subDir filesep 'Response_Base_Plots' filesep];
         end
         % Grab "project_forcing" Structure Fields
         switch storm_sampling
