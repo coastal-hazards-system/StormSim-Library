@@ -191,7 +191,9 @@ switch storm_type
         % Remove storms From Frequency Vector
         prob_mass.TC_Freq(storm2rm,:)=[];
         % Redifine New Frequency Vector
-        prob_mass.TC_Freq = prob_mass.TC_Freq*prob_mass.TotalFreq/sum(prob_mass.TC_Freq);
+        if ~isempty(storm2rm)
+            prob_mass.TC_Freq = prob_mass.TC_Freq*prob_mass.TotalFreq/sum(prob_mass.TC_Freq);
+        end
         % Remove storms From Other Vars
         prob_mass.Param(storm2rm,:)=[];
         prob_mass.dist(:,storm2rm)=[];

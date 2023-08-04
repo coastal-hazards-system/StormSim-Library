@@ -227,7 +227,6 @@ if ~isempty(storm_data_filename) % New Case Run
             % Peaks
             if use_peaks == 0 && isfield(storm.(storm_level_1{kk}),'Peaks')
                 storm.(storm_level_1{kk}) = rmfield(storm.(storm_level_1{kk}),'Peaks');
-            else
                 % WLP
                 if create_wlp == 0 && isfield(storm.(storm_level_1{kk}).('Peaks'),'WLP')
                     storm.(storm_level_1{kk}).('Peaks') = rmfield(storm.(storm_level_1{kk}).('Peaks'),'WLP');

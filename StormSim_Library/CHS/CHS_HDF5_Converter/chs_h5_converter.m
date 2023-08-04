@@ -114,7 +114,6 @@
 
                     cData.Attributes = FileAttributes;
                 else % V2
-
                     %%%% HEADERS & ATTRIBUTES %%%%
                     % Get File Attributes Name List
                     FileAttributes = info.Attributes;
