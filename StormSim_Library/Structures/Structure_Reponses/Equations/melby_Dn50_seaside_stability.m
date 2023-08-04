@@ -27,7 +27,7 @@
 %
 %
 %============================================================
-function [Dn50_Melby] = melby_Dn50_seaside_stability(Hsig,Tm,h,Nz,Sslp,delta,P,S,grav,km1,km2,Rc)
+function [Dn50_Melby] = melby_Dn50_seaside_stability(Hsig,Tm,h,duration,Sslp,delta,P,S,grav,km1,km2,Rc)
 
 
 %% Melby
@@ -40,6 +40,7 @@ Hsig = Hsig(:);
 Tm = Tm(:);
 h = h(:);
 Rc = Rc(:);
+Nz = duration./Tm;
 
 %% COMPUTE Dn50
 % Momentum Flux Computations

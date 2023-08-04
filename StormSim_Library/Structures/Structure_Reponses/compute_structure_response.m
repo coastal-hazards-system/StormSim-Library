@@ -3,7 +3,7 @@ function [Resp, project_forcing] = compute_structure_response(config, structure,
 % Strucutre Type
 struc_type = config.struc_type;
 % Storm Duration [s]
-Nz = config.storm_duration*3600; % Convert hr to s
+duration = config.storm_duration*3600; % Convert hr to s
 % Compute Forcing HC
 compute_HC = config.pros_compute_forcing_HC;
 % Define Requested Workflow
@@ -102,7 +102,7 @@ if ~ismember(workflow,[2,4])
             % Compute Stone SIze Using S Limit State
             if struc_type == 3
                 [Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
-                    Nz, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
+                    duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
                     Hm0, Tm, h, Rc,'un',false);
             end
     end
