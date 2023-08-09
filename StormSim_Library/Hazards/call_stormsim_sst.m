@@ -21,6 +21,7 @@ function [OUTPUT] = call_stormsim_sst(input_data,staID,Nyrs,prc,use_AEP,U_a,U_r,
     gprMdl(1).mdl = [];
     SLC = [];
     tide_SD = [];
+    ind_Skew = 0; 
 %     if contains(staID,{'hm0','swl'})
 %        uncert_treatment = 'combined';        
 %     else
@@ -30,9 +31,9 @@ function [OUTPUT] = call_stormsim_sst(input_data,staID,Nyrs,prc,use_AEP,U_a,U_r,
     %% CALL SST
     [OUTPUT.HC_plt_x,OUTPUT.HC_tbl_x,OUTPUT.HC_tbl_rsp_y,~,~,OUTPUT.SST_output] = StormSim_SST_Tool_R1_FGM(input_data,flag_value,tLag,lambda,Nyrs,path_out,staID,yaxis_Label,yaxis_Limits,...
         prc,use_AEP,GPD_TH_crit,SLC,apply_Tides,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel,tide_SD,U_a,U_r,uncert_treatment);
-    % Convert To AEF 
-%     [OUTPUT.HC_plt_x,OUTPUT.HC_plt_y,OUTPUT.HC_tbl_x,OUTPUT.HC_tbl_rsp_y,~,~,OUTPUT.SST_output] = StormSim_SST_Tool_R1_v20230223_FGM_v2(input_data,flag_value,tLag,lambda,Nyrs,path_out,staID,yaxis_Label,yaxis_Limits,...
-% prc,use_AEP,GPD_TH_crit,SLC,apply_Tides,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel,tide_SD,U_a,U_r,uncert_treatment);
-    
+
+%     [OUTPUT.HC_plt_x,OUTPUT.HC_tbl_x,OUTPUT.HC_tbl_rsp_y,~,~,OUTPUT.SST_output] = StormSim_SST_Tool_R1_v20210809(input_data,flag_value,tLag,lambda,Nyrs,path_out,{staID},yaxis_Label,yaxis_Limits,...
+%         prc,use_AEP,GPD_TH_crit,SLC,ind_Skew,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel);
+
     rmdir ('SST_output','s');    
 end
