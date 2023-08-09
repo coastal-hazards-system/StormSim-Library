@@ -2,6 +2,8 @@ function [project_forcing] = adjust_project_forcing(config, structure, project_f
 %% GRAB DETAILS FROM "config"
 % Define Tide File
 tide_file = config.tide_file;
+% Define Use Tide Switch 
+use_tides = config.apply_random_tides;
 % Define Project SWL ADjustment
 swl_slr = config.swl_slr;
 % Depth Limitation Switch
@@ -17,7 +19,7 @@ switch data_type
     case 'RB'
         %------ SWL ADJUSTMENTS -----
         % Apply Random Tide To SWL
-        if exist(tide_file,'file') == 2
+        if exist(tide_file,'file') == 2 && use_tides == 1
             project_forcing = apply_random_tide(tide_file, project_forcing, 0);
         end
         % Apply SLR
