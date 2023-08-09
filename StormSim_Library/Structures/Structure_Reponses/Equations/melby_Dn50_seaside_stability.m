@@ -64,7 +64,7 @@ am(sm<smc) = 1./(km2.*P.^0.18.*Sslp.^(0.5-P).*sm(sm<smc).^(-P./3));
 % COmpute Median Stone Size For Given S
 Dn50_Melby = sqrt(Mf./delta).*h.*am.*((ks.*sqrt(Nz))./S).^0.2;
 % Assign NaNs
-Dn50_Melby(Hsig<=0 | h<0) = NaN;
+Dn50_Melby(Hsig<=0.1 | h<0) = NaN;
 % Reshape
 Dn50_Melby = reshape(Dn50_Melby, data_dims);
 
