@@ -268,23 +268,25 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function [JPM_output,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_vg] = StormSim_JPM_Tool_R1_v20210831(Resp,ProbMass,vg_id,vg_ColNum,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y)
+function [JPM_output,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_vg] = StormSim_JPM_Tool_R1_v20210831(Resp,ProbMass,vg_id,vg_ColNum,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y, stat_print)
 %% General settings
-clc;disp(['***********************************************************' newline...
-    '***         StormSim-JPM Tool Alpha Version 0.3         ***' newline...
-    '***                Release 1 - 20210831                 ***' newline...
-    '***                 FOR  TESTING  ONLY                  ***' newline...
-    '***********************************************************' newline...
-    '**********           NOTES TO THE USER           **********' newline...
-    '*** 1) Refer to Quick Start Guide for a description     ***' newline...
-    '***    of settings, inputs and outputs.                 ***' newline...
-    '*** 2) Please report any error using the Feedback Form. ***' newline...
-    '*** 3) For questions or help contact:                   ***' newline...
-    '***    Efrain.Ramos-Santiago@usace.army.mil             ***' newline...
-    '***********************************************************'])
+clc;
+if stat_print == 1
+    disp(['***********************************************************' newline...
+        '***         StormSim-JPM Tool Alpha Version 0.3         ***' newline...
+        '***                Release 1 - 20210831                 ***' newline...
+        '***                 FOR  TESTING  ONLY                  ***' newline...
+        '***********************************************************' newline...
+        '**********           NOTES TO THE USER           **********' newline...
+        '*** 1) Refer to Quick Start Guide for a description     ***' newline...
+        '***    of settings, inputs and outputs.                 ***' newline...
+        '*** 2) Please report any error using the Feedback Form. ***' newline...
+        '*** 3) For questions or help contact:                   ***' newline...
+        '***    Efrain.Ramos-Santiago@usace.army.mil             ***' newline...
+        '***********************************************************'])
 
-disp([newline '*** Step 1: Processing input arguments '])
-
+    disp([newline '*** Step 1: Processing input arguments '])
+end
 % Turn off all warnings
 warning('off','all');
 
@@ -523,14 +525,16 @@ Resp(Resp<0)=NaN; %Working with extreme events: Change negative values to NaN.
 sz = (n <= 5000);
 switch sz
     case 1
-        
-        disp(['*** Step 2: Partition of input data not necessary' newline...
-            '****** User entered less than 5000 virtual gages'])
+        if stat_print == 1
 
-        % Perform integration
-        disp('*** Step 3: Performing integration')
+            disp(['*** Step 2: Partition of input data not necessary' newline...
+                '****** User entered less than 5000 virtual gages'])
+            % Perform integration
+            disp('*** Step 3: Performing integration')
+        end
+
         [JPM_output,Removed_vg] = StormSim_JPM_Integrate(Resp,ProbMass,vg_id,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,integrate_Method,SLC,dscrtGauss,HC_tbl_rsp_y,HC_tbl_x,z,ind_aep,id_PCT,apply_Parallel,HC_plt_x);
-        
+
         % Change AEF to AEP?
         if ind_aep
             HC_plt_x=aef2aep(HC_plt_x);
@@ -538,62 +542,71 @@ switch sz
 
         % Plot hazard curves
         if plot_results
-            disp('****** Plotting hazard curves')
+            if stat_print == 1
+                disp('****** Plotting hazard curves');
+            end
             StormSim_JPM_Plot(JPM_output,vg_id,path_out,yaxis_label,yaxis_limits,integrate_Method,prc,ind_aep,a,HC_plt_x)
         end
-        
+
         % Store output
-        disp(['*** Step 4: Saving results here: ',path_out])
+        if stat_print == 1
+            disp(['*** Step 4: Saving results here: ',path_out]);
+        end
         save([path_out,'StormSim_JPM_output.mat'],'JPM_output','HC_plt_x','HC_tbl_x','HC_tbl_rsp_y','Removed_vg','-v7.3')
-        
+
     case 0
-        
+
         % Set path directory to stored partitioned "Response" files
         pth_inp = 'JPM_input_partitioned';
         if ~exist(pth_inp,'dir'),mkdir(pth_inp);end; pth_inp=['.\',pth_inp,'\'];
-        
+
         % Display status
-        disp(['*** Step 2: Partitioning input data ' newline...
-            '****** User entered more than 5000 virtual gages'])
-        
+        if stat_print == 1
+            disp(['*** Step 2: Partitioning input data ' newline...
+                '****** User entered more than 5000 virtual gages'])
+        end
         % Split the inputs (big files) into partitions of 5000 virtual gages
         Np = round((n+5000)/5000); %number of partitions
         Nc = 1:5000; %counter of nodes
         for i = 1:Np %partition loop
             Resp_p=Resp(:,Nc);ProbMass_p=ProbMass(:,Nc);sp_id_p=vg_id(:,Nc);U_tide_p=U_tide(:,Nc);
-            
+
             %Export partition
             save([pth_inp,'InputPartition_',int2str(i),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
-            
+
             %Execute counter for next loop
             Nc = Nc+5000;
         end
-        
+
         % Now, create and export the last partition
         Resp_p=Resp(:,Nc(1):n);ProbMass_p=ProbMass(:,Nc(1):n);sp_id_p=vg_id(:,Nc(1):n);U_tide_p=U_tide(:,Nc(1):n);
         save([pth_inp,'InputPartition_',int2str(Np),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
-%         Np = Np-1;
-        
+        %         Np = Np-1;
+
         %Display status
-        disp([' ****** Finished. Partitioned input files stored in ' pth_inp])
-        
+        if stat_print == 1
+            disp([' ****** Finished. Partitioned input files stored in ' pth_inp])
+        end
         % Delete original inputs from workspace
         clearvars Resp ProbMass U_tide vg_id;
-        
+
         % Do evaluation, one partition at a time
-        disp('*** Step 3: Performing integration')
+        if stat_print == 1
+            disp('*** Step 3: Performing integration');
+        end
         HC_plt_x2=HC_plt_x;
         for i = 1:Np %partition loop
-            
+
             % Load files
             load([pth_inp,'InputPartition_',int2str(i),'.mat'],'Resp_p','ProbMass_p','sp_id_p','U_tide_p')
-            
+
             % Display status
-            disp(['****** Working partition file ',int2str(i),': virtual gauges ',int2str(sp_id_p(1)),' - ',int2str(sp_id_p(end))]) 
-            
+            if stat_print == 1
+                disp(['****** Working partition file ',int2str(i),': virtual gauges ',int2str(sp_id_p(1)),' - ',int2str(sp_id_p(end))])
+            end
             % Perform integration
             [JPM_output,Removed_vg] = StormSim_JPM_Integrate(Resp_p,ProbMass_p,sp_id_p,U_a,U_r,U_tide_p,U_tide_app,U_tide_type,uncert_treatment,integrate_Method,SLC,dscrtGauss,HC_tbl_rsp_y,HC_tbl_x,z,ind_aep,id_PCT,apply_Parallel,HC_plt_x2);
-            
+
             % Change AEF to AEP?
             if ind_aep
                 HC_plt_x=aef2aep(HC_plt_x2);
@@ -601,16 +614,22 @@ switch sz
 
             % Plot hazard curves
             if plot_results
-                disp('****** Plotting hazard curves')
+                if stat_print == 1
+                    disp('****** Plotting hazard curves');
+                end
                 StormSim_JPM_Plot(JPM_output,sp_id_p,path_out,yaxis_label,yaxis_limits,integrate_Method,prc,ind_aep,a,HC_plt_x)
             end
 
             % Export output per partition
             save([path_out,'StormSim_JPM_output_Part_',int2str(i),'.mat'],'JPM_output','HC_plt_x','HC_tbl_x','HC_tbl_rsp_y','Removed_vg','-v7.3')
         end
-        disp(['*** Step 4: Results stored here: ',path_out])
+        if stat_print == 1
+            disp(['*** Step 4: Results stored here: ',path_out]);
+        end
 end
 [~,id_act]=hasPCT;if id_act==0,delete(gcp);end
-disp('*** Evaluation finished.')
-disp('*** StormSim-JPM Tool terminated.')
+if stat_print == 1
+    disp('*** Evaluation finished.');
+    disp('*** StormSim-JPM Tool terminated.');
+end
 end

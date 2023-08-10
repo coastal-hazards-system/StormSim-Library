@@ -447,23 +447,25 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function [HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_datasets,Check_datasets,SST_output] = StormSim_SST_Tool_R1_v20210809(input_data,flag_value,tLag,lambda,Nyrs,path_out,staID,yaxis_Label,yaxis_Limits,prc,use_AEP,GPD_TH_crit,SLC,ind_Skew,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel)
+function [HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_datasets,Check_datasets,SST_output] = StormSim_SST_Tool_R1_v20210809(input_data,flag_value,tLag,lambda,Nyrs,path_out,staID,yaxis_Label,yaxis_Limits,prc,use_AEP,GPD_TH_crit,SLC,ind_Skew,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel, stat_print)
 %% Other settings
 clc;
-disp(['***********************************************************' newline...
-    '***         StormSim-SST Tool Alpha Version 0.5         ***' newline...
-    '***                Release 1 - 20210809                 ***' newline...
-    '***                 FOR  TESTING  ONLY                  ***' newline...
-    '***********************************************************' newline...
-    '**********           NOTES TO THE USER           **********' newline...
-    '*** 1) Refer to Quick Start Guide for a description     ***' newline...
-    '***    of settings, inputs and outputs.                 ***' newline...
-    '*** 2) Please report any error using the Feedback Form. ***' newline...
-    '*** 3) For questions or help contact:                   ***' newline...
-    '***    Efrain.Ramos-Santiago@usace.army.mil             ***' newline...
-    '***********************************************************'])
+if stat_print == 1
+    disp(['***********************************************************' newline...
+        '***         StormSim-SST Tool Alpha Version 0.5         ***' newline...
+        '***                Release 1 - 20210809                 ***' newline...
+        '***                 FOR  TESTING  ONLY                  ***' newline...
+        '***********************************************************' newline...
+        '**********           NOTES TO THE USER           **********' newline...
+        '*** 1) Refer to Quick Start Guide for a description     ***' newline...
+        '***    of settings, inputs and outputs.                 ***' newline...
+        '*** 2) Please report any error using the Feedback Form. ***' newline...
+        '*** 3) For questions or help contact:                   ***' newline...
+        '***    Efrain.Ramos-Santiago@usace.army.mil             ***' newline...
+        '***********************************************************'])
 
-disp([newline '*** Step 1: Processing input arguments '])
+    disp([newline '*** Step 1: Processing input arguments '])
+end
 
 % Turn off all warnings
 warning('off','all');
@@ -649,8 +651,9 @@ switch ExecMode
         error('Unrecognized value for ExecMode. Available options are ''Regular'' or ''Fast''')
 end
 
-disp('*** Step 2: Verifying input datasets')
-
+if stat_print == 1
+    disp('*** Step 2: Verifying input datasets')
+end
 %% Data preprocessing: remove NaN, inf values; compute record length
 procData(sz).dat = [];
 procData(sz).dat2 = [];
@@ -663,44 +666,44 @@ switch DataType
         for i=sz %dataset loop
             data_time = input_data(i).time_values;
             data_values = input_data(i).data_values;
-            
+
             % Remove flag values?
             if ~isempty(flag_value)
                 data_time(data_values==flag_value)=[];
                 data_values(data_values==flag_value)=[];
             end
-            
+
             % Merge data and remove NaN, Inf values
             data_values=[data_time(:) data_values(:)];
             data_values(isinf(data_values(:,2))|isnan(data_values(:,2)),:)=[];
-            
+
             procData(i).dat = data_values;
-            
+
             % Compute record length: Effective duration method
             dt=[]; [dt(:,1),dt(:,2),dt(:,3)]=ymd(datetime(data_time,'ConvertFrom','datenum'));
             dt=unique(dt,'rows'); Nyrs(i)=size(dt,1)/365.25;
-            
+
             % Can dataset be evaluated? Mark empty datasets to delete later
             if isempty(data_values)
                 procData(i).id = i;
             end
         end
-        
+
     case 2 %POT
         for i=sz %dataset loop
-            
+
             %take datasets
             tt = input_data(i).time_values;
             data_values = input_data(i).data_values;
-            
+
             if isempty(tt)
                 tt = NaN(length(data_values),1);
             end
-            
+
             if ind_Skew
                 data_values2 = input_data(i).data_values2;
             end
-            
+
             % Remove flag values?
             if ~isempty(flag_value)
                 id_1 = data_values==flag_value;
@@ -713,13 +716,13 @@ switch DataType
                     data_values2(data_values2==flag_value)=[];
                 end
             end
-            
+
             % Remove NaN, Inf and nonpositive values
             data_values = data_values(:);
             id_1 = isinf(data_values)|isnan(data_values)|data_values<=0;
             data_values(id_1,:)=[];
             tt(id_1,:)=[];
-            
+
             if ind_Skew && ~isempty(data_values) %&& ~isempty(data_values2)
                 data_values2 = data_values2(:);
                 data_values2(id_1)=[];
@@ -728,24 +731,24 @@ switch DataType
                 data_values2(id_1)=[];
                 tt(id_1)=[];
             end
-            
+
             % Sample only has the same value?
             [~,ia,~] = unique(data_values,'stable');
             ia = length(ia)<=3;
-            
+
             % Merge data and store
             data_values = [tt data_values]; %#ok<AGROW>
             procData(i).dat = data_values;
-            
+
             if ind_Skew && ~isempty(data_values) %&& ~isempty(data_values2)
                 procData(i).dat2 = data_values2;
             end
-            
+
             % Can dataset be evaluated? Mark empty datasets to delete later
             if isempty(data_values) || ia
                 procData(i).id = i;
             end
-            
+
             % If skew tides are needed, is there a valis model provided?
             if ind_Skew && (isempty(data_values2) || ~isobject(gprMdl(i).mdl))
                 procData(i).id2 = i;
@@ -764,7 +767,7 @@ if ~isempty(id)
     Removed_datasets = {'Cannot evaluate these stations for any of the following reasons:';...
         '- dataset was empty after removal of NaN/Inf/flag values (and nonpositive values when input dataset is a POT)';...
         '- dataset consists of 3 or less unique values repeated many times'};
-    
+
     for i=id
         Removed_datasets = [Removed_datasets; staID{i}]; %#ok<AGROW>
     end
@@ -783,7 +786,7 @@ if ind_Skew
     if ~isempty(id2)
         Check_datasets = {'These stations were evaluated without applying skew tides since:';...
             '- ind_Skew = 1 but entered invalid values for either the second POT dataset (with tides) or the GPR model'};
-        
+
         for i=id2
             Check_datasets = [Check_datasets; staID{i}]; %#ok<AGROW>
         end
@@ -796,15 +799,17 @@ switch DataType
     case 1 %Timeseries
         if GPD_TH_crit==0 % Evaluate all MRL thresholds
             for i=sz %dataset loop
-                disp(['*** Step 3: Performing SST for station ',staID{i,1}])
+                if stat_print == 1
+                    disp(['*** Step 3: Performing SST for station ',staID{i,1}]);
+                end
                 j=j+1;
                 try
                     % Execute StormSim-POT
                     [POT_samp,~] = StormSim_POT(procData(i).dat(:,1),procData(i).dat(:,2),tLag(i),lambda(i),Nyrs(i));
-                    
+
                     % Execute StormSim-SST-Fit
                     [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,staID(i,1),yaxis_Label{i},path_out,yaxis_Limits(i,:),apply_GPD_to_SS);
-                    
+
                     % Gather the output
                     switch ExecMode
                         case 1 %Regular
@@ -816,10 +821,10 @@ switch DataType
                             SST_output(j).HC_tbl = HC_tbl;
                             SST_output(j).HC_tbl_rsp_x = HC_tbl_rsp_x;
                             SST_output(j).HC_emp = HC_emp;
-                            
+
                             % Plot results
                             StormSim_SST_Plot(HC_plt,HC_emp,MRL_output,prc,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),use_AEP,GPD_TH_crit,a,HC_plt_x2)
-                            
+
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
                             SST_output(j).HC_plt=HC_plt;
@@ -831,18 +836,20 @@ switch DataType
                     SST_output(j).ME = ME;
                 end
             end
-            
+
         elseif id_PCT && GPD_TH_crit~=0 && apply_Parallel % PCT available and evaluate only one MRL threshold
             for i=sz %dataset loop
-                disp(['*** Step 3: Performing SST for station ',staID{i,1}])
+                if stat_print == 1
+                    disp(['*** Step 3: Performing SST for station ',staID{i,1}]);
+                end
                 j=j+1;
                 try
                     % Execute StormSim-POT
                     [POT_samp,~] = StormSim_POT(procData(i).dat(:,1),procData(i).dat(:,2),tLag(i),lambda(i),Nyrs(i));
-                    
+
                     % Execute StormSim-SST-Fit-Simple
                     [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
-                    
+
                     % Gather the output
                     switch ExecMode
                         case 1 %Regular
@@ -855,10 +862,10 @@ switch DataType
                             SST_output(j).HC_tbl_rsp_x=HC_tbl_rsp_x;
                             SST_output(j).HC_emp=HC_emp;
                             SST_output(j).Warning=str1;
-                            
+
                             % Plot results
                             StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
-                            
+
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
                             SST_output(j).HC_plt=HC_plt;
@@ -871,18 +878,20 @@ switch DataType
                     SST_output(j).ME = ME;
                 end
             end
-            
+
         else % PCT not available and evaluate only one MRL threshold
             for i=sz %dataset loop
-                disp(['*** Step 3: Performing SST for station ',staID{i,1}])
+                if stat_print == 1
+                    disp(['*** Step 3: Performing SST for station ',staID{i,1}]);
+                end
                 j=j+1;
                 try
                     % Execute StormSim-POT
                     [POT_samp,~] = StormSim_POT(procData(i).dat(:,1),procData(i).dat(:,2),tLag(i),lambda(i),Nyrs(i));
-                    
+
                     % Execute StormSim-SST-Fit-Simple
                     [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_Simple(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
-                    
+
                     % Gather the output
                     switch ExecMode
                         case 1 %Regular
@@ -895,10 +904,10 @@ switch DataType
                             SST_output(j).HC_tbl_rsp_x=HC_tbl_rsp_x;
                             SST_output(j).HC_emp=HC_emp;
                             SST_output(j).Warning=str1;
-                            
+
                             % Plot results
                             StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
-                            
+
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
                             SST_output(j).HC_plt=HC_plt;
@@ -912,16 +921,18 @@ switch DataType
                 end
             end
         end
-        
+
     case 2 %POT
         if GPD_TH_crit==0
             for i=sz %dataset loop
-                disp(['*** Step 3: Performing SST for station ',staID{i,1}])
+                if stat_print == 1
+                    disp(['*** Step 3: Performing SST for station ',staID{i,1}]);
+                end
                 j=j+1;
                 try
                     % Execute StormSim-SST-Fit
                     [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,staID(i,1),yaxis_Label{i},path_out,yaxis_Limits(i,:),apply_GPD_to_SS);
-                    
+
                     % Gather the output
                     switch ExecMode
                         case 1 %Regular
@@ -933,10 +944,10 @@ switch DataType
                             SST_output(j).HC_tbl=HC_tbl;
                             SST_output(j).HC_tbl_rsp_x=HC_tbl_rsp_x;
                             SST_output(j).HC_emp=HC_emp;
-                            
+
                             % Plot results
                             StormSim_SST_Plot(HC_plt,HC_emp,MRL_output,prc,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),use_AEP,GPD_TH_crit,a,HC_plt_x2)
-                            
+
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
                             SST_output(j).HC_plt=HC_plt;
@@ -948,15 +959,17 @@ switch DataType
                     SST_output(j).ME = ME;
                 end
             end
-            
+
         elseif id_PCT && GPD_TH_crit~=0 && apply_Parallel % PCT available and evaluate only one MRL threshold
             for i=sz %dataset loop
-                disp(['*** Step 3: Performing SST for station ',staID{i,1}])
+                if stat_print == 1
+                    disp(['*** Step 3: Performing SST for station ',staID{i,1}]);
+                end
                 j=j+1;
                 try
                     % Execute StormSim-SST-Fit-Simple
                     [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
-                    
+
                     % Gather the output
                     switch ExecMode
                         case 1 %Regular
@@ -969,10 +982,10 @@ switch DataType
                             SST_output(j).HC_tbl_rsp_x=HC_tbl_rsp_x;
                             SST_output(j).HC_emp=HC_emp;
                             SST_output(j).Warning=str1;
-                            
+
                             % Plot results
                             StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
-                            
+
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
                             SST_output(j).HC_plt=HC_plt;
@@ -985,15 +998,17 @@ switch DataType
                     SST_output(j).ME = ME;
                 end
             end
-            
+
         else % PCT not available and evaluate only one MRL threshold
             for i=sz %dataset loop
-                disp(['*** Step 3: Performing SST for station ',staID{i,1}])
+                if stat_print == 1
+                    disp(['*** Step 3: Performing SST for station ',staID{i,1}]);
+                end
                 j=j+1;
                 try
                     % Execute StormSim-SST-Fit-Simple
                     [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_Simple(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
-                    
+
                     % Gather the output
                     switch ExecMode
                         case 1 %Regular
@@ -1006,10 +1021,10 @@ switch DataType
                             SST_output(j).HC_tbl_rsp_x=HC_tbl_rsp_x;
                             SST_output(j).HC_emp=HC_emp;
                             SST_output(j).Warning=str1;
-                            
+
                             % Plot results
                             StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
-                            
+
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
                             SST_output(j).HC_plt=HC_plt;
@@ -1030,12 +1045,15 @@ if use_AEP %Convert to AEP
 end
 
 %% Save the output
-disp(['*** Step 4: Saving results here: ',path_out])
+if stat_print == 1
+    disp(['*** Step 4: Saving results here: ',path_out]);
+end
 save([path_out,'StormSim_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
 
 [~,id_act]=hasPCT;if id_act==0,delete(gcp);end
-disp('*** Evaluation finished.' )
-disp(['****** Remember to check outputs Check_datasets and Removed_datasets.' newline])
-disp('*** StormSim-SST Tool terminated.')
-
+if stat_print == 1
+    disp('*** Evaluation finished.' )
+    disp(['****** Remember to check outputs Check_datasets and Removed_datasets.' newline])
+    disp('*** StormSim-SST Tool terminated.')
+end
 end
