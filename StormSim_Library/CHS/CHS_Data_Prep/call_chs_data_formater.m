@@ -111,19 +111,19 @@ struc_id = config.struc_id;
 case_name = config.case_name;
 
 %% Check If This Is Fresh Run Or New Case
-% Define Filename Prefix Based On Data Source 
+% Define Filename Prefix Based On Data Source
 if ~isempty(sp_ID)
     file2look = [name_prefix '_SP*']; % CHS/CSTORM Related Data
 else
-    file2look = [name_prefix '*']; % External Model 
+    file2look = [name_prefix '*']; % External Model
 end
 % Scan Project Directory For Checkpoints
-h5_list = dir(file2look); 
+h5_list = dir(file2look);
 % Grab "storm" Filename
 storm_data_filename = h5_list(~contains({h5_list.name},{'raw_files'}));
 % Grab "CHS_Data" Filename
 chs_data_filename = h5_list(contains({h5_list.name},{'raw_files'}));
-% Create New Case For Current Transect 
+% Create New Case For Current Transect
 if ~isempty(storm_data_filename) % New Case Run
     % Build File Path
     file2look = fullfile(storm_data_filename.folder,storm_data_filename.name); % storm, prob_mass
@@ -137,7 +137,7 @@ if ~isempty(storm_data_filename) % New Case Run
     % Check Timeseries & Peaks
     storm_level_2 = fieldnames(storm.(storm_level_1{1}));
     storm_level_2 = storm_level_2(contains(storm_level_2,{'Peaks','Timeseries'}));
-    % Verify Storm Sampling 
+    % Verify Storm Sampling
     switch storm_sampling
         case 'CC'
             chk1 = contains('TC',storm_level_1) && contains('XC',storm_level_1);
@@ -227,6 +227,8 @@ if ~isempty(storm_data_filename) % New Case Run
             % Peaks
             if use_peaks == 0 && isfield(storm.(storm_level_1{kk}),'Peaks')
                 storm.(storm_level_1{kk}) = rmfield(storm.(storm_level_1{kk}),'Peaks');
+            end
+            if use_peaks == 1 && isfield(storm.(storm_level_1{kk}),'Peaks')
                 % WLP
                 if create_wlp == 0 && isfield(storm.(storm_level_1{kk}).('Peaks'),'WLP')
                     storm.(storm_level_1{kk}).('Peaks') = rmfield(storm.(storm_level_1{kk}).('Peaks'),'WLP');
@@ -242,7 +244,7 @@ else
     file2look = [];
 end
 
-%% CONVERT AND PROCESS CHS_Data 
+%% CONVERT AND PROCESS CHS_Data
 % Execute Pre-Processing If Needed
 if isempty(file2look) % Process SP Data
     % Determine Minimum File Requirement For config
