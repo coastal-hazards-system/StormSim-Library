@@ -139,7 +139,7 @@ for k = 1:length(Resp_RB1)
             % Get Legend Title Handle
             htitle = get(legend2,'Title');
             % Define Legend Location
-            set(legend2,'Location','southeast','FontSize',ax_tick_fnt,'Orientation','horizontal','NumColumns',3);
+            set(legend2,'Location','Best','FontSize',ax_tick_fnt,'Orientation','horizontal','NumColumns',3);
             % Define Legened Title
             set(htitle,'String','Confidence Levels');
         elseif ll == 3
