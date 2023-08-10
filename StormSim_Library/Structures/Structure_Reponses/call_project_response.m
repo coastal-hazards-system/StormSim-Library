@@ -104,7 +104,7 @@ switch workflow
                     for jj = 1:length(level_a)
                         Resp.(level_a{jj}).('Peaks').(level_2{ii}) = helper_var.(level_a{jj}).('Peaks');
                         % Plot Cross-section For Each Storm Type
-                        if structure_type ~=2
+                        if structure_type ~=2 && workflow~=2
                             plot_structure_and_forcing(config, Resp.(level_a{jj}).('Peaks').(level_2{ii}),...
                                 structure, level_a{jj},[subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
                         end
