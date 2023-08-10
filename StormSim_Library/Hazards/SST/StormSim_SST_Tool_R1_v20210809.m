@@ -808,7 +808,7 @@ switch DataType
                     [POT_samp,~] = StormSim_POT(procData(i).dat(:,1),procData(i).dat(:,2),tLag(i),lambda(i),Nyrs(i));
 
                     % Execute StormSim-SST-Fit
-                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,staID(i,1),yaxis_Label{i},path_out,yaxis_Limits(i,:),apply_GPD_to_SS);
+                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,staID(i,1),yaxis_Label{i},path_out,yaxis_Limits(i,:),apply_GPD_to_SS, app_type);
 
                     % Gather the output
                     switch ExecMode
@@ -848,7 +848,7 @@ switch DataType
                     [POT_samp,~] = StormSim_POT(procData(i).dat(:,1),procData(i).dat(:,2),tLag(i),lambda(i),Nyrs(i));
 
                     % Execute StormSim-SST-Fit-Simple
-                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
+                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS, app_type);
 
                     % Gather the output
                     switch ExecMode
@@ -890,7 +890,7 @@ switch DataType
                     [POT_samp,~] = StormSim_POT(procData(i).dat(:,1),procData(i).dat(:,2),tLag(i),lambda(i),Nyrs(i));
 
                     % Execute StormSim-SST-Fit-Simple
-                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_Simple(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
+                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_Simple(POT_samp(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS, app_type);
 
                     % Gather the output
                     switch ExecMode
@@ -931,7 +931,7 @@ switch DataType
                 j=j+1;
                 try
                     % Execute StormSim-SST-Fit
-                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,staID(i,1),yaxis_Label{i},path_out,yaxis_Limits(i,:),apply_GPD_to_SS);
+                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,staID(i,1),yaxis_Label{i},path_out,yaxis_Limits(i,:),apply_GPD_to_SS, app_type);
 
                     % Gather the output
                     switch ExecMode
@@ -968,7 +968,7 @@ switch DataType
                 j=j+1;
                 try
                     % Execute StormSim-SST-Fit-Simple
-                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
+                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_SimplePar(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS, app_type);
 
                     % Gather the output
                     switch ExecMode
@@ -1007,7 +1007,7 @@ switch DataType
                 j=j+1;
                 try
                     % Execute StormSim-SST-Fit-Simple
-                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_Simple(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS);
+                    [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output,str1] = StormSim_SST_Fit_Simple(procData(i).dat(:,2),Nyrs(i),HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,procData(i).dat2,SLC,gprMdl(i).mdl,apply_GPD_to_SS, app_type);
 
                     % Gather the output
                     switch ExecMode
