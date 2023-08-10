@@ -187,10 +187,15 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(POT_samp,Nyrs,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,POT_samp2,SLC,gprMdl,staID,yaxis_Label,path_out,yaxis_Limits,apply_GPD_to_SS)
+function [HC_emp,HC_plt,HC_plt_x2,HC_tbl,HC_tbl_rsp_x,MRL_output] = StormSim_SST_Fit(POT_samp,Nyrs,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,prc,use_AEP,GPD_TH_crit,ind_Skew,POT_samp2,SLC,gprMdl,staID,yaxis_Label,path_out,yaxis_Limits,apply_GPD_to_SS, app_type)
 
 %% Bootstrap Input Parameters
-Nsim = 1e3; %Number of simulations (no less than 10,000)
+switch app_type
+    case 1 % StormSim Application
+        Nsim = 100;
+    case 2 % PCHA Application
+        Nsim = 1e3; %Number of simulations (no less than 10,000)
+end
 
 %% Develop empirical CDF (using output of POT function)
 POT_samp = sort(POT_samp,'descend'); %Sort POT sample in descending order
@@ -217,10 +222,10 @@ ecdf_y = HC_emp(:,1);
 % rng('default');
 
 if ind_Skew && ~isempty(POT_samp2) && isobject(gprMdl)
-    
+
     ecdf_y = ecdf_y - SLC;
     boot = ecdf_boot(ecdf_y,Nsim)';
-    
+
     % Compute and add skew tides to bootstrap sample or surge
     for i=1:Nsim
         [skew_tide_mean,skew_tide_sd] = predict(gprMdl,boot(:,i));
@@ -228,13 +233,13 @@ if ind_Skew && ~isempty(POT_samp2) && isobject(gprMdl)
         boot(:,i) = boot(:,i) + skew_tide_pred;
         boot(:,i) = sort(boot(:,i),'descend');
     end
-    
+
     % Add the SLC amount
     boot = boot + SLC;
-    
+
     %Substitute the empirical dist with user supplied surge + tides + SLC (WL)
     ecdf_y = sort(POT_samp2,'descend'); %Sort POT sample in descending order
-    
+
     % Resizing
     szH = size(HC_emp,1); szy = length(ecdf_y);
     if szH>szy
@@ -252,12 +257,12 @@ boot(boot<0)=NaN;
 
 %% Apply the GPD when empirical POT sample size is >20 and RL >20 yrs. Otherwise, compute HC using empirical.
 if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
-    
-    
+
+
     %% Apply "Mean Residual Life" Automated Threshold Detection
     MRL_output = StormSim_MRL(ecdf_y,Nyrs);
-    
-    
+
+
     %% MRL GPD Threshold condition
     switch GPD_TH_crit
         case 0 %user wants the 3 THs
@@ -279,24 +284,24 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
         end
         mrl_th = repmat(mrl_th,Nsim,1);
     end
-    
-    
+
+
     %% Take parameters and preallocate
     ecdf_x_adj=HC_emp(:,4); % for hazard computations, this must be AEF
-    
+
     %pre-allocation for speed
     Resp_boot_plt=NaN(Nsim,length(HC_plt_x));
     pd_k_wOut=NaN(Nsim,1);
     pd_sigma=pd_k_wOut;
     pd_k_mod=pd_k_wOut;
     pd_TH_wOut=pd_k_wOut;
-    
+
     HC_plt(j(end)).out=[];
     HC_plt(j(end)).MRL_Crit=[];
     HC_tbl=HC_plt;
     HC_tbl_rsp_x=HC_plt;
-    
-    
+
+
     %% Perform SST
     str = 'Annual Exceedance Frequency (yr^{-1})';
     if use_AEP %Convert to AEP
@@ -306,9 +311,9 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
     else %Convert to AEF
         HC_plt_x2 = HC_plt_x;
     end
-    
+
     for i=j %MRL GPD Threshold loop
-        
+
         % If the MRL didn't returned a threshold value, compute it from the
         % bootstrap samples. Then identify values above it.
         if isnan(mrl_th)
@@ -326,7 +331,7 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
             eMsg ='';
         end
         Lambda_mrl = sz/Nyrs; %annual rate of events
-        
+
         % GPD fitting
         for k = 1:Nsim
             PEAKS_rnd = boot(:,k);
@@ -340,51 +345,51 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
             catch
             end
         end
-        
+
         % Correction of GPD shape parameter values. Limits determined by NCNC.
         pd_k_mod(:,i) = pd_k_wOut(:,i);
         k_min=-0.5; k_max=0.3;
         pd_k_mod(pd_k_mod(:,i)<k_min,i) = k_min;
         pd_k_mod(pd_k_mod(:,i)>k_max,i) = k_max;
-        
+
         for k = 1:Nsim
             try
                 PEAKS_rnd = boot(:,k);
-                
+
                 % Compute the AEF from the GPD fit
                 Resp_gpd = icdf('Generalized Pareto',1-HC_plt_x/Lambda_mrl(k),pd_k_mod(k,i),pd_sigma(k,i),pd_TH_wOut(k,i));
                 AEF_gpd = HC_plt_x(~isnan(Resp_gpd));
                 Resp_gpd(isnan(Resp_gpd))=[];
-                
+
                 % Take the empirical AEF from bootstrap sample
                 Resp_ecdf = PEAKS_rnd(idx2(:,k));
                 AEF_ecdf = ecdf_x_adj(idx2(:,k));
-                
+
                 % Merge the AEFs (empirical + fitted GPD)
                 y_comb = [Resp_gpd;Resp_ecdf];
                 x_comb = [AEF_gpd;AEF_ecdf];
-                
+
                 % Comvert to AEP?
                 if use_AEP
                     x_comb = aef2aep(x_comb);
                 end
-                
+
                 % Delete duplicates
                 [~,ia,~]=unique(x_comb,'stable');
                 x_comb=x_comb(ia,:);
                 y_comb=y_comb(ia,:);
-                
+
                 [~,ia,~]=unique(y_comb,'stable');
                 y_comb=y_comb(ia,:);
                 x_comb=x_comb(ia,:);
-                
+
                 % Interpolate HC curve for table and plot
                 Resp_boot_plt(k,:) = interp1(log(x_comb),y_comb,log(HC_plt_x2));
             catch
             end
         end
-        
-        
+
+
         %% Sample Plot for bootstrap process
         figure('Color',[1 1 1],'visible','off')
         axes('xscale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
@@ -400,26 +405,26 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
         end
         set(gca,'XDir','reverse','XTick',XTick)
         hold on
-        
+
         % Historical
         scatter(HC_emp(:,4),ecdf_y,15,'g','filled','MarkerEdgeColor','k');
-        
+
         % Resampling (last bootstrap sample)
         scatter(HC_emp(:,4),PEAKS_rnd,15,'r','filled','MarkerEdgeColor','k');
-        
+
         % Comvert to AEP?
         if use_AEP
             AEF_ecdf = aef2aep(AEF_ecdf);
             AEF_gpd = aef2aep(AEF_gpd);
         end
-        
+
         % Empirical
         plot(AEF_ecdf,Resp_ecdf,'y-','LineWidth',2)
-        
+
         % MRL threshold
         th_x = interp1(y_comb,x_comb,pd_TH_wOut(k,i));
         scatter(th_x,pd_TH_wOut(k,i),15,'w','filled','MarkerEdgeColor','b');
-        
+
         plot(AEF_gpd,Resp_gpd,'b-','LineWidth',2) % GPD with MRL
         if length(staID)==1
             title({'StormSim-SST ';['Station: ',staID{1}]},'FontSize',12);
@@ -433,58 +438,58 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
         hold off
         fname = [path_out,'SST_HC_bootCheck_',staID{1},'_TH_',MRL_output.Selection.Criterion{i},'.png'];
         saveas(gcf,fname,'png')
-        
-        
+
+
         %% Compute mean and percentiles
         Boot_mean_plt = mean(Resp_boot_plt,1,'omitnan');
         Boot_plt = prctile(Resp_boot_plt,prc,1);
-        
+
         %Return an error when mean HC >= 1e3 meters
         if ind_Skew && max(Boot_mean_plt,[],'omitnan')>=1e3
             error('Values above 10^3 found in mean hazard curve')
         end
-        
+
         Mean_p_CLs = [Boot_mean_plt;Boot_plt];
-        
+
         % Monotonic adjustment
         for kk=1:size(Mean_p_CLs,1)
             Mean_p_CLs(kk,:) = Monotonic_adjustment(HC_plt_x2,Mean_p_CLs(kk,:));
         end
-        
+
         % Store results for output
         HC_plt(i).out = Mean_p_CLs;
         HC_plt(i).MRL_Crit = MRL_output.Selection.Criterion{i};
-        
-        
+
+
         %% Interpolation to create hazard tables
-        
+
         % preallocate
         HC_tbl_rsp_x2 = NaN(size(Mean_p_CLs,1),length(HC_tbl_rsp_y));
         HC_tbl_y2 = NaN(size(Mean_p_CLs,1),length(HC_tbl_x));
         HCmn = NaN(size(Mean_p_CLs,1),1);
         for kk=1:size(Mean_p_CLs,1)
-            
+
             % Delete duplicates
             [~,ia,~] = unique(Mean_p_CLs(kk,:),'stable');
             dm1 = Mean_p_CLs(kk,ia); dm2 = log(HC_plt_x2(ia));
-            
+
             % Delete NaN/Inf
             ia=isnan(dm1)|isinf(dm1); dm1(ia)=[]; dm2(ia)=[];
-            
+
             % Interpolate
             HC_tbl_rsp_x2(kk,:) = exp(interp1(dm1,dm2,HC_tbl_rsp_y','linear','extrap'));
             HC_tbl_y2(kk,:) = interp1(dm2,dm1,log(HC_tbl_x),'linear','extrap');
-            
+
             %interpol for 0.1 aep/aef
             HCmn(kk) = interp1(dm2,dm1,log(0.1),'linear','extrap');
-            
+
         end
-        
+
         % Change negatives to NaN
         HC_tbl_y2(HC_tbl_y2<0)=NaN;
         %         HC_tbl_rsp_x2(HC_tbl_rsp_x2<0)=NaN;
         HC_tbl_rsp_x2(HC_tbl_rsp_x2<1e-4)=NaN;
-        
+
         % Compare if mean HC > 1.75* emp HC at 0.1 AEP/AEF,
         HCep = interp1(log(HC_emp(:,4)),HC_emp(:,1),log(0.1),'linear','extrap');
         str1 = {''};
@@ -492,18 +497,18 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
             str1 = {'Warning: At 0.1 AEP/AEF, best estimate HC value is greater than 1.75 times the empirical HC value. Manual verification is recommended.'};
         end
         HC_plt(i).Warning = str1;
-        
+
         % Store
         HC_tbl_rsp_x(i).out = HC_tbl_rsp_x2;
         HC_tbl_rsp_x(i).MRL_Crit = MRL_output.Selection.Criterion{i};
         HC_tbl(i).out = HC_tbl_y2;
         HC_tbl(i).MRL_Crit = MRL_output.Selection.Criterion{i};
     end
-    
-    
+
+
 else %dont apply GPD, but compute HC + prc with empirical only
-    
-    
+
+
     %% Take parameters and preallocate
     Resp_boot_plt=NaN(Nsim,length(HC_plt_x));
     pd_k_wOut=NaN;
@@ -515,8 +520,8 @@ else %dont apply GPD, but compute HC + prc with empirical only
     HC_tbl=HC_plt;
     HC_tbl_rsp_x=HC_plt;
     eMsg = 'GPD not fit: POT sample size <20 and RL <20 years.';
-    
-    
+
+
     %% Conversion to AEF or AEP
     if use_AEP %Convert to AEP
         HC_emp(:,4) = aef2aep(HC_emp(:,4));
@@ -524,83 +529,83 @@ else %dont apply GPD, but compute HC + prc with empirical only
     else %Convert to AEF
         HC_plt_x2 = HC_plt_x;
     end
-    
-    
+
+
     %% Compute HC
     for k = 1:Nsim
         y_comb = boot(:,k);
         x_comb = HC_emp(:,4);
-        
+
         % Delete duplicates
         [~,ia,~]=unique(x_comb,'stable');
         x_comb=x_comb(ia,:);
         y_comb=y_comb(ia,:);
-        
+
         [~,ia,~]=unique(y_comb,'stable');
         y_comb=y_comb(ia,:);
         x_comb=x_comb(ia,:);
-        
+
         % Interpolate HC curve for plot: lineal inside empirical, nearest neighbor outside
         HC_plt_x2a = HC_plt_x2(HC_plt_x2>=min(x_comb));
         HC_plt_x2b = HC_plt_x2(HC_plt_x2<min(x_comb));
-        
+
         Resp_boot_plta = interp1(log(x_comb),y_comb,log(HC_plt_x2a),'linear');
         Resp_boot_pltb = interp1(log(x_comb),y_comb,log(HC_plt_x2b),'nearest','extrap');
-        
+
         % merge results
         Resp_boot_plt(k,:) = [Resp_boot_pltb' Resp_boot_plta'];
     end
-    
-    
+
+
     %% Compute mean and percentiles
     Boot_mean_plt = mean(Resp_boot_plt,1,'omitnan');
     Boot_plt = prctile(Resp_boot_plt,prc,1);
-    
+
     %For this application only: delete results if WL >= 1e3 meters
     if ind_Skew && max(Boot_mean_plt,[],'omitnan')>=1e3
         error('Values above 10^3 found in mean hazard curve')
     end
-    
+
     Mean_p_CLs = [Boot_mean_plt;Boot_plt];
-    
+
     % Monotonic adjustment
     for kk=1:size(Mean_p_CLs,1)
         Mean_p_CLs(kk,:) = Monotonic_adjustment(HC_plt_x2,Mean_p_CLs(kk,:));
     end
-    
+
     % Store results for output
     HC_plt(1).out = Mean_p_CLs;
     HC_plt(1).MRL_Crit = 'None';
-    
-    
+
+
     %% Interpolation to create hazard tables
-    
+
     % preallocate
     HC_tbl_rsp_x2 = NaN(size(Mean_p_CLs,1),length(HC_tbl_rsp_y));
     HC_tbl_y2 = NaN(size(Mean_p_CLs,1),length(HC_tbl_x));
     HCmn = NaN(size(Mean_p_CLs,1),1);
     for kk=1:size(Mean_p_CLs,1)
-        
+
         % Delete duplicates
         [~,ia,~] = unique(Mean_p_CLs(kk,:),'stable');
         dm1 = Mean_p_CLs(kk,ia); dm2 = log(HC_plt_x2(ia));
-        
+
         % Delete NaN/Inf
         ia=isnan(dm1)|isinf(dm1); dm1(ia)=[]; dm2(ia)=[];
-        
+
         % Interpolate
         HC_tbl_rsp_x2(kk,:) = exp(interp1(dm1,dm2,HC_tbl_rsp_y','nearest','extrap'));
         HC_tbl_y2(kk,:) = interp1(dm2,dm1,log(HC_tbl_x),'nearest','extrap');
-        
+
         %interpol for 0.1 aep/aef
         HCmn(kk) = interp1(dm2,dm1,log(0.1),'linear','extrap');
-        
+
     end
-    
+
     % Change negatives to NaN
     HC_tbl_y2(HC_tbl_y2<0)=NaN;
     HC_tbl_rsp_x2(HC_tbl_rsp_x2<1e-4)=NaN;
-    
+
     % Compare if mean HC > 1.75* emp HC at 0.1 AEP/AEF,
     HCep = interp1(log(HC_emp(:,4)),HC_emp(:,1),log(0.1),'linear','extrap');
     str1 = {''};
@@ -608,7 +613,7 @@ else %dont apply GPD, but compute HC + prc with empirical only
         str1 = {'Warning: At 0.1 AEP/AEF, best estimate HC value is greater than 1.75 times the empirical HC value. Manual verification is recommended.'};
     end
     HC_plt(1).Warning = str1;
-    
+
     % Store
     HC_tbl_rsp_x(1).out = HC_tbl_rsp_x2;
     HC_tbl_rsp_x(1).MRL_Crit = 'None';
