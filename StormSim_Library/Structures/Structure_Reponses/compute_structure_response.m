@@ -185,8 +185,8 @@ switch dflat
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
             if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
-                % Get Reshape Size
-                dSize = size(project_forcing.(storm_type).('SWL'){1},2);
+                %
+                dSize = size(project_forcing.(storm_type).('SWL_no_rep'){1},2);
                 % Grab Values With No Uncertainty For HC Calculations
                 SWL = project_forcing.(storm_type).('SWL_no_rep');
                 Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
@@ -198,7 +198,7 @@ switch dflat
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
             elseif any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'TC'})
-                % Get Reshape Size
+                %
                 dSize = size(project_forcing.(storm_type).('SWL'){1},2);
                 % Grab Values With No Uncertainty For HC Calculations
                 SWL = project_forcing.(storm_type).('SWL_no_rep');
@@ -211,6 +211,9 @@ switch dflat
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
             end
+        else
+            % No Need To Create replicates Here
+            dSize = 1;
         end
         if compute_HC == 1
             % Find SWL Max For Each Storm
@@ -220,7 +223,7 @@ switch dflat
             % Store Back Into Project Forcing
             project_forcing.(storm_type).('Hm0') = repmat(cell2mat(Hm0_2),1,dSize);
             %
-            project_forcing.(storm_type).('Tp') = repmat(cell2mat(cellfun(@(x,y) x(y), Tp, Hm0_indx, 'un', false)),1 ,dSize);
+            project_forcing.(storm_type).('Tp') = repmat(cell2mat(cellfun(@(x,y) x(y), Tp, Hm0_indx, 'un', false)),1,dSize);
         end
 end
 

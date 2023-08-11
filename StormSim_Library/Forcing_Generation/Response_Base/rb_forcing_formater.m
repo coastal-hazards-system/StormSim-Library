@@ -17,8 +17,8 @@ end
 % Execute Code Block According To Strom Type Being Called
 switch sType
     case 'TC' % Tropical Cyclones - 444 Replicates
-        % Discrete Normal Distribution: (NCNC)
-        RandNorm = 444; % 444 values covering the (-3,3) z-score range
+            % Discrete Normal Distribution: (NCNC)
+            RandNorm = 444; % 444 values covering the (-3,3) z-score range
     case 'XC' % Extratropical Storms - 20 Replicates
         % Discrete Normal Distribution:
         if workflow == 2 || workflow == 4

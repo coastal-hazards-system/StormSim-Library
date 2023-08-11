@@ -21,7 +21,7 @@ project_name = config.project_name;
 struc_id = config.struc_id;
 % Define Case  Name
 case_name = config.case_name;
-% Probability Masses 
+% Probability Masses
 PM_path = config.prob_mass_source;
 % OutDir
 outDir = [project_name filesep struc_id filesep case_name];
@@ -67,30 +67,31 @@ if run_flag == 1
     %% LOAD ENRINMENT ACCORDING TO WORKFLOW
     % Determine Environment To Load
     switch workflow
-        case 4 % Any External Workflow
-            % Do Nothing
-        otherwise % StormSim Workflow
-            % Check For TC Probabilities Dependencies
-            chk2 = exist(PM_path);
-            % Verify Results
-            if chk2 ~= 0
-                disp('CHS tropical cylcones probability masses found...');
-            else
-                disp('CHS tropical cyclones probability masses not found...');
-                % Throw Error Message
-                warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
-                % Update Config
-                config.storm_sampling = 'XC';
-            end
-            % Check For norm_444.mat
-            %     chk3 = exist(['MCSim_Inputs' filesep 'norm_444.mat'],'file')==2;
-            % Verify Results
-            %     if chk3
-            %         disp('  Discretized normal curve found...');
-            %     else
-            %         disp('  Discretized normal curve not found...');
-            %     end
+        case {2,4}
+            config.pros_compute_forcing_HC = 1;
     end
+    % StormSim Workflow
+    % Check For TC Probabilities Dependencies
+    chk2 = exist(PM_path);
+    % Verify Results
+    if chk2 ~= 0
+        disp('CHS tropical cylcones probability masses found...');
+    else
+        disp('CHS tropical cyclones probability masses not found...');
+        % Throw Error Message
+        warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
+        % Update Config
+        config.storm_sampling = 'XC';
+    end
+    % Check For norm_444.mat
+    %     chk3 = exist(['MCSim_Inputs' filesep 'norm_444.mat'],'file')==2;
+    % Verify Results
+    %     if chk3
+    %         disp('  Discretized normal curve found...');
+    %     else
+    %         disp('  Discretized normal curve not found...');
+    %     end
+
 else
     % Create Strucutre Variable
     [structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot

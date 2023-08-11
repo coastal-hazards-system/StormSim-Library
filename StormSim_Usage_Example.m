@@ -1,4 +1,4 @@
-clc;clear all;
+clc;clear all;close all;
 addpath(genpath('StormSim_Library'));
 % diary 'Log.txt';
 %% USER INPUTS
@@ -8,7 +8,6 @@ MCS/CSR Requires:
 %}
 % Define StormSim Input File Name
 stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
-
 %% STEP 0: SET-UP ENVIRONMENT
 %{
  Description:
