@@ -27,7 +27,16 @@ else
     x_tbl_tc = aef2aep(tc_resp(1).x_table);
 end
 % Find Primary Responses Indexes
-s_indx = 1:length(tc_resp);%find(cellfun(@length,{tc_resp.tbl_rsp_x})~=0);
+s_indx = 1:min(length(tc_resp),length(xc_resp));
+% Remove Resposes With Missing Pairs
+if length(s_indx)~=max(length(tc_resp),length(xc_resp))
+    if length(tc_resp)>length(xc_resp)
+        tc_resp = tc_resp(ismember({tc_resp.var},{xc_resp.var}));
+    else
+        xc_resp = xc_resp(ismember({xc_resp.var},{tc_resp.var}));
+    end
+end
+% s_indx = 1:length(tc_resp);%find(cellfun(@length,{tc_resp.tbl_rsp_x})~=0);
 % Find Secondary Responses Indexes
 s_indx2 = find(cellfun(@length,{tc_resp.tbl_rsp_x})==0);
 % Initialize Storage Var & Fields For CC HC
@@ -37,7 +46,7 @@ cc_resp = rmfield(cc_resp,{'tbl_rsp_x','tbl_rsp_y'});
 % Define Counter
 ctr = 1;
 % Loop Through Each Parameter
-for j = s_indx % SWL and/or Hm0
+for j = s_indx
     disp(['               Combining ' tc_resp(j).var ' hazard curves....']);
     % Combine HCs To Create Table
     cc_resp(ctr).y_table = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
@@ -49,7 +58,6 @@ for j = s_indx % SWL and/or Hm0
     cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
     cc_resp(ctr).title(2) = {strrep(cc_resp(ctr).title{2},'TC','CC')};
     % Adjust Figure Output Names
-    strrep(cc_resp(ctr).save_name,'JPM','CC');
     cc_resp(ctr).save_name = strrep(cc_resp(ctr).save_name,'JPM','CC');
     % Define POT
     cc_resp(ctr).POT = {'Hazard curve computed by combining TC & XC primary responses'};
