@@ -73,7 +73,7 @@ switch workflow
 end
 
 %% COMPUTE STRUCTURE RESPONSE
-if ~ismember(workflow,[2,4]) 
+if ~ismember(workflow,[2,4])
     % Call Eurotop Influence Factors
     gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
     % Compute Structure Type Dependant Responses
@@ -185,36 +185,42 @@ switch dflat
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
             if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
+                % Get Reshape Size
+                dSize = size(project_forcing.(storm_type).('SWL'){1},2);
+                % Grab Values With No Uncertainty For HC Calculations
                 SWL = project_forcing.(storm_type).('SWL_no_rep');
                 Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
                 Tp = project_forcing.(storm_type).('Tp_no_rep');
+                % Replace Forcing Fields Before Going Into SST/JPM
                 project_forcing.(storm_type).('SWL') = SWL;
                 project_forcing.(storm_type).('Hm0') = Hm0;
                 project_forcing.(storm_type).('Tp') = Tp;
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
-            else
+            elseif any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'TC'})
+                % Get Reshape Size
+                dSize = size(project_forcing.(storm_type).('SWL'){1},2);
+                % Grab Values With No Uncertainty For HC Calculations
+                SWL = project_forcing.(storm_type).('SWL_no_rep');
+                Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
+                Tp = project_forcing.(storm_type).('Tp_no_rep');
+                % Replace Forcing Fields Before Going Into SST/JPM
+                project_forcing.(storm_type).('SWL') = SWL;
+                project_forcing.(storm_type).('Hm0') = Hm0;
+                project_forcing.(storm_type).('Tp') = Tp;
                 % Remove Fields
                 project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
             end
         end
         if compute_HC == 1
             % Find SWL Max For Each Storm
-            project_forcing.(storm_type).('SWL') = cell2mat(cellfun(@(x) max(x,[],1),SWL,'un',false));
+            project_forcing.(storm_type).('SWL') = repmat(cell2mat(cellfun(@(x) max(x,[],1),SWL,'un',false)),1,dSize);
             % Find Hm0 Max For Each Storm
             [Hm0_2,Hm0_indx] = cellfun(@(x) max(x,[],1),Hm0,'un',false);
-            % Create Col index For Max
-            cc = repmat({1:length(Hm0_2{1})},length(Hm0_2),1);
             % Store Back Into Project Forcing
-            project_forcing.(storm_type).('Hm0') = cell2mat(Hm0_2);
-            % Initialize Tp Var
-            dummy = zeros(size(project_forcing.(storm_type).('Hm0')));
-            % Tp as a f(Hm0)
-            for ll = 1:length(Hm0)
-                dummy(ll,:) = cell2mat(arrayfun(@(x,y) Tp{ll}(x,y),Hm0_indx{ll},cc{ll},'un',false));
-            end
-            % Assign Back To Project Forcing
-            project_forcing.(storm_type).('Tp') = dummy;
+            project_forcing.(storm_type).('Hm0') = repmat(cell2mat(Hm0_2),1,dSize);
+            %
+            project_forcing.(storm_type).('Tp') = repmat(cell2mat(cellfun(@(x,y) x(y), Tp, Hm0_indx, 'un', false)),1 ,dSize);
         end
 end
 
