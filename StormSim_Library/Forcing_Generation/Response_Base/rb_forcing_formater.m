@@ -14,15 +14,19 @@ if strcmp(sType,'TC')
 end
 
 %% LOAD NORMAL DISCRETIZATION BASED ON STORM TYPE
-    % Execute Code Block According To Strom Type Being Called
-    switch sType
-        case 'TC' % Tropical Cyclones - 444 Replicates
-            % Discrete Normal Distribution: (NCNC)
-            RandNorm = 444; % 444 values covering the (-3,3) z-score range
-        case 'XC' % Extratropical Storms - 20 Replicates
-            % Discrete Normal Distribution:
+% Execute Code Block According To Strom Type Being Called
+switch sType
+    case 'TC' % Tropical Cyclones - 444 Replicates
+        % Discrete Normal Distribution: (NCNC)
+        RandNorm = 444; % 444 values covering the (-3,3) z-score range
+    case 'XC' % Extratropical Storms - 20 Replicates
+        % Discrete Normal Distribution:
+        if workflow == 2 || workflow == 4
+            RandNorm = 1; % SST Creates Replicates Internally for SWL, Hm0, Tp HCs
+        else
             RandNorm = 20; % 20 values for XC because there is 1000 bootstrap samples in SST code
-    end
+        end
+end
 
 %% RESHAPE FORCING PARAMETERS FOR RB1 ANALYSIS
 % Disp
