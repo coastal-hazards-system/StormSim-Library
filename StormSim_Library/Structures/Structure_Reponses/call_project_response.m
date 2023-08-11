@@ -92,7 +92,7 @@ switch workflow
                     % Check If XC & TC Exist
                     level_a = fieldnames(helper_var);
                     % Create Subdirectory
-                    if structure_type ~=2
+                    if structure_type ~=2 && workflow~=2
                         if ~exist([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections'],'dir')
                             mkdir([subDir wName '1_' level_2{ii} '_Hazards_Cross-Sections']);
                         else % Directory Exist
