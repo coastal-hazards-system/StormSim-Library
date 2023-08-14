@@ -1,4 +1,4 @@
-function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1] = csh_probability_mass_loader(region,Nsvpt)
+function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1] = csh_probability_mass_loader(pm_gen_path, region, Nsvpt)
    %{
     %% DESCRIPTION
         This function is responsible for leading CHS TC storm probability
@@ -22,20 +22,23 @@ function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1] = csh_probabil
     %}
     
     %% LOAD FILES BASED ON REGION
-    if exist('MCSim_Inputs','dir')
+    % Buid PM Path 
+    pm_path = fullfile(pm_gen_path, region);
+    % Load According To Region (this will be replaced with PM v2)
+    if exist(pm_gen_path,'dir')
         if contains(region,{'NACCS','CHS-NA'}) % NACCS
             % Listing of closest (CRL) to each save point.
-            load(['MCSim_Inputs' filesep 'NACCS' filesep,'NACCS_CRL_ic.mat']);
+            load([pm_path filesep,'NACCS_CRL_ic.mat']);
             % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
-            SRR_LI = load(['MCSim_Inputs' filesep 'NACCS' filesep,'SRR_TC_LI.mat']);SRR_LI = SRR_LI.SRR;
+            SRR_LI = load([pm_path filesep,'SRR_TC_LI.mat']);SRR_LI = SRR_LI.SRR;
             % High intensity (HI) storm SRR at each CRL.
-            SRR_HI = load(['MCSim_Inputs' filesep 'NACCS' filesep,'SRR_TC_HI.mat']);SRR_HI = SRR_HI.SRR;
+            SRR_HI = load([pm_path filesep,'SRR_TC_HI.mat']);SRR_HI = SRR_HI.SRR;
             % Storms relative probability at each save point.
-            load(['MCSim_Inputs' filesep 'NACCS' filesep,'NACCS_TC_Freq_CRL.mat']);
+            load([pm_path filesep,'NACCS_TC_Freq_CRL.mat']);
             % NACCS Synthetic Storm Parameters
-            load(['MCSim_Inputs' filesep 'NACCS' filesep,'NACCS_TC_Param.mat']);
+            load([pm_path filesep,'NACCS_TC_Param.mat']);
             % Distance from region save points to region TCs' landfall or bypassing reference locations.
-            load(['MCSim_Inputs' filesep 'NACCS' filesep,'NACCS_TROP_dist.mat']);
+            load([pm_path filesep,'NACCS_TROP_dist.mat']);
             
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The

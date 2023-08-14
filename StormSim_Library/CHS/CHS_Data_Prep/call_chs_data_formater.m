@@ -109,6 +109,8 @@ project_name = config.project_name;
 struc_id = config.struc_id;
 % Define Case  Name
 case_name = config.case_name;
+% Probability Masses
+pm_path = config.prob_mass_source;
 
 %% Check If This Is Fresh Run Or New Case
 % Define Filename Prefix Based On Data Source
@@ -314,7 +316,7 @@ if isempty(file2look) % Process SP Data
                 % Load Storm Probability Massess
                 [prob_mass.Param, prob_mass.TC_SRR,...
                     prob_mass.TC_Freq, prob_mass.dist, prob_mass.TotalFreq,...
-                    prob_mass.smpl0, prob_mass.smpl1] = csh_probability_mass_loader(region,sp_ID);
+                    prob_mass.smpl0, prob_mass.smpl1] = csh_probability_mass_loader(pm_path, region,sp_ID);
             case 2
                 try
                     % Load CHS_Data
