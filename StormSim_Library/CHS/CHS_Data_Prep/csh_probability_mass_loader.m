@@ -1,4 +1,4 @@
-function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1] = csh_probability_mass_loader(pm_gen_path, region, Nsvpt)
+function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1] = csh_probability_mass_loader(pm_path, region, Nsvpt)
    %{
     %% DESCRIPTION
         This function is responsible for leading CHS TC storm probability
@@ -22,23 +22,22 @@ function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1] = csh_probabil
     %}
     
     %% LOAD FILES BASED ON REGION
-    % Buid PM Path 
-    pm_path = fullfile(pm_gen_path, region);
+
     % Load According To Region (this will be replaced with PM v2)
-    if exist(pm_gen_path,'dir')
+    if exist(pm_path,'dir')
         if contains(region,{'NACCS','CHS-NA'}) % NACCS
             % Listing of closest (CRL) to each save point.
-            load([pm_path filesep,'NACCS_CRL_ic.mat']);
+            load(fullfile(pm_path,'NACCS_CRL_ic.mat'),'ic');% nNodes x 1 (double)
             % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
-            SRR_LI = load([pm_path filesep,'SRR_TC_LI.mat']);SRR_LI = SRR_LI.SRR;
+            SRR_LI = load(fullfile(pm_path,'SRR_TC_LI.mat'), 'SRR');SRR_LI = SRR_LI.SRR;
             % High intensity (HI) storm SRR at each CRL.
-            SRR_HI = load([pm_path filesep,'SRR_TC_HI.mat']);SRR_HI = SRR_HI.SRR;
+            SRR_HI = load(fullfile(pm_path,'SRR_TC_HI.mat'), 'SRR');SRR_HI = SRR_HI.SRR;
             % Storms relative probability at each save point.
-            load([pm_path filesep,'NACCS_TC_Freq_CRL.mat']);
+            load(fullfile(pm_path,'NACCS_TC_Freq_CRL.mat'),'Freq');
             % NACCS Synthetic Storm Parameters
-            load([pm_path filesep,'NACCS_TC_Param.mat']);
+            load(fullfile(pm_path,'NACCS_TC_Param.mat'),'Param');
             % Distance from region save points to region TCs' landfall or bypassing reference locations.
-            load([pm_path filesep,'NACCS_TROP_dist.mat']);
+            load(fullfile(pm_path,'NACCS_TROP_dist.mat'),'TROP_dist');
             
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The
