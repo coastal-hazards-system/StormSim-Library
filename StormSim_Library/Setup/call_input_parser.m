@@ -139,7 +139,7 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
             % Keep Only One File For Attributes
             CHS_file_ref = CHS_file_ref(1);
             % Grab CHS Identifiers
-            chs_ident = strsplit(CHS_file_ref,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
+            chs_ident = strsplit(CHS_file_ref(1).name,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
             % Add CHS Wave SP
             config.sp_ID_wave = str2double(chs_ident{5}(3:end));
         else
