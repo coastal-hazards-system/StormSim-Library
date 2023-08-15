@@ -27,7 +27,7 @@
 %
 %
 %============================================================
-function [S,u1p] = van_gent_Dn50_leeside_stability(S_ls, Hsig, Tm10, Tm, Rc, crest_width, Sslp, duration, delta, K_ls1, K_ls2)
+function [Dn50_Lee] = van_gent_Dn50_leeside_stability(S_ls, Hsig, Tm10, Tm, Rc, crest_width, Sslp, Lslp, duration, delta, K_ls1, K_ls2)
 
 %% VECTORIZE INPUTS
 data_dims = size(Hsig);
@@ -48,18 +48,18 @@ r = 6; % Constant Wave Conditions
 % Compute Crest Velocity Exceeded By 1% Of The Incident Waves
 u1p = u1p_calc(crest_width, Rc, z1p, Tm10, Hsig, Sslp, grav);
 % Compute First Term
-a_ls = Sslp.^(-2.5/r) .* (1 + exp(-1 * Rc_rear/Hsig)).^(1/r);
+a_ls = Lslp.^(-2.5/r) .* (1 + exp(-1 * Rc./Hsig)).^(1/r);
 % Compute Second Term
-aux1 = (S_ls./(K_ls2 .* sqrt(Nz)))^(-1/r);
+aux1 = (S_ls./(K_ls2 .* sqrt(Nz))).^(-1/r);
 % compute Third Term
 aux2 = (u1p .* Tm10)./(K_ls1 .* sqrt(delta));
 % Compute Leeside Stone Size
 Dn50_Lee = a_ls .* aux1 .* aux2;
 % Remove Invalid Entries
-Dn50_Lee(Ru<abs(Rc)) = NaN;
+Dn50_Lee(z1p<abs(Rc)) = NaN;
 Dn50_Lee(u1p<=0) = NaN;
 % Reshape
-Dn50_Lee = reshape(Dn50_Melby, data_dims);
+Dn50_Lee = reshape(Dn50_Lee, data_dims);
 end
 
 

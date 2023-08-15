@@ -12,6 +12,8 @@ workflow = config.workflow;
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
 crest_elev = structure.crest_elevation;
+% Define Structure Crest Width
+crest_width = structure.crest_width;
 % Define Structure Toe Elevation (<0 below datum zero)
 toe_elev = structure.toe_elevation; % Flip convention
 % Berm Elevation (<0 Below Datum Zero)
@@ -22,12 +24,15 @@ berm_width = structure.berm_width;
 berm_slope = structure.berm_slope;
 % Seaside Slope (cot(alpha))
 slope = structure.seaside_slope;
+% Leeside Slope
+slope_lee = structure.leeside_slope;
 % Rubblemound Fields
 if struc_type == 3
     % Delta
     delta = structure.armor_delta;
     % Seaside Limit State
     S = structure.seaside_limit_S;
+    S_ls = structure.leeside_limit_S;
     % CEM P
     P = structure.cem_P;
 elseif struc_type == 2
@@ -102,6 +107,8 @@ if ~ismember(workflow,[2,4])
                 Hm0, Tp, SWL, Rc, gammas,'un',false);
             % Compute Mean Period
             Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
+            % Compute Zeroth Moment Spectral Wave Period
+            Tm10 = cellfun(@(x) x./1.1,Tp,'un',false); % This should be removed
             % Compute Stone SIze Using S Limit State
             if struc_type == 3
                 % Dn50 Seaside (Melby - Momentum Flux)
@@ -116,6 +123,9 @@ if ~ismember(workflow,[2,4])
                     So we have both normal and LC (toe berm) stability computed in same sim.
                 %}
                 [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc_LC,'un',false);
+                % Leeside
+                [Dn50_Lee] = cellfun(@(a,b,c,d) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2),...
+                    Hm0, Tm10, Tm, Rc,'un',false);
             end
     end
 else % StormSim:EVA was called, no structure responses
@@ -140,6 +150,7 @@ switch dflat
         if exist('Dn50','var')
             Resp.('Dn50') = Dn50{:}; % Median Stone Size
             Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
+            Resp.('Dn50_Lee') = Dn50_Lee{:}; % Median Stone Size - Van Gent Leeside Stability
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
@@ -178,6 +189,7 @@ switch dflat
         if exist('Dn50','var')
             Resp.('Dn50') = cell2struct(Dn50,'LCNUM');
             Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
+            Resp.('Dn50_Lee') = cell2struct(Dn50_Lee,'LCNUM');% Median Stone Size - Van Gent Leeside Stability
         end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
@@ -193,6 +205,7 @@ switch dflat
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+            Resp.('Dn50_Lee') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_Lee,'un',false));
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
