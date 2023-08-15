@@ -48,6 +48,7 @@ switch workflow
             Tp = {project_forcing.(storm_type).Tp}; % Tp
             h = {project_forcing.(storm_type).SWL - toe_elev};
             Rc = {crest_elev - project_forcing.(storm_type).SWL};
+            Rc_LC = {berm_elev - project_forcing.(storm_type).SWL}; % Low Crested Breakwater
             dflat = 1;
         else
             SWL = project_forcing.(storm_type).SWL; % SWL
@@ -55,6 +56,7 @@ switch workflow
             Tp = project_forcing.(storm_type).Tp; % Tp
             h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
             Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
+            Rc_LC = cellfun(@(x) berm_elev - x, SWL, 'un', false); % Low Crested Breakwater
             dflat = 3;
         end
     case 3 % LCS
@@ -69,6 +71,7 @@ switch workflow
         Tp = cellfun(@(x) x(:,swl_indx+2),{project_forcing.LCNUM},'un',false); % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
+        Rc_LC = cellfun(@(x) berm_elev - x, SWL, 'un', false); % Low Crested Breakwater
         dflat = 2;
 end
 
@@ -101,9 +104,18 @@ if ~ismember(workflow,[2,4])
             Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
             % Compute Stone SIze Using S Limit State
             if struc_type == 3
+                % Dn50 Seaside (Melby - Momentum Flux)
                 [Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
                     duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
                     Hm0, Tm, h, Rc,'un',false);
+                % Dn50 Seaside Low Crested Breakwater
+                %{
+                    Melby addition for LCBW. This is a temporary fix for Midbay. Ultimately we will have a branch whether  
+                    breakwater is normal or low-crested.  In that case, there will not be a separate crest elevation for low-crested structure.  
+                    However, for Midbay, we have both normal structure and low crested because toe berm is at MLLW. 
+                    So we have both normal and LC (toe berm) stability computed in same sim.
+                %}
+                [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc_LC,'un',false);
             end
     end
 else % StormSim:EVA was called, no structure responses
@@ -127,7 +139,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = Dn50{:}; % Median Stone Size
-            %             Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
+            Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
@@ -165,7 +177,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2struct(Dn50,'LCNUM');
-            %             Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
+            Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
         end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
@@ -180,7 +192,7 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
-            %             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+            Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1

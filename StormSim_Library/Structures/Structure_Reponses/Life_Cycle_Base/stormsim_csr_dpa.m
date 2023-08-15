@@ -216,6 +216,8 @@ Rc = cellfun(@(x,y) crest_elevation - x,WL,'un',false);
 Hm0 = cellfun(@(x) x(:,6),LC_SimOUT_hyd,'un',false);
 % Extract Wave Peak Period
 Tp = cellfun(@(x) x(:,7),LC_SimOUT_hyd,'un',false);
+% Spectral Wave Period (Tm_-1,0)
+Tm10 = cellfun(@(x) x(:,7)/1.1,LC_SimOUT_hyd,'un',false);
 % Mean wave period (sec)
 Tm = cellfun(@(x) x./1.2,Tp,'un',false);
 % Storm increment duration (hr)
@@ -225,9 +227,9 @@ Nz = cellfun(@(x,y) (x.*3600)./y,Dstm,Tm,'un',false);
 
 %% COMPUTE INITIAL STRUCTURE RESPONSES (runup & runup_vel)
 % Compute Run-up
-z1p = cellfun(@(w,x,y) z1p_calc(w,x,y,seaside_slope,grav),Hm0,Tp,Rc,'un',false);
+z1p = cellfun(@(w,x,y) z1p_calc(w,x,y,seaside_slope,grav),Hm0,Tm10,Rc,'un',false);
 % Compute u1%
-u1p = cellfun(@(v,w,x,y) u1p_calc(crest_width,v,w,x,y,seaside_slope,grav),Rc,z1p,Tp,Hm0,'un',false);
+u1p = cellfun(@(v,w,x,y) u1p_calc(crest_width,v,w,x,y,seaside_slope,grav),Rc,z1p,Tm10,Hm0,'un',false);
 
 %% INITIALIZE DAMAGE VARIABLES
 Szero_no_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);

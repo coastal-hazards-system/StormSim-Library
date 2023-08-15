@@ -1,7 +1,5 @@
 
-function u1p = u1p_calc(wdth,Rc,z1p,Tp,H,Sslp,grav)
-    % spectral mean wave period in sec
-    Tmm1=Tp./1.1;
+function u1p = u1p_calc(wdth,Rc,z1p,Tmm1,H,Sslp,grav)
     % Spectral Mean Wave Length
     Lmm1=grav*Tmm1.^2./2./pi;
     % Spectral Mean Wave Slope
@@ -9,7 +7,7 @@ function u1p = u1p_calc(wdth,Rc,z1p,Tp,H,Sslp,grav)
     % Surf Similarity Parameter
     SSPm=1./Sslp./sqrt(som);
     % Friction Factor
-    gamf = zeros(size(Tp));
+    gamf = zeros(size(Tmm1));
     gamf(SSPm<=2) = 0.55;
     gamf(SSPm>2 & SSPm<10) = 0.05625.*(SSPm(SSPm>2 & SSPm<10)-2)+0.55;
         gamf(SSPm>=10) = 1;

@@ -19,14 +19,13 @@
 %
 % function[output] = Runup(input)
 %============================================================
-function[z1p] = z1p_calc(H,Tp,Rc,Sslp,grav)
+function[z1p] = z1p_calc(H,Tmm1,Rc,Sslp,grav)
 
 %============================================================
 
 
 %============================================================
   % preliminary calculations
-  Tmm1=Tp./1.1;     % spectral mean wave period in sec
   Lmm1=grav.*Tmm1.^2./2./pi;
   som  = H./Lmm1;
   SSPm = 1./Sslp./sqrt(som);  % Iribarren param

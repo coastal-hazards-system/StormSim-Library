@@ -148,7 +148,7 @@ for ii = 1:length(vars_2_get)
                 y_label = ['R_{2%} + SWL [' unit_label ']'];
                 var_name = 'R_{2%} + SWL';
             end
-        case {'Dn50','Dn50_LCBW'}
+        case {'Dn50','Dn50_LCBW', 'Dn50_Lee'}
             U_a=0;
             U_r = dn50_u;
             uncert_treatment_jpm = 'relative';
@@ -156,9 +156,15 @@ for ii = 1:length(vars_2_get)
             unit_label = 'm';
             y_label = ['D_{n_{50}} [' unit_label ']'];
             var_name = 'D_{n_{50}}';
-            if strcmp(staID,'Dn50_LCBW')
-                y_label = ['D_{n_{50}} LCBW' unit_label ''];
-                var_name = 'D_{n_{50}} LCBW';
+            if any(strcmp(staID,{'Dn50_LCBW', 'Dn50_Lee'}))
+                switch staID
+                    case 'Dn50_LCBW'
+                        str_suffix = 'LCBW';
+                    case 'Dn50_Lee'
+                        str_suffix = 'Lee';
+                end
+                y_label = ['D_{n_{50}} ' str_suffix unit_label ''];
+                var_name = ['D_{n_{50}} ' str_suffix];
             end
         case 'p1'
             U_a=0;

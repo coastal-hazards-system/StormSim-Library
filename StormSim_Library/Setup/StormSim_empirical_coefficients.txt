@@ -1,6 +1,6 @@
 Model Variable Symbol	Field Names	Units	Value	Standard Deviation
-km1	Stability Plunging Empirical Coefficient Km1	NA	4.3	0.4
-km2	Stability Surging Empirical Coefficient Km2	NA	4.2	0.6
+km1	Stability Plunging Empirical Coefficient Km1	NA	4.4	0.4
+km2	Stability Surging Empirical Coefficient Km2	NA	4.3	0.6
 k_si	Seaside Damage Inititation Empirical Coefficient K_si	NA	2	0
 k_sp	Seaside Damage Progression Empirical Coefficient K_sp	NA	0.6	0
 ini_waves	Seaside Damage Initiation-Progression Number of Waves	NA	3000	0
