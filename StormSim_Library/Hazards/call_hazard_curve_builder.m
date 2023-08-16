@@ -28,6 +28,8 @@ disp('            Building hazard curves....');
 try
     Nyrs_XC = config.Nyrs_XC;
 end
+case_name = strrep(config.case_name,'_',' ');
+struc_id = strrep(config.struc_id,'_',' ');
 % Get Workflow
 workflow = config.workflow;
 % Compute Forcing Hazard Curves Switch
@@ -104,6 +106,9 @@ y_scale_log = 0;
 ctr = 1;Output = [];
 % Loop Through All Stations
 for ii = 1:length(vars_2_get)
+    % Define Workflow String
+    wstr = strsplit(outPath,filesep);
+    wstr = wstr{end}(1:3);
     % Define Default Log Scale
     y_scale_log = 0;
     % Define Station ID
@@ -190,6 +195,9 @@ for ii = 1:length(vars_2_get)
             c_indx = 1:size(project_forcing.(staID),2);
             input_data.data_values = project_forcing.(staID);
             input_data.time_values = zeros(size(project_forcing.(staID)));
+            if workflow == 4
+                wstr(1:2) = 'RB';
+            end
         else
             c_indx = 1;% Only process 1st replicate, no double dipping for uncertainty
             input_data.data_values = project_forcing.(staID)(:,c_indx);
@@ -199,6 +207,15 @@ for ii = 1:length(vars_2_get)
         c_indx = 1:size(Resp.(staID),2);
         input_data.data_values = Resp.(staID);
         input_data.time_values = zeros(size(Resp.(staID)));
+    end
+    % Define Workflow Name
+    switch workflow
+        case 1
+            wname = ['StormSim: PROS - ' wstr ' | '  case_name ' | ' struc_id];
+        case 2
+            wname = ['StormSim: EVA - ' wstr ' | '  case_name ' | ' struc_id];
+        case 4
+            wname = ['StormSim: PROS - ' wstr ' | '  case_name ' | ' struc_id];
     end
     % Check For Full NaN Vector
     if sum(isnan(input_data.data_values(:)))==length(input_data.data_values(:))
@@ -222,7 +239,9 @@ for ii = 1:length(vars_2_get)
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Define Figure Title
-                title_str = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
+                %                 title_str = {['StormSim: SST Hazard Curve - SP: ' num2str(sp_ID)],...
+                %                     ['' storm_type ' | ' var_name ' [' unit_label ']']};
+                title_str = {wname,...
                     ['' storm_type ' | ' var_name ' [' unit_label ']']};
                 % Store SST Outputs
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
@@ -248,7 +267,9 @@ for ii = 1:length(vars_2_get)
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Define Figure Title
-                title_str = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
+                %                 title_str = {['StormSim: JPM Hazard Curve - SP: ' num2str(sp_ID)],...
+                %                     ['' storm_type ' | ' var_name ' [' unit_label ']']};
+                title_str = {wname,...
                     ['' storm_type ' | ' var_name ' [' unit_label ']']};
                 % Store/Format JPM Outputs
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...

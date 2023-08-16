@@ -55,7 +55,7 @@ for j = s_indx
     cc_resp(ctr).y_plot = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
         xc_resp(j).tbl_rsp_y, x_plot_tc);
     % ADjust Figure Title
-    cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
+%     cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
     cc_resp(ctr).title(2) = {strrep(cc_resp(ctr).title{2},'TC','CC')};
     % Adjust Figure Output Names
     cc_resp(ctr).save_name = strrep(cc_resp(ctr).save_name,'JPM','CC');
