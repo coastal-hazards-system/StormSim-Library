@@ -31,6 +31,35 @@ if ~exist(outDir,'dir')
 end
 % Define Workflow
 workflow = config.workflow;
+% Get Structure Type
+struc_type = config.struc_type;
+
+
+%% VOID SWITCHES WHEN NEEDED
+% Safeguard For Unssuported Responses For Each Structure Type
+switch struc_type
+    case 1 % Levee
+        % Goda Pressures
+        config.pros_p1 = 0;
+        config.pros_p2_p3 = 0;
+        % Nappe
+        config.pros_nappe = 0;
+    case 2 % floodwall
+        % Dn50 - Momentum Flux
+        config.pros_dn50_seaside = 0;
+        % Dn50 - Van Gent
+        config.pros_dn50_leeside = 0;
+        % Dn50 - LCBW
+        config.pros_dn50_lcbw = 0;
+        % Eurotop
+        config.pros_r2p = 0;
+    case 3 % Rubblemound
+        % Goda Pressures
+        config.pros_p1 = 0;
+        config.pros_p2_p3 = 0;
+        % Nappe
+        config.pros_nappe = 0;
+end
 
 %% DISPLAY WELCOME MESSAGE
 % Determine What TO Print
