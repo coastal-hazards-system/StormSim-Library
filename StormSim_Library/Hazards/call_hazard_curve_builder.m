@@ -64,17 +64,17 @@ end
 if ~isempty(project_forcing) && compute_forcing_hc == 1
     % Add Project Forcing To List
     vars_2_get = [vars_2_get;fieldnames(project_forcing)];
-    % Grab Prob Masses
-    if strcmp(storm_type, 'TC')
-        TC_Prob = project_forcing.TC_Prob;
-        % Remove Tc Prob From Filenames
-        vars_2_get = vars_2_get(~contains(vars_2_get,{'TC_Prob'}));
-    end
     % Grab Forcing Uncertainty
     swl_u_a = config.chs_swl_u_a; % SWL Absolute
     swl_u_r = config.chs_swl_u_r; % SWL Proportional
     hm0_u_a = config.chs_hm0_u_a; % Hm0 Absolute
     hm0_u_r = config.chs_hm0_u_r; % Hm0 Proportional
+end
+% Grab Prob Masses
+if strcmp(storm_type, 'TC')
+    TC_Prob = project_forcing.TC_Prob;
+    % Remove Tc Prob From Filenames
+    vars_2_get = vars_2_get(~contains(vars_2_get,{'TC_Prob'}));
 end
 % Save Name
 save_name = [outPath filesep config.project_name,'_', config.struc_id];

@@ -8,6 +8,35 @@ duration = config.storm_duration*3600; % Convert hr to s
 compute_HC = config.pros_compute_forcing_HC;
 % Define Requested Workflow
 workflow = config.workflow;
+% Grab Structure Response Switches
+calc_dn50_ss = config.pros_dn50_seaside;
+calc_dn50_ls = config.pros_dn50_leeside;
+calc_dn50_lcbw = config.pros_dn50_lcbw;
+calc_r2p = config.pros_r2p;
+calc_q = config.pros_q;
+calc_p1 = config.pros_p1;
+calc_p2_p3 = config.pros_p2_p3;
+calc_Nappe = config.pros_nappe;
+% Remove Responses Based On Structure Type
+switch struc_type
+    case 1 % Levee (R2p & OT)
+        calc_p1 = 0;
+        calc_p2_p3 = 0;
+        calc_Nappe = 0;
+        calc_dn50_ss = 0;
+        calc_dn50_ls = 0;
+        calc_dn50_lcbw = 0;
+    case 2 % Floodwall (q, P1, P2, P3, Nappe)
+        calc_dn50_ss = 0;
+        calc_dn50_ls = 0;
+        calc_dn50_lcbw = 0;
+        calc_r2p = 0;
+    case 3 % Rubblemound (R2p, q, Dn50)
+        calc_p1 = 0;
+        calc_p2_p3 = 0;
+        calc_Nappe = 0;
+end
+
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -88,23 +117,36 @@ if ~ismember(workflow,[2,4])
     switch struc_type
         case 2 % Floodwall
             % Compute runup & Overtopping
-            [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+            if calc_q == 1
+            [~,~,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
                 berm_slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                 wall_bottom_elev, berm_width, struc_type),...
                 Hm0, Tp, SWL, Rc, gammas,'un',false);
+            end
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
             % Compute Water Depth @ Berm
             hb = cellfun(@(x) x - abs(berm_elev), SWL,'un',false);
             % Compute P1 Only
+            if calc_p1 == 1 || calc_p2_p3 == 1
             p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
                 zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
+            end
         case {1,3} % Levees & Rubblemound
             % Compute runup & Overtopping
+            if calc_r2p == 1 || calc_q == 1
             [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
                 slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                 toe_elev, berm_width, struc_type),...
                 Hm0, Tp, SWL, Rc, gammas,'un',false);
+            end
+            % Remove Unwanted Fields 
+            if calc_r2p == 0
+                clearvars('R2p','R2p_SWL');
+            end
+            if calc_q == 0
+                clearvars('q');
+            end
             % Compute Mean Period
             Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
             % Compute Zeroth Moment Spectral Wave Period
@@ -112,10 +154,13 @@ if ~ismember(workflow,[2,4])
             % Compute Stone SIze Using S Limit State
             if struc_type == 3
                 % Dn50 Seaside (Melby - Momentum Flux)
+                if calc_dn50_ss == 1
                 [Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
                     duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
                     Hm0, Tm, h, Rc,'un',false);
+                end
                 % Dn50 Seaside Low Crested Breakwater
+                if calc_dn50_lcbw == 1
                 %{
                     Melby addition for LCBW. This is a temporary fix for Midbay. Ultimately we will have a branch whether  
                     breakwater is normal or low-crested.  In that case, there will not be a separate crest elevation for low-crested structure.  
@@ -123,9 +168,12 @@ if ~ismember(workflow,[2,4])
                     So we have both normal and LC (toe berm) stability computed in same sim.
                 %}
                 [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc_LC,'un',false);
+                end
                 % Leeside
+                if calc_dn50_ls == 1
                 [Dn50_Lee] = cellfun(@(a,b,c,d) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2),...
                     Hm0, Tm10, Tm, Rc,'un',false);
+                end
             end
     end
 else % StormSim:EVA was called, no structure responses
