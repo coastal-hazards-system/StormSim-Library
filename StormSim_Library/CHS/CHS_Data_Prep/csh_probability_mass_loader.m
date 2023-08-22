@@ -37,7 +37,7 @@ if exist(pm_path,'dir')
         SRR_MI = load(fullfile(pm_path,'SRR_TC_MI_600km.mat'), 'SRR');SRR_MI = SRR_MI.SRR;
         % Compute Total SRR
         TC_SRR = [SRR_LI*600, SRR_MI*600, SRR_HI*600];
-        TC_SRR(4) = sum(TC_SRR);
+        TC_SRR(:, 4) = sum(TC_SRR,2);
         % Storms relative probability at each save point.
         Freq = load(fullfile(pm_path,[region '_TC_ProbMass_600km.mat']),'ProbMass');Freq = Freq.ProbMass;
         % NACCS Synthetic Storm Parameters
@@ -45,7 +45,7 @@ if exist(pm_path,'dir')
         % Low Intensity Storm Population
         smpl0 = Param(Param(:,7)<28,1); % Low Intensity
         % Mid Intensity Storm Population
-        smpl1 = Param(Param(:,7)>=28 && Param(:,7)<48,1); % Mid Intensity
+        smpl1 = Param(Param(:,7)>=28 & Param(:,7)<48,1); % Mid Intensity
         % Low Intensity Storm Population
         smpl2 = Param(Param(:,7)>=48,1); % Low Intensity
     else

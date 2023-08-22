@@ -118,10 +118,10 @@ if ~ismember(workflow,[2,4])
         case 2 % Floodwall
             % Compute runup & Overtopping
             if calc_q == 1
-            [~,~,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
-                berm_slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
-                wall_bottom_elev, berm_width, struc_type),...
-                Hm0, Tp, SWL, Rc, gammas,'un',false);
+                [~,~,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+                    berm_slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+                    wall_bottom_elev, berm_width, struc_type),...
+                    Hm0, Tp, SWL, Rc, gammas,'un',false);
             end
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
@@ -129,18 +129,18 @@ if ~ismember(workflow,[2,4])
             hb = cellfun(@(x) x - abs(berm_elev), SWL,'un',false);
             % Compute P1 Only
             if calc_p1 == 1 || calc_p2_p3 == 1
-            p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
-                zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
+                p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
+                    zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
             end
         case {1,3} % Levees & Rubblemound
             % Compute runup & Overtopping
             if calc_r2p == 1 || calc_q == 1
-            [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
-                slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
-                toe_elev, berm_width, struc_type),...
-                Hm0, Tp, SWL, Rc, gammas,'un',false);
+                [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+                    slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+                    toe_elev, berm_width, struc_type),...
+                    Hm0, Tp, SWL, Rc, gammas,'un',false);
             end
-            % Remove Unwanted Fields 
+            % Remove Unwanted Fields
             if calc_r2p == 0
                 clearvars('R2p','R2p_SWL');
             end
@@ -155,24 +155,24 @@ if ~ismember(workflow,[2,4])
             if struc_type == 3
                 % Dn50 Seaside (Melby - Momentum Flux)
                 if calc_dn50_ss == 1
-                [Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
-                    duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
-                    Hm0, Tm, h, Rc,'un',false);
+                    [Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
+                        duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
+                        Hm0, Tm, h, Rc,'un',false);
                 end
                 % Dn50 Seaside Low Crested Breakwater
                 if calc_dn50_lcbw == 1
-                %{
+                    %{
                     Melby addition for LCBW. This is a temporary fix for Midbay. Ultimately we will have a branch whether  
                     breakwater is normal or low-crested.  In that case, there will not be a separate crest elevation for low-crested structure.  
                     However, for Midbay, we have both normal structure and low crested because toe berm is at MLLW. 
                     So we have both normal and LC (toe berm) stability computed in same sim.
-                %}
-                [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc_LC,'un',false);
+                    %}
+                    [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc_LC,'un',false);
                 end
                 % Leeside
                 if calc_dn50_ls == 1
-                [Dn50_Lee] = cellfun(@(a,b,c,d) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2),...
-                    Hm0, Tm10, Tm, Rc,'un',false);
+                    [Dn50_Lee] = cellfun(@(a,b,c,d) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2),...
+                        Hm0, Tm10, Tm, Rc,'un',false);
                 end
             end
     end
@@ -252,9 +252,14 @@ switch dflat
         end
         if exist('Dn50','var')
             Resp.('Dn50') = cell2mat(cellfun(@(x) max(x,[],1),Dn50,'un',false));
+        end
+        if exist('Dn50_LCBW','var')
             Resp.('Dn50_LCBW') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_LCBW,'un',false));
+        end
+        if exist('Dn50_Lee','var')
             Resp.('Dn50_Lee') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_Lee,'un',false));
         end
+
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
             if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})
