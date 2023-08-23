@@ -17,6 +17,8 @@ calc_q = config.pros_q;
 calc_p1 = config.pros_p1;
 calc_p2_p3 = config.pros_p2_p3;
 calc_Nappe = config.pros_nappe;
+% No Structural Response Computed 
+no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_p1,calc_p2_p3,calc_Nappe]);
 % Remove Responses Based On Structure Type
 switch struc_type
     case 1 % Levee (R2p & OT)
@@ -110,7 +112,7 @@ switch workflow
 end
 
 %% COMPUTE STRUCTURE RESPONSE
-if ~ismember(workflow,[2,4])
+if ~ismember(workflow,[2,4]) && no_resp~=0
     % Call Eurotop Influence Factors
     gammas = cellfun(@(x,y) call_eurotop_ifactors(config, structure, x, y),SWL,Hm0,'un',false);
     % Compute Structure Type Dependant Responses
