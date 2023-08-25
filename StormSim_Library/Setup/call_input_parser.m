@@ -91,12 +91,29 @@ project_name = config.project_name;
 struc_id = config.struc_id;
 % Case Name
 case_name = config.case_name;
-% This A Fresh Run?
-
+% Workflow
+workflow = config.workflow;
+%
+if ismissing(config.chs_bias_file)
+    config.chs_bias_file = 'none';
+end
+%
 if exist([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'], 'file')
     % Load Config
-    load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
+    config_load = load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
+    config_load = config_load.config;
+    % Add Values
+    if strcmp(config.chs_bias_file,config_load.chs_bias_file) % Same Bias File
+        config.chs_swl_u_a = config_load.chs_swl_u_a;
+        config.chs_swl_u_r = config_load.chs_swl_u_r;
+        config.chs_hm0_u_a = config_load.chs_hm0_u_a;
+        config.chs_hm0_u_r = config_load.chs_hm0_u_r;
+    else
+        % Delete Files Because Bias Needs to Be Recomputed
+        delete([pwd filesep project_name filesep struc_id filesep '*.mat']);
+    end
 end
+
 %% DETERMINE FORCING DATA SOURCE CASE
 % Get File Extension For "config.chs_zip"
 [~,~,fext] = fileparts(config.chs_zip);
@@ -253,6 +270,7 @@ if sum([config.use_peaks,config.use_timeseries])~=2
     config.create_wlp = 0;
     config.create_whp = 0;
 end
+
 % Uncertainty Engine Field Initialization
 config.u_engine = 0;
 % Forcing Adjustments Field Initialization
