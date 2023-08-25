@@ -89,7 +89,14 @@ end
 project_name = config.project_name;
 % Transect Id
 struc_id = config.struc_id;
+% Case Name
+case_name = config.case_name;
+% This A Fresh Run?
 
+if exist([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'], 'file')
+    % Load Config
+    load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
+end
 %% DETERMINE FORCING DATA SOURCE CASE
 % Get File Extension For "config.chs_zip"
 [~,~,fext] = fileparts(config.chs_zip);
