@@ -40,6 +40,8 @@ chs_region = config.region;
 spID = config.sp_ID;
 % Define CHS Bias File
 chs_bias_file = config.chs_bias_file;
+% Define SWL Hydrograph Switch 
+use_waves_swl = config.use_waves_swl;
 
 %% DEFINE AUX VARIABLES
 % storm Type Flag To Search For
@@ -140,6 +142,10 @@ if use_timeseries == 1
         disp([newline 'Matching CHS extratropical timeseries waves and water levels....']);
     else
         disp([newline 'Matching CHS tropical timeseries waves and water levels....']);
+    end
+    % Make Sure To Grab Request SWL Hydrograph 
+    if use_waves_swl == 0
+        has_WaterElevation = 0;
     end
     % Create ADCIRC-STWAVE TimeSeries Dataset
     [storm.Timeseries, ts_storm2rm] = chs_timeseries_formater(timeseries_data(ad_indx_timeseries==1).Table_StormData,...
