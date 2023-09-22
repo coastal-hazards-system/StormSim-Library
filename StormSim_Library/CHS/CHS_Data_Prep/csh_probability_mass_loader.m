@@ -98,8 +98,7 @@ if exist(pm_path,'dir')
             % Storms relative probability at each save point.
             ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
             % NACCS Synthetic Storm Parameters
-            Param = load([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
-            Param = Param.Param_MT;
+            Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
             % Savepoint location info
             staID = dload([pm_path filesep,[region,'_staID.mat']]);
 
@@ -138,7 +137,7 @@ if exist(pm_path,'dir')
             trk_lat=Param(:,4); trk_lon=Param(:,5);
             distDeg = distance(trk_lat,trk_lon,staID(Nsvpt,2),staID(Nsvpt,3)); %output = degrees
             dist = distdim(distDeg,'deg','km')'; %converts from deg to km
-            dist200=find(min(dist,[],2)<=trk_dist);
+            dist200=find(dist<=trk_dist);
 
             % Low Intensity Storm Population
             smpl0 = dist200(Param(dist200,7)<28);
