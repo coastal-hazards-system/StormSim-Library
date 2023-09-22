@@ -36,7 +36,7 @@ for ii = 1:length(storm_types)
         for jj = 1:length(pDatasets)
             % Grab HC Data
             hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Timeseries')(resp_indx);
-                        % Grab Forcing Data (Scatter)
+            % Grab Forcing Data (Scatter)
             if workflow == 1 % StormSim: PROS
                 sData.(storm_types{ii}).(pDatasets{jj}).SWL = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('SWL_no_rep'),'un',false));
                 sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('Hm0_no_rep'),'un',false));
@@ -97,8 +97,8 @@ for jj = 1:length(pDatasets)
     for kk = 1:length(resp_indx)
         % Get Min/Max
         if isfield(hcData,'XC')
-            % Compute Logical Vector 
-s_lim_indx = hcData.('XC').(pDatasets{jj})(kk).x_plot>=x_lim(1);
+            % Compute Logical Vector
+            s_lim_indx = hcData.('XC').(pDatasets{jj})(kk).x_plot>=x_lim(1);
             % Min
             dmin = min(hcData.('XC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
             % Get Max
