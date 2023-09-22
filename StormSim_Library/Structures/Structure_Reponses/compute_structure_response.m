@@ -17,7 +17,7 @@ calc_q = config.pros_q;
 calc_p1 = config.pros_p1;
 calc_p2_p3 = config.pros_p2_p3;
 calc_Nappe = config.pros_nappe;
-% No Structural Response Computed 
+% No Structural Response Computed
 no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_p1,calc_p2_p3,calc_Nappe]);
 % Remove Responses Based On Structure Type
 switch struc_type
@@ -248,6 +248,10 @@ switch dflat
         end
         if exist('q','var')
             Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
+            for mm = 1:length(q)
+                q{mm}(q{mm}<10^-4) = NaN;
+            end
+            Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
         end
         if exist('p1','var')
             Resp.('p1') = cell2mat(cellfun(@(x) max(x,[],1),p1,'un',false));
@@ -311,17 +315,17 @@ end
 switch dflat
     case {1,3} %
         if exist('q','var')
-            % q <10^-4
-            Resp.('q')(Resp.('q')<10^-4) = NaN;
             % q Imaginary Numbers
-            if ~isreal(Resp.('q'))
+            if any(~arrayfun(@isreal,Resp.('q')),'all')
                 nReal = real(Resp.('q'));
                 nImag = imag(Resp.('q'));
-                % Set Entries With Imaginary Component = 0 to NaNs
+                % Set Entries With Imaginary Component ~= 0 to NaNs
                 nReal(nImag~=0) = NaN;
                 % Store Back As Double
                 Resp.('q') = nReal;
             end
+            % q <10^-4
+            Resp.('q')(Resp.('q')<10^-4) = NaN;
         end
     case 2 % LCS
         if exist('q','var')

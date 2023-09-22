@@ -37,7 +37,7 @@ storm_data = cell(length(stmID(:,1)),2);
 storm_data(1:length(storms2rm),:) = [];
 % initialize Counter
 ctr = 1;
-ts_storm2rm = [];
+ts_storm2rm = storms2rm;
 % Display Completion Progress Initial Print
 fprintf(1,'   Completion Progress: %3d%%\n',0);
 
@@ -88,8 +88,8 @@ for stm = 1:length(stmID)
 
     %% REMOVE BAD ENTRIES
     % ADCIRC
-    WL_datestr(WL==-99999) = [];
-    WL(WL==-99999) = [];
+    WL_datestr(WL(:,2)==-99999,:) = [];
+    WL(WL(:,2)==-99999,:) = [];
     % STWAVE
     waves_datestr(sum(waves==-99999,2)>=1)=[];
     waves(sum(waves==-99999,2)>=1,:)=[];

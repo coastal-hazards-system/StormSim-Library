@@ -188,6 +188,15 @@ for ii = 1:length(vars_2_get)
             y_label = ['q [ ' unit_label ']'];
             var_name = 'q';
             y_scale_log = 1;
+        case 'Q_vol'
+            U_a=0;
+            U_r = q_u;
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
+            unit_label = 'm^3 per m';
+            y_label = ['Q [ ' unit_label ']'];
+            var_name = 'Q_vol';
+            y_scale_log = 1;
     end
     % Assign Input Data
     if contains(staID,{'SWL','Hm0','Tp'}) && ~contains(staID,'R2p_SWL')

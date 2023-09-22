@@ -28,42 +28,23 @@ pm_version = pm_version{end};
 
 % Load According To Region (this will be replaced with PM v2)
 if exist(pm_path,'dir')
-    if contains(pm_version,'v2') % NACCS
-        % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
-        SRR_LI = load(fullfile(pm_path,'SRR_TC_LI_600km.mat'), 'SRR');SRR_LI = SRR_LI.SRR;
-        % High intensity (HI) storm SRR at each CRL.
-        SRR_HI = load(fullfile(pm_path,'SRR_TC_HI_600km.mat'), 'SRR');SRR_HI = SRR_HI.SRR;
-        % Medium intensity (MI) storm SRR at each CRL.
-        SRR_MI = load(fullfile(pm_path,'SRR_TC_MI_600km.mat'), 'SRR');SRR_MI = SRR_MI.SRR;
-        % Compute Total SRR
-        TC_SRR = [SRR_LI*600, SRR_MI*600, SRR_HI*600];
-        TC_SRR(:, 4) = sum(TC_SRR,2);
-        % Storms relative probability at each save point.
-        Freq = load(fullfile(pm_path,[region '_TC_ProbMass_600km.mat']),'ProbMass');Freq = Freq.ProbMass;
-        % NACCS Synthetic Storm Parameters
-        Param = load(fullfile(pm_path,[region '_TC_Param_MasterTable.mat']),'Param_MT');Param = Param.Param_MT;
-        % Low Intensity Storm Population
-        smpl0 = Param(Param(:,7)<28,1); % Low Intensity
-        % Mid Intensity Storm Population
-        smpl1 = Param(Param(:,7)>=28 & Param(:,7)<48,1); % Mid Intensity
-        % Low Intensity Storm Population
-        smpl2 = Param(Param(:,7)>=48,1); % Low Intensity
-    else
-        try
-            % Listing of closest (CRL) to each save point.
-            load(fullfile(pm_path,[region '_CRL_ic.mat']),'ic');% nNodes x 1 (double)
-            % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
-            SRR_LI = load(fullfile(pm_path,'SRR_TC_LI.mat'), 'SRR');SRR_LI = SRR_LI.SRR;
-            % High intensity (HI) storm SRR at each CRL.
-            SRR_HI = load(fullfile(pm_path,'SRR_TC_HI.mat'), 'SRR');SRR_HI = SRR_HI.SRR;
-            % Storms relative probability at each save point.
-            load(fullfile(pm_path,[region '_TC_Freq_CRL.mat']),'Freq');
-            % NACCS Synthetic Storm Parameters
-            load(fullfile(pm_path,[region '_TC_Param.mat']),'Param');
-            % Distance from region save points to region TCs' landfall or bypassing reference locations.
-            load(fullfile(pm_path,[region '_TROP_dist.mat']),'TROP_dist');
+    switch pm_version
+        case 'NACCS'
+            try
+                % Listing of closest (CRL) to each save point.
+                load(fullfile(pm_path,[pm_version '_CRL_ic.mat']),'ic');% nNodes x 1 (double)
+                % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
+                SRR_LI = load(fullfile(pm_path,'SRR_TC_LI.mat'), 'SRR');SRR_LI = SRR_LI.SRR;
+                % High intensity (HI) storm SRR at each CRL.
+                SRR_HI = load(fullfile(pm_path,'SRR_TC_HI.mat'), 'SRR');SRR_HI = SRR_HI.SRR;
+                % Storms relative probability at each save point.
+                load(fullfile(pm_path,[pm_version '_TC_Freq_CRL.mat']),'Freq');
+                % NACCS Synthetic Storm Parameters
+                load(fullfile(pm_path,[pm_version '_TC_Param.mat']),'Param');
+                % Distance from region save points to region TCs' landfall or bypassing reference locations.
+                load(fullfile(pm_path,[pm_version '_TROP_dist.mat']),'TROP_dist');
 
-            %{
+                %{
                 Load storm recurrence rate (SRR) associated with project save point. The
                 SRR was computed at 200 coastal reference locations (CRL) and the SRR from the closest CRL to the
                 savepoint is used.
@@ -72,37 +53,99 @@ if exist(pm_path,'dir')
                 multiplying by 400 km to represent the recurrence rate associated with
                 storms passing within 200 km of the coastal reference location (CRL)
                 closest to save point
+                %}
+                %%%% NEED TO ADD CASES WITH MORE INTENSITY LEVELS (400 km diameter might change)
+                % Convert LI SRR to storms/year using a 400 km diameter.
+                TC_SRR = SRR_LI(ic(Nsvpt))*400;
+                % Convert HI SRR to storms/year using a 400 km diameter.
+                TC_SRR(1,2) = SRR_HI(ic(Nsvpt))*400;
+                % SRR for all TC intensities.
+                TC_SRR(1,3) = TC_SRR(1,1) + TC_SRR(1,2);
+                % Get Frequency Vector
+                TC_Freq = Freq(Nsvpt).TC;
+                % Extract Distance Vector For Specified Save Point
+                dist = TROP_dist(Nsvpt,:);
+                % Get Total Frequency
+                TotalFreq=sum(TC_Freq);
+                % Find Storms Within 200 km radius
+                dist200 = find(dist<=200);
+                % Low Intensity Storm Population
+                smpl0 = dist200(Param(dist200,5)<48);
+                % High Intensity Storm Population
+                smpl1 = dist200(Param(dist200,5)>=48);
+                smpl2 = [];
+            catch
+                Param = [];
+                TC_SRR = [];
+                TC_Freq = [];
+                dist = [];
+                TotalFreq=[];
+                smpl0 = [];
+                smpl1 = [];
+                smpl2 = [];
+            end
+        otherwise %{'CHS-NA','CHS-SA','CHS-GoM','CHS-PR','CHS-TX','CHS-LA'}
+            % CRL location info
+            CRL = dload([pm_path filesep '..' filesep,'CHS_Atl_CRLs_v1.6.mat']);
+            % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
+            SRR_LI = dload([pm_path filesep '..' filesep,'SRR_TC_LI_600km.mat']);%SRR_LI = SRR_LI.SRR;
+            % High intensity (MI) storm SRR at each CRL.
+            SRR_MI = dload([pm_path filesep '..' filesep,'SRR_TC_MI_600km.mat']);%SRR_MI = SRR_MI.SRR;
+            % High intensity (HI) storm SRR at each CRL.
+            SRR_HI = dload([pm_path filesep '..' filesep,'SRR_TC_HI_600km.mat']);%SRR_HI = SRR_HI.SRR;
+            % All storm SRR at each CRL.
+            SRR_All = dload([pm_path filesep '..' filesep,'SRR_TC_All_600km.mat']);%SRR_HI = SRR_HI.SRR;
+            % Storms relative probability at each save point.
+            ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
+            % NACCS Synthetic Storm Parameters
+            Param = load([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
+            Param = Param.Param_MT;
+            % Savepoint location info
+            staID = dload([pm_path filesep,[region,'_staID.mat']]);
+
+
+            %{
+                Load storm recurrence rate (SRR) associated with project save point. The
+                SRR was computed at 1050 coastal reference locations (CRL) and the SRR from the closest CRL to the
+                savepoint is used.
+
+                            The SRR was converted to storms per year by
+                multiplying by 600 km to represent the recurrence rate associated with
+                storms passing within 200 km of the coastal reference location (CRL)
+                closest to save point
             %}
-            %%%% NEED TO ADD CASES WITH MORE INTENSITY LEVELS (400 km diameter might change)
-            % Convert LI SRR to storms/year using a 400 km diameter.
-            TC_SRR = SRR_LI(ic(Nsvpt))*400;
-            % Convert HI SRR to storms/year using a 400 km diameter.
-            TC_SRR(1,2) = SRR_HI(ic(Nsvpt))*400;
+
+            % Find CRL closest to savepoint
+            distDeg = distance(staID(Nsvpt,2),staID(Nsvpt,3),CRL(:,1),CRL(:,2)); %output = degrees
+            dist = distdim(distDeg,'deg','km'); %converts from deg to km
+            ic=find(dist == min(dist));
+
+            % Convert LI SRR to storms/year using a 600 km diameter.
+            TC_SRR = SRR_LI(ic)*600;
+            % Convert MI SRR to storms/year using a 600 km diameter.
+            TC_SRR(1,2) = SRR_MI(ic)*600;
+            % Convert HI SRR to storms/year using a 600 km diameter.
+            TC_SRR(1,3) = SRR_HI(ic)*600;
             % SRR for all TC intensities.
-            TC_SRR(1,3) = TC_SRR(1,1) + TC_SRR(1,2);
+            TC_SRR(1,4) = SRR_All(ic)*600;
             % Get Frequency Vector
-            TC_Freq = Freq(Nsvpt).TC;
-            % Extract Distance Vector For Specified Save Point
-            dist = TROP_dist(Nsvpt,:);
+            TC_Freq = ProbMass;
             % Get Total Frequency
             TotalFreq=sum(TC_Freq);
-            % Find Storms Within 200 km radius
-            dist200 = find(dist<=200);
+
+            % Find storms within 200 km of savepoint
+            trk_dist=200;
+            trk_lat=Param(:,4); trk_lon=Param(:,5);
+            distDeg = distance(trk_lat,trk_lon,staID(Nsvpt,2),staID(Nsvpt,3)); %output = degrees
+            dist = distdim(distDeg,'deg','km')'; %converts from deg to km
+            dist200=find(min(dist,[],2)<=trk_dist);
+
             % Low Intensity Storm Population
-            smpl0 = dist200(Param(dist200,5)<48);
+            smpl0 = dist200(Param(dist200,7)<28);
+            % Medium Intensity Storm Population
+            smpl1 = dist200((Param(dist200,7)>=28) & (Param(dist200,7)<48));
             % High Intensity Storm Population
-            smpl1 = dist200(Param(dist200,5)>=48);
-            smpl2 = [];
-        catch
-            Param = [];
-            TC_SRR = [];
-            TC_Freq = [];
-            dist = [];
-            TotalFreq=[];
-            smpl0 = [];
-            smpl1 = [];
-            smpl2 = [];
-        end
+            smpl2 = dist200(Param(dist200,7)>=48);
     end
 else
     Param = [];

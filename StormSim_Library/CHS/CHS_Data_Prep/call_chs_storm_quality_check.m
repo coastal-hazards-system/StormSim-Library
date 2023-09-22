@@ -40,7 +40,7 @@ chs_region = config.region;
 spID = config.sp_ID;
 % Define CHS Bias File
 chs_bias_file = config.chs_bias_file;
-% Define SWL Hydrograph Switch 
+% Define SWL Hydrograph Switch
 use_waves_swl = config.use_waves_swl;
 
 %% DEFINE AUX VARIABLES
@@ -71,6 +71,8 @@ if use_peaks == 1
     has_WaterElevation = sum(contains(peaks_data(ad_indx==0).Conv_Data.headers,{'Water Elevation','WaterElevation'}));
     % Extract "Strom_Table" Field
     peaks_data = [peaks_data.Conv_Data];
+    % Number Of TC's
+    nTC_storms = height(peaks_data(ad_indx==1).Table_StormData);
     % Format storm Data
     [storm.('Peaks').Maxima] = chs_peaks_formater(peaks_data(ad_indx==1).Table_StormData,...
         peaks_data(ad_indx==0).Table_StormData, STWAVE_headers_location);
@@ -101,9 +103,20 @@ else
     has_WaterElevation = sum(contains(peaks_data(ad_indx==0).Conv_Data.headers,{'Water Elevation','WaterElevation'}));
     % Extract "Strom_Table" Field
     peaks_data = [peaks_data.Conv_Data];
-    % Define Storms To Remove
+    % Number Of TC's
+    nTC_storms = height(peaks_data(ad_indx==1).Table_StormData);
+    % Initialize Storms To Remove
     storm2rm = [];
-    removed_storms.Maxima = [];
+    % Find NaN Entries
+    for ll = 1:length(peaks_data)
+        % Check For Bad Hydrohgraphs
+        dummy = cellfun(@length,peaks_data(ll).StormData(:,9));
+        % Grab Storm IDs
+        dummy2 = str2double(peaks_data(ll).Table_StormData.('Storm ID'));
+        % Add Bad Storm IDs TO Storms To Remove
+        storm2rm = [storm2rm; dummy2(dummy==1)];
+    end
+    removed_storms.Maxima = storm2rm;
 end
 
 %% APPLY TIMESERIES QA/QC AND GENERATE ALTERNATE DATASETS
@@ -118,6 +131,7 @@ if use_timeseries == 1
     ad_indx_timeseries = contains({timeseries_data(tc_indx).Filename},{'ADCIRC'});
     % Progress One Level
     timeseries_data = [timeseries_data(tc_indx).Conv_Data];
+    % Create Alternate Datastes (WHP,WLP)
     if use_peaks == 1
         % Run QA/QC Using TimeSeries
         [removed_storms.Maxima,...
@@ -143,7 +157,7 @@ if use_timeseries == 1
     else
         disp([newline 'Matching CHS tropical timeseries waves and water levels....']);
     end
-    % Make Sure To Grab Request SWL Hydrograph 
+    % Make Sure To Grab Request SWL Hydrograph
     if use_waves_swl == 0
         has_WaterElevation = 0;
     end
@@ -184,12 +198,13 @@ if use_timeseries == 1 && use_peaks == 1
         storm.('Peaks').WHP(ismember(storm.('Peaks').WHP(:,5),...
             removed_storms.WHP),:) = [];
     end
+        % Compute Logical Vector Of Bad Storms
+    storm2rm = ismember(1:nTC_storms,...
+        storm2rm);
 elseif use_timeseries == 1 && use_peaks == 0
-    %
-    storm2rm = removed_storms.Maxima;
-    % Remove Bad storms
-    storm.('Timeseries')(ismember(cell2mat(storm.('Timeseries')(:,1)),...
-        removed_storms.Maxima),:) = [];
+    % Compute Logical Vector Of Bad Storms
+    storm2rm = ismember(1:nTC_storms,...
+        removed_storms.Maxima);
 end
 % Adjust storm Type Dependant Fields
 switch storm_type
