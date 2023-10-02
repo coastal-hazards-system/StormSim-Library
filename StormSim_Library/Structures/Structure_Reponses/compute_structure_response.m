@@ -249,7 +249,7 @@ switch dflat
         if exist('q','var')
             Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
             for mm = 1:length(q)
-                q{mm}(q{mm}<10^-4) = NaN;
+                q{mm}(q{mm}<10^-6) = NaN;
             end
             Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
         end
@@ -325,7 +325,7 @@ switch dflat
                 Resp.('q') = nReal;
             end
             % q <10^-4
-            Resp.('q')(Resp.('q')<10^-4) = NaN;
+            Resp.('q')(Resp.('q')<10^-6) = NaN;
         end
     case 2 % LCS
         if exist('q','var')
