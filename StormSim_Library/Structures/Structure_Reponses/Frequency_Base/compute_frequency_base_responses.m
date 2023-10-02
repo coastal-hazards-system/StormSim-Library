@@ -93,7 +93,7 @@ for ii = 1:length(level_1)
         % Replace Response Variable
         new_s_name(end-2) = {staID};
         % Remove SST/JPM
-        new_s_name(end-3) = {'Frequency_Base'};
+        new_s_name(end-3) = {[level_1{ii} '_Frequency_Base']};
         % Append New Save Name ANd Store
         new_s_name = [s_path filesep strjoin(new_s_name,'_') s_ext];
         %% APPEND RESPONSE TO "HC_out"
@@ -186,7 +186,7 @@ for ii = 1:length(level_1)
         HC_out.(level_1{ii}).(f_str) = [HC_out.(level_1{ii}).(f_str),Output];
     end
     % Plot Frequency Based HCs
-    plot_hazard_curves(HC_out.(level_1{ii}).(f_str)(jj+1:end), use_aep);
+    plot_hazard_curves(HC_out.(level_1{ii}).(f_str), use_aep);
 end
 
 %% AUX FUNCTIONS (CONSOLIDATE LINES OF CODE)
