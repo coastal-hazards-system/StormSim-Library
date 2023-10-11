@@ -1,4 +1,4 @@
-function [R2p, R2p_SWL, q]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
+function [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
     Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
     gamma_star, gamma_v, gamma_b, wall_toe, berm_width, structure_type)
 
@@ -192,7 +192,7 @@ if slope > 0.1 &&  structure_type==1  % slope cota > 1 ->  (levee)
             exp(-(OT_coeff4.*Rc_corrt./Hm0./gamma_f./gamma_beta_OT./...
             gamma_star).^1.3);
         %
-        q = min([q_max,q_a],[],2,"omitnan");
+        q_wave_ot = min([q_max,q_a],[],2,"omitnan");
     else % cota between 1:2 and 1:1 - embankment to vertical wall
         % EurOtop Runup Eq 5.6
         R2p_a = min([Hm0.*runup_coeff3./(1./slope) + 1.6 , (3.*Hm0)],[],2,"omitnan");
@@ -203,7 +203,7 @@ if slope > 0.1 &&  structure_type==1  % slope cota > 1 ->  (levee)
         a = a_a+(a_a.*0.15.*randn);
         b_a = min((1.5+0.42.*(2-(1./slope)).^1.5),2.35);
         b = b_a+(b_a.*0.10.*randn);
-        q = sqrt(g.*Hm0.^3).*a.*exp(-(b.*Rc_corrt./Hm0./gamma_beta_OT).^1.3);
+        q_wave_ot = sqrt(g.*Hm0.^3).*a.*exp(-(b.*Rc_corrt./Hm0./gamma_beta_OT).^1.3);
     end
 elseif slope > 0.1 &&  structure_type==3 % rubble mound
     %     disp('      Calculating Rubble Mound Overtopping and Runup...')
@@ -242,7 +242,7 @@ elseif slope > 0.1 &&  structure_type==3 % rubble mound
     R2p = zeros(size(SWL));
     R2p(R2p_max>0) = min([R2p_a(R2p_max>0),R2p_max(R2p_max>0)],[],2,"omitnan");
     R2p(R2p_max<=0) = R2p_a(R2p_max<=0);
-    q = sqrt(g.*Hm0.^3).*OT_coeff3.*...
+    q_wave_ot = sqrt(g.*Hm0.^3).*OT_coeff3.*...
         exp(-(OT_coeff4.*Rc_corrt./Hm0./gamma_f_orBB./gamma_beta_OT).^1.3);
 else  % If the slope cota = 1 ------> Vertical walls
     %     disp('      Calculating Floodwall Overtopping...')
@@ -262,26 +262,32 @@ else  % If the slope cota = 1 ------> Vertical walls
     % depth above toe mound./berm in front of vertical wall
     d_wall = Rc_corrt- w_depth;
     % Initialize
-    q = zeros(size(SWL));
+    q_wave_ot = zeros(size(SWL));
     rIndx = w_depth./Hm0>4;
     % no foreshore influence
-    q(rIndx) = sqrt(g.*Hm0(rIndx).^3).*OT_coeff1.*...
+    q_wave_ot(rIndx) = sqrt(g.*Hm0(rIndx).^3).*OT_coeff1.*...
         exp(-((OT_coeff2./gamma_beta_OT(rIndx)).*Rc_corrt(rIndx)./Hm0(rIndx)).^1.3);% EurOtop Overtopping Eq 7.1
     % foreshore influence
-    q(~rIndx) = sqrt(g.*Hm0(~rIndx).^3).*OT_coeff3.*...
+    q_wave_ot(~rIndx) = sqrt(g.*Hm0(~rIndx).^3).*OT_coeff3.*...
         exp(-(OT_coeff4./gamma_beta_OT(~rIndx)).*Rc_corrt(~rIndx)./Hm0(~rIndx));
 end
+% 
 % q Overflow
-q = q + q_overflow;
+q = q_wave_ot + q_overflow;
 % Define NaN Index
 rIndx = Hm0<=0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);
 % Do not calculate structure response if no storm forcing
 q(rIndx) = NaN;
+q_wave_ot(rIndx) = NaN;
+q_overflow(rIndx) = NaN;
 R2p(rIndx) = NaN;
 % Compute R2p + SWL
 R2p_SWL = R2p + SWL;
 % Reshape
 q = reshape(q,data_dims);
+q_wave_ot = reshape(q_wave_ot,data_dims);
+q_overflow = reshape(q_overflow,data_dims);
+
 R2p = reshape(R2p,data_dims);
 R2p_SWL = reshape(R2p_SWL,data_dims);
 end
