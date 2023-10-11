@@ -29,7 +29,7 @@ y1 = xc_resp_vector;
 rIndx = isnan(x1) | isinf(x1);
 x1(rIndx) = []; y1(rIndx) = [];
 % Compute Log
-x1 = log(x1);
+    x1 = log(x1);
 % Do Unique, Keep Order
 [C, ia, ~] = unique(x1,'stable');
 x1 = C;y1 = y1(ia,1);
@@ -37,7 +37,7 @@ x1 = C;y1 = y1(ia,1);
 try
     % Interpolate Response For Specified ARI's
     dummy = interp1(x1,y1,log(aep_list),'linear','extrap');
-    % Set Negative Interp Values To NaN
+    % Set Negative Iynterp Values To NaN
     dummy(dummy<=0) = NaN;
     % Store Results
     aep_out(:,1) = dummy;
@@ -58,6 +58,7 @@ for ii=1:size(tc_prob,2)
     x1(rIndx) = []; y1(rIndx) = [];
     % Compute Log
     x1 = log(x1);
+
     rIndx = isnan(x1) | isinf(x1);
     x1(rIndx) = []; y1(rIndx) = [];
     % Do Unique, Keep Order
@@ -74,10 +75,13 @@ for ii=1:size(tc_prob,2)
     end
 end
 for ii=2:size(TC_aep,2)
-    %    CL_BE_TC_ratio = TC_aep(:,1)./TC_aep(:,ii); % TC BE/CL
-    CL_BE_TC_diff = TC_aep(:,1) - TC_aep(:,ii); % TC BE - CL
-    %     aep_out(:,ii) = aep_out(:,1) ./ CL_BE_TC_ratio; % CC BE/(TC BE/CL)
-    aep_out(:,ii) = aep_out(:,1) - CL_BE_TC_diff; % CC BE/(TC BE + CL)
+    if log_scale == 0
+        CL_BE_TC_diff = TC_aep(:,1) - TC_aep(:,ii); % TC BE - CL
+        aep_out(:,ii) = aep_out(:,1) - CL_BE_TC_diff; % CC BE/(TC BE + CL)
+    else
+        CL_BE_TC_diff2 = log10(TC_aep(:,ii)) - log10(TC_aep(:,1));
+        aep_out(:,ii) = 10.^(log10(aep_out(:,1)).*CL_BE_TC_diff2);
+    end
     if size(aep_out,1)>100
         nan_index = find(isnan(aep_out(:,ii)),1,'first');
         aep_out(nan_index-1,ii)=nan;
