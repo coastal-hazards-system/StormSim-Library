@@ -98,11 +98,11 @@ if struc_type == 2 && ~ismember(workflow,[2,4])
                 p3dyn_tbl, p3sta_tbl, p3total_tbl, pu_tbl]=goda_forces_on_vertical_p2p3(cc_resp(sIndx(2)).y_table, cc_resp(sIndx(3)).y_table,...
                 1.8,0,h_tbl,hb_tbl,Rc_tbl,hw,cc_resp(sIndx(1)).y_table,rho_w,[1 1]);
             % Define Pressure Fields To Append
-            pFields = who('p2*_plt','p3*_plt','pu*_plt');
+            pFields = who('p2*_tbl','p3*_tbl','pu*_tbl');
             % Loop Through Fieldnames
             for kk = 1:length(pFields)
                 % Grab Field Name
-                sVar = strrep(pFields{kk},'_plt','');
+                sVar = strrep(pFields{kk},'_tbl','');
                 % Find Storage Index
                 v_indx = strcmp(sVar, {cc_resp.var});
                 % Store Values
