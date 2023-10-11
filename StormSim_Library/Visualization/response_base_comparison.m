@@ -1,7 +1,9 @@
 function response_base_comparison(Resp_RB1, Resp_RB3, storm_type, use_aep, orientation, outpath)
 
 %% PULL DATA
-
+% Define PLot Field 
+plt_fld = 'y_table';
+plt_fld_x = 'x_table';
 
 %% DEFINE FONTS
 % Title Font
@@ -25,15 +27,15 @@ end
 
 %% DETERMINE ABSOLUTE MIN/MAX
 % Compute Logical Vector
-s_lim_indx = Resp_RB1(1).x_plot>=x_lim(1);
+s_lim_indx = Resp_RB1(1).(plt_fld_x)>=x_lim(1);
 % Loop Through Responses
 for ii = 1:length(Resp_RB1)
     % Get Min
-    dmin = min(Resp_RB1(ii).y_plot(s_lim_indx, :),[],'all','omitnan');
-    dmin_2 = min(Resp_RB3(ii).y_plot(s_lim_indx, :),[],'all','omitnan');
+    dmin = min(Resp_RB1(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    dmin_2 = min(Resp_RB3(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
     % Get Max
-    dmax = max(Resp_RB1(ii).y_plot(s_lim_indx, :),[],'all','omitnan');
-    dmax_2 = max(Resp_RB3(ii).y_plot(s_lim_indx, :),[],'all','omitnan');
+    dmax = max(Resp_RB1(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    dmax_2 = max(Resp_RB3(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
     % Store Absolute Min For Dataset/Response
     y_min_list(ii) = min([dmin,dmin_2],[],2);
     % Store Absolute Max For Dataset/Response
@@ -75,12 +77,12 @@ for k = 1:length(Resp_RB1)
             case 3
                 for kk = 1:length(Resp_RB1)
                     plt(kk).var = Resp_RB1(kk).var;
-                    plt(kk).x_plot = Resp_RB1(kk).x_plot;
-                    plt(kk).y_plot = abs(Resp_RB3(kk).y_plot - Resp_RB1(kk).y_plot)./((Resp_RB3(kk).y_plot + Resp_RB1(kk).y_plot).*0.5) .* 100;
+                    plt(kk).(plt_fld_x) = Resp_RB1(kk).(plt_fld_x);
+                    plt(kk).(plt_fld) = abs(Resp_RB3(kk).(plt_fld) - Resp_RB1(kk).(plt_fld))./((Resp_RB3(kk).(plt_fld) + Resp_RB1(kk).(plt_fld)).*0.5) .* 100;
                 end
         end
         % For Each CL
-        for i = 1:length(plt(k).y_plot(1,:))
+        for i = 1:length(plt(k).(plt_fld)(1,:))
             % Define Curve Name
             if prc(i) == 50
                 DataName = 'Best Estimate';
@@ -88,7 +90,7 @@ for k = 1:length(Resp_RB1)
                 DataName = [num2str(prc(i)) '%'];
             end
             % PLot CL into Axes
-            p = plot(ax,plt(k).x_plot(s_lim_indx,1),plt(k).y_plot(s_lim_indx,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            p = plot(ax,plt(k).(plt_fld_x)(s_lim_indx,1),plt(k).(plt_fld)(s_lim_indx,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
             % Update Data Tip
             row = dataTipTextRow('RowID', 1:length(plt(k).x_plot(:,1)));
             % Append Neew Data Tip
@@ -99,7 +101,7 @@ for k = 1:length(Resp_RB1)
             if ll ~= 3
                 ax.YLim = [y_min_list(k) y_max_list(k)];
             else
-                ax.YLim = [min(plt(kk).y_plot(s_lim_indx, :),[],'all','omitnan') max(plt(kk).y_plot(s_lim_indx, :),[],'all','omitnan')];
+                ax.YLim = [min(plt(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan') max(plt(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan')];
             end
         end
         % Set XTicks

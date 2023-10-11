@@ -1,11 +1,14 @@
 function plot_hazard_curves(plt, use_aep)
 %% Plot hazard curves and save out
+% Define Plot Field 
+plt_fld = 'y_table';%plt.y_plot;
+plt_fld_x = 'x_table';%plt.x_plot;
 % Define Fonts
 title_fnt = 28;
 ax_label_fnt = title_fnt-2;
 ax_tick_fnt = ax_label_fnt - 2;
 % Remove Empty Fields
-plt(cellfun(@isempty,{plt.y_plot})) = [];
+plt(cellfun(@isempty,{plt.(plt_fld)})) = [];
 % Define XTick Labels And XTicks
 if use_aep == 1
     xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
@@ -40,9 +43,9 @@ for k = 1:length(plt)
     % Enabel Box
     box(ax,'on');
     % Compute Logical Vector 
-s_lim_indx = plt(k).x_plot>=x_lim(1);
+    s_lim_indx = plt(k).(plt_fld_x)>=x_lim(1);
     % For Each CL
-    for i = 1:length(plt(k).y_plot(1,:))
+    for i = 1:length(plt(1).(plt_fld)(1,:))
         % Define Curve Name
         if prc(i) == 50
             DataName = 'Best Estimate';
@@ -50,15 +53,15 @@ s_lim_indx = plt(k).x_plot>=x_lim(1);
             DataName = [num2str(prc(i)) '%'];
         end
         % PLot CL into Axes
-        p = plot(ax,plt(k).x_plot(s_lim_indx,1),plt(k).y_plot(s_lim_indx,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+        p = plot(ax,plt(k).(plt_fld_x)(s_lim_indx,1),plt(k).(plt_fld)(s_lim_indx,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
         % Update Data Tip
-        row = dataTipTextRow('RowID', 1:length(plt(k).x_plot(s_lim_indx,1)));
+        row = dataTipTextRow('RowID', 1:length(plt(k).(plt_fld_x)(s_lim_indx,1)));
         % Append Neew Data Tip
         p.DataTipTemplate.DataTipRows(end+1) = row;
     end
     % Define Y Lim
-    if numel(plt(k).y_plot(s_lim_indx, :))~=sum(isnan(plt(k).y_plot(s_lim_indx, :)),'all')
-        ax.YLim = [min(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan'),max(plt(k).y_plot(s_lim_indx, :),[],'all','omitnan')];
+    if numel(plt(k).(plt_fld)(s_lim_indx, :))~=sum(isnan(plt(k).(plt_fld)(s_lim_indx, :)),'all')
+        ax.YLim = [min(plt(k).(plt_fld)(s_lim_indx, :),[],'all','omitnan'),max(plt(k).(plt_fld)(s_lim_indx, :),[],'all','omitnan')];
     end
     % Set XTicks
     ax.XTick = xticks_data;

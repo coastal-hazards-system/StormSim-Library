@@ -1,5 +1,9 @@
 function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, ts_switch, outpath)
 %% PULL DATA
+% Define Plot Field 
+plt_fld = 'y_table';
+plt_fld_x = 'x_table';
+%
 workflow = config.workflow;
 % Scan Peak Datasets
 storm_types = sort(fieldnames(Resp));
@@ -98,21 +102,21 @@ for jj = 1:length(pDatasets)
         % Get Min/Max
         if isfield(hcData,'XC')
             % Compute Logical Vector
-            s_lim_indx = hcData.('XC').(pDatasets{jj})(kk).x_plot>=x_lim(1);
+            s_lim_indx = hcData.('XC').(pDatasets{jj})(kk).(plt_fld_x)>=x_lim(1);
             % Min
-            dmin = min(hcData.('XC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
+            dmin = min(hcData.('XC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
             % Get Max
-            dmax = max(hcData.('XC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
+            dmax = max(hcData.('XC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
         else
             dmin = [];
             dmax = [];
         end
         if isfield(hcData,'TC')
-            s_lim_indx = hcData.('TC').(pDatasets{jj})(kk).x_plot>=x_lim(1);
+            s_lim_indx = hcData.('TC').(pDatasets{jj})(kk).(plt_fld_x)>=x_lim(1);
             % Min
-            dmin2 = min(hcData.('TC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
+            dmin2 = min(hcData.('TC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
             % Get Max
-            dmax2 = max(hcData.('TC').(pDatasets{jj})(kk).y_plot(s_lim_indx, :),[],'all','omitnan');
+            dmax2 = max(hcData.('TC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
         else
             dmin2 = [];
             dmax2 = [];
@@ -141,7 +145,7 @@ for ii = 1:length(pDatasets)
         % Number of XC's
         xc_nstm = num2str(length(sData.('XC').(pDatasets{ii}).SWL));
         % Grab AEP/AEF Vector
-        xc_x = hcData.('XC').(pDatasets{ii})(1).x_plot; % SST
+        xc_x = hcData.('XC').(pDatasets{ii})(1).(plt_fld_x); % SST
     else
         xc_nstm = '0';
     end
@@ -150,7 +154,7 @@ for ii = 1:length(pDatasets)
         % Number of TC's
         tc_nstm = num2str(length(sData.('TC').(pDatasets{ii}).SWL));
         % Grab AEP/AEF Vector
-        tc_x = hcData.('TC').(pDatasets{ii})(1).x_plot; % JPM
+        tc_x = hcData.('TC').(pDatasets{ii})(1).(plt_fld_x); % JPM
     else
         tc_nstm = '0';
     end
@@ -276,8 +280,8 @@ for ii = 1:length(pDatasets)
                 DataName = [num2str(CLs(i)) '%'];
             end
             % PLot CL into XC Axes
-            p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
+            p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
             % Create Data Tip Vector
             row = dataTipTextRow('RowID', 1:length(xc_x));
             % Append New Data Tip
@@ -298,8 +302,8 @@ for ii = 1:length(pDatasets)
                 DataName = [num2str(CLs(i)) '%'];
             end
             % PLot CL into TC Axes
-            p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).y_plot(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
+            p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
             % Create Data Tip Vector
             row2 = dataTipTextRow('RowID', 1:length(tc_x));
             % Append New Data Tip
