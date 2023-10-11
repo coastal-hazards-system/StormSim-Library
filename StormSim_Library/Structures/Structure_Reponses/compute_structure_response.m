@@ -1,4 +1,7 @@
 function [Resp, project_forcing] = compute_structure_response(config, structure, project_forcing,  emp_coeff, storm_type)
+%% DEFINE AUX VARIABLES ON SCRIPT
+q_lim = 10^-6;
+
 %% GRAB DETAILS FROM "config"
 % Strucutre Type
 struc_type = config.struc_type;
@@ -120,7 +123,7 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
         case 2 % Floodwall
             % Compute runup & Overtopping
             if calc_q == 1
-                [~,~,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+                [~,~, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
                     berm_slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     wall_bottom_elev, berm_width, struc_type),...
                     Hm0, Tp, SWL, Rc, gammas,'un',false);
@@ -137,7 +140,7 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
         case {1,3} % Levees & Rubblemound
             % Compute runup & Overtopping
             if calc_r2p == 1 || calc_q == 1
-                [R2p,R2p_SWL,q]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
+                [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
                     slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     toe_elev, berm_width, struc_type),...
                     Hm0, Tp, SWL, Rc, gammas,'un',false);
@@ -192,7 +195,9 @@ switch dflat
             Resp.('R2p_SWL') = R2p_SWL{:}; % Run-up + SWL
         end
         if exist('q','var')
-            Resp.('q') = q{:}; % Overtopping
+            Resp.('q') = q{:}; % Overtopping (Combined)
+            Resp.('q_overflow') = q_overflow{:}; % Overtopping by overflow
+            Resp.('q_wave_ot') = q_wave_ot{:}; % Overtopping By Waves
         end
         if exist('p1','var')
             Resp.('p1') = p1{:}; % Goda Wall Pressure
@@ -232,6 +237,8 @@ switch dflat
         end
         if exist('q','var')
             Resp.('q') = cell2struct(q,'LCNUM');
+            Resp.('q_overflow') = cell2struct(q_overflow,'LCNUM');
+            Resp.('q_wave_ot') = cell2struct(q_wave_ot,'LCNUM');
         end
         if exist('p1','var')
             Resp.('p1') = cell2struct(p1,'LCNUM');
@@ -248,10 +255,16 @@ switch dflat
         end
         if exist('q','var')
             Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
+            Resp.('q_overflow') = cell2mat(cellfun(@(x) max(x,[],1),q_overflow,'un',false));
+            Resp.('q_wave_ot') = cell2mat(cellfun(@(x) max(x,[],1),q_wave_ot,'un',false));
+
             for mm = 1:length(q)
-                q{mm}(q{mm}<10^-6) = NaN;
+                q{mm}(q{mm}<q_lim) = NaN;
+                q_wave_ot{mm}(q_wave_ot{mm}<q_lim) = NaN;
             end
             Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
+            Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
+            Resp.('Q_vol_wave_ot') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_wave_ot,'un',false));
         end
         if exist('p1','var')
             Resp.('p1') = cell2mat(cellfun(@(x) max(x,[],1),p1,'un',false));
@@ -318,34 +331,42 @@ switch dflat
             % q Imaginary Numbers
             if any(~arrayfun(@isreal,Resp.('q')),'all')
                 nReal = real(Resp.('q'));
+                nReal_2 = real(Resp.('q_overflow'));
+                nReal_3 = real(Resp.('q_wave_ot'));
                 nImag = imag(Resp.('q'));
                 % Set Entries With Imaginary Component ~= 0 to NaNs
                 nReal(nImag~=0) = NaN;
+                nReal_2(nImag~=0) = NaN;
+                nReal_3(nImag~=0) = NaN;
                 % Store Back As Double
                 Resp.('q') = nReal;
+                Resp.('q_overflow') = nReal_2;
+                Resp.('q_wave_ot') = nReal_3;
             end
             % q <10^-4
-            Resp.('q')(Resp.('q')<10^-6) = NaN;
+            Resp.('q')(Resp.('q')<q_lim) = NaN;
+            Resp.('q_wave_ot')(Resp.('q_wave_ot')<q_lim) = NaN;
+
         end
     case 2 % LCS
         if exist('q','var')
             for kk = 1:length(Resp.('q'))
-                % Extract Response LC
-                dummy = Resp.('q')(kk).LCNUM;
-                % Apply q < 10^-4 Failsafe
-                dummy(dummy<10^-4) = NaN;
                 % Check For Comples Response
-                if ~isreal(dummy)
-                    nReal = real(dummy);
-                    nImag = imag(dummy);
-                    % Set Entries With Imaginary Component = 0 to NaNs
-                    nReal(nImag~=0) = NaN;
-                    % Store Back As Double
-                    Resp.('q')(kk).LCNUM = nReal;
-                else
-                    % Store Back
-                    Resp.('q')(kk).LCNUM = dummy;
-                end
+                nReal = real(Resp.('q')(kk).LCNUM);
+                nReal_2 = real(Resp.('q_overflow')(kk).LCNUM);
+                nReal_3 = real(Resp.('q_wave_ot')(kk).LCNUM);
+                nImag = imag(Resp.('q')(kk).LCNUM);
+                % Set Entries With Imaginary Component = 0 to NaNs
+                nReal(nImag~=0) = NaN;
+                nReal_2(nImag~=0) = NaN;
+                nReal_3(nImag~=0) = NaN;
+                % Store Back As Double
+                Resp.('q')(kk).LCNUM = nReal;
+                Resp.('q_overflow')(kk).LCNUM = nReal_2;
+                Resp.('q_wave_ot')(kk).LCNUM = nReal_3;
+                % q <10^-4
+                Resp.('q')(kk).LCNUM(Resp.('q')(kk).LCNUM<q_lim) = NaN;
+                Resp.('q_wave_ot')(kk).LCNUM(Resp.('q_wave_ot')(kk).LCNUM<q_lim) = NaN;
             end
         end
 end
