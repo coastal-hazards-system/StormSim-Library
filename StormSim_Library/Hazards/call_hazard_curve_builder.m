@@ -188,6 +188,24 @@ for ii = 1:length(vars_2_get)
             y_label = ['q [ ' unit_label ']'];
             var_name = 'q';
             y_scale_log = 1;
+        case 'q_wave_ot'
+            U_a=0;
+            U_r = q_u;
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
+            unit_label = 'm^3/s per m';
+            y_label = ['q_{wave OT} [ ' unit_label ']'];
+            var_name = 'q_{wave OT}';
+            y_scale_log = 1;
+        case 'q_overflow'
+            U_a=0;
+            U_r = q_u;
+            uncert_treatment_jpm = 'relative';
+            uncert_treatment_sst = 'relative';
+            unit_label = 'm^3/s per m';
+            y_label = ['q_{overflow} [ ' unit_label ']'];
+            var_name = 'q_{overflow}';
+            y_scale_log = 0;
         case 'Q_vol'
             U_a=0;
             U_r = q_u;
@@ -195,7 +213,7 @@ for ii = 1:length(vars_2_get)
             uncert_treatment_sst = 'relative';
             unit_label = 'm^3 per m';
             y_label = ['Q [ ' unit_label ']'];
-            var_name = 'Q_vol';
+            var_name = 'Q_{vol}';
             y_scale_log = 1;
     end
     % Assign Input Data
@@ -302,7 +320,7 @@ for ii = 1:length(vars_2_get)
     ctr = ctr + 1;
 end
 % Remove Empty Entries (If Any)
-rm_indx = cell2mat(cellfun(@(x) isempty(x), {Output.y_plot}, 'un', false));% Get Logical Index
+rm_indx = cell2mat(cellfun(@(x) isempty(x), {Output.y_table}, 'un', false));% Get Logical Index
 Output = Output(~rm_indx);% Keep Valid Fields
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)
@@ -394,8 +412,9 @@ end
         % Replace Fields For P2
         Output(rIndx).('var') = sVar;
         Output(rIndx).CL = CL; % Percentiles (Cols)
-        Output(rIndx).('x_plot') = x_plt;
-        Output(rIndx).('y_plot') = y_plt;
+        % Only Grab Frequency Bound On The Table 
+        Output(rIndx).('x_plot') = x_plt(x_plt >= min(x_tbl) & x_plt <= max(x_tbl),:);
+        Output(rIndx).('y_plot') = y_plt(x_plt >= min(x_tbl) & x_plt <= max(x_tbl),:);
         Output(rIndx).('x_table') = x_tbl;
         Output(rIndx).('y_table') = y_tbl;
         Output(rIndx).('x_table_ARI') = x_tbl;
