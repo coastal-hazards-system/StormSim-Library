@@ -1,4 +1,4 @@
-function [aep_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, aep_list, log_scale, u_a)
+function [aep_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, aep_list, log_scale, prc, u_a)
 % Initialize Out Var
 aep_out = NaN(length(aep_list), size(xc_prob, 2));
 % Loop Through Each CL
