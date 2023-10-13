@@ -1,8 +1,8 @@
 function plot_hazard_curves(plt, use_aep)
 %% Plot hazard curves and save out
 % Define Plot Field 
-plt_fld = 'y_table';%plt.y_plot;
-plt_fld_x = 'x_table';%plt.x_plot;
+plt_fld = 'y_plot';%plt.y_plot;
+plt_fld_x = 'x_plot';%plt.x_plot;
 % Define Fonts
 title_fnt = 28;
 ax_label_fnt = title_fnt-2;

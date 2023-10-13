@@ -1,8 +1,8 @@
 function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, ts_switch, outpath)
 %% PULL DATA
 % Define Plot Field 
-plt_fld = 'y_table';
-plt_fld_x = 'x_table';
+plt_fld = 'y_plot';
+plt_fld_x = 'x_plot';
 %
 workflow = config.workflow;
 % Scan Peak Datasets

@@ -2,8 +2,8 @@ function response_base_comparison(Resp_RB1, Resp_RB3, storm_type, use_aep, orien
 
 %% PULL DATA
 % Define PLot Field 
-plt_fld = 'y_table';
-plt_fld_x = 'x_table';
+plt_fld = 'y_plot';
+plt_fld_x = 'x_plot';
 
 %% DEFINE FONTS
 % Title Font
