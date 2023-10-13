@@ -17,11 +17,12 @@ calc_dn50_ls = config.pros_dn50_leeside;
 calc_dn50_lcbw = config.pros_dn50_lcbw;
 calc_r2p = config.pros_r2p;
 calc_q = config.pros_q;
+calc_q_vol = config.pros_q_vol;
 calc_p1 = config.pros_p1;
 calc_p2_p3 = config.pros_p2_p3;
 calc_Nappe = config.pros_nappe;
 % No Structural Response Computed
-no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_p1,calc_p2_p3,calc_Nappe]);
+no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_q_vol,calc_p1,calc_p2_p3,calc_Nappe]);
 % Remove Responses Based On Structure Type
 switch struc_type
     case 1 % Levee (R2p & OT)
@@ -139,7 +140,7 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
             end
         case {1,3} % Levees & Rubblemound
             % Compute runup & Overtopping
-            if calc_r2p == 1 || calc_q == 1
+            if calc_r2p == 1 || calc_q == 1 || calc_q_vol == 1
                 [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
                     slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     toe_elev, berm_width, struc_type),...
@@ -149,7 +150,7 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
             if calc_r2p == 0
                 clearvars('R2p','R2p_SWL');
             end
-            if calc_q == 0
+            if calc_q == 0 && calc_q_vol == 0
                 clearvars('q');
             end
             % Compute Mean Period
@@ -262,9 +263,11 @@ switch dflat
                 q{mm}(q{mm}<q_lim) = NaN;
                 q_wave_ot{mm}(q_wave_ot{mm}<q_lim) = NaN;
             end
-            Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
-            Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
-            Resp.('Q_vol_wave_ot') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_wave_ot,'un',false));
+            if calc_q_vol == 1
+                Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
+                Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
+                Resp.('Q_vol_wave_ot') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_wave_ot,'un',false));
+            end
         end
         if exist('p1','var')
             Resp.('p1') = cell2mat(cellfun(@(x) max(x,[],1),p1,'un',false));
