@@ -2,6 +2,17 @@ function cc_resp = call_hazard_curve_combiner(config, structure, tc_resp, xc_res
 %% GRAB DETAILS FORM "config"
 struc_type = config.struc_type;
 workflow = config.workflow;
+% Build Uncertainty Vector 
+u_names = fieldnames(config);
+u_vector = struct2cell(config);
+% Grab Uncertainty Fields 
+u_vector = u_vector(contains(u_names, {'u_a','_u'}));
+u_names = u_names(contains(u_names, {'u_a','_u'}));
+% Remove U_r Fields 
+u_vector = u_vector(~contains(u_names,{'u_r'}));
+u_names = u_names(~contains(u_names,{'u_r'}));
+
+
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -47,13 +58,27 @@ cc_resp = rmfield(cc_resp,{'tbl_rsp_x','tbl_rsp_y'});
 ctr = 1;
 % Loop Through Each Parameter
 for j = s_indx
+    % Determine Corresponding Uncertainty Field 
+    switch tc_resp(j).var
+        case 'R2p_SWL'
+            u_field = 0;
+        case 'Tp'
+            u_field = 0;
+        case {'q_overflow', 'Q_vol_overflow'}
+            u_field = 0;
+        case {'Q_vol_wave_ot','Q_vol'}
+            u_field = u_vector{contains(u_names, 'q')};
+        otherwise
+            u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
+    end
+    %
     disp(['               Combining ' tc_resp(j).var ' hazard curves....']);
     % Combine HCs To Create Table
     cc_resp(ctr).y_table = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
-        xc_resp(j).tbl_rsp_y, x_tbl_tc, tc_resp(j).y_log_scale);
+xc_resp(j).tbl_rsp_y, x_tbl_tc, tc_resp(j).y_log_scale, u_field);
     % Combine HCs To Create Plot
     cc_resp(ctr).y_plot = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
-        xc_resp(j).tbl_rsp_y, x_plot_tc, tc_resp(j).y_log_scale);
+        xc_resp(j).tbl_rsp_y, x_plot_tc, tc_resp(j).y_log_scale, u_field);
     % ADjust Figure Title
 %     cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
     cc_resp(ctr).title(2) = {strrep(cc_resp(ctr).title{2},'TC','CC')};
