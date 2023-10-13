@@ -119,7 +119,7 @@ switch workflow
             % Create Dummy Peaks Field
             for kk = 1:length(level_1)
                 dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
-                storm.(level_1{kk}).('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1))];
+                storm.(level_1{kk}).('Peaks').('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1)),dummy_data(:,1)];
             end
             % Get Storm Sampling Using Peaks Files
             [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
