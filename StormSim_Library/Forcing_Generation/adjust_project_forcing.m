@@ -54,7 +54,7 @@ switch data_type
         %% ADJUST PROJECT FORCING DATA - LIFE CYCLE SIM
         %------ SWL ADJUSTMENTS -----
         % Apply Random Tide To SWL
-        if exist(tide_file,'file') == 2
+        if exist(tide_file,'file') == 2 && use_tides == 1
             project_forcing = apply_random_tide(tide_file, project_forcing, 0);
         end
         % Apply SLR
