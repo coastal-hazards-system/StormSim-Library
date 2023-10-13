@@ -65,7 +65,7 @@ for j = s_indx
             u_field = 0;
         case {'q_overflow', 'Q_vol_overflow'}
             u_field = 0;
-        case {'Q_vol_wave_ot','Q_vol'}
+        case {'Q_vol_wave_ot','Q_vol','q_wave_ot'}
             u_field = u_vector{contains(u_names, 'q')};
         otherwise
             u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
