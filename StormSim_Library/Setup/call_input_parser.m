@@ -122,16 +122,22 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
     case 1 % Zip Folder -> Native CHS Data
         if exist(config.chs_zip,'file')==2 % Valid Zip Folder Detected
             % Create Temp Folder
-            if exist('Temp','dir')~=7
-                mkdir('Temp');
-            else
-                rmdir('Temp','s');
+            if exist('Temp','dir')==7
+                % Determine How Many Temp Dirs Are Present
+                temp_list = dir('Temp*');
+                % Build Temp Folder Name
+                config.temp_path = ['Temp_' num2str(length(temp_list) + 1)];
+                % Assign Variable For Convenience
+                temp_path = config.temp_path;
+                % Create Temp Folder
+                mkdir(temp_path);
+            else % Temp Does Not Exist
                 mkdir('Temp');
             end
             % Decompress Zip Folder
-            unzip(config.chs_zip,'Temp');
+            unzip(config.chs_zip,temp_path);
             % Scan Unzip Directory
-            temp_dir = dir(['Temp' filesep '**' filesep '*.h5']);
+            temp_dir = dir([temp_path filesep '**' filesep '*.h5']);
             % Add Field To config
             config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
             % Add h5 Files Path To Config
@@ -141,11 +147,11 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
             % Grab CHS Identifiers
             chs_ident = strsplit(config.chs_files_2_convert{ad_indx(1),2},'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
             % Add CHS Region
-%             if contains(chs_ident{1},'CHS-NA')
-%                 config.region = 'NACCS';
-%             else
-                config.region = chs_ident{1};
-%             end
+            %             if contains(chs_ident{1},'CHS-NA')
+            %                 config.region = 'NACCS';
+            %             else
+            config.region = chs_ident{1};
+            %             end
             % Add CHS SP
             config.sp_ID = str2double(chs_ident{5}(3:end));
             % Grab ADCIRC Files
@@ -200,11 +206,11 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
                 % Grab CHS Identifiers
                 chs_ident = strsplit(fname,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
                 % Add CHS Region
-%                 if contains(chs_ident{1},'CHS-NA')
-%                     config.region = 'NACCS';
-%                 else
-                    config.region = chs_ident{1};
-%                 end
+                %                 if contains(chs_ident{1},'CHS-NA')
+                %                     config.region = 'NACCS';
+                %                 else
+                config.region = chs_ident{1};
+                %                 end
                 % Add CHS ADCIRC SP
                 config.sp_ID = str2double(chs_ident{5}(3:end));
                 % Get File Extension Of Files
