@@ -111,6 +111,8 @@ struc_id = config.struc_id;
 case_name = config.case_name;
 % Probability Masses
 pm_path = config.prob_mass_source;
+% Grab Temp Folder For Simulation
+                            temp_path = config.temp_path;
 
 %% Check If This Is Fresh Run Or New Case
 % Define Filename Prefix Based On Data Source
@@ -286,6 +288,8 @@ if isempty(file2look) % Process SP Data
             CHS_Data = call_chs_h5_converter(full_file_path);
             % Export Data
             save([name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat'],'CHS_Data');
+            % Remove Temp Dir
+                                rmdir(temp_path,'s');
         case 2
             % Try to load CHS_Data From Provided File
             try
