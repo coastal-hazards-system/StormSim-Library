@@ -97,6 +97,8 @@ workflow = config.workflow;
 if ismissing(config.chs_bias_file)
     config.chs_bias_file = 'none';
 end
+% Make Temp Path Empty
+config.temp_path = '';
 %
 if exist([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'], 'file')
     % Load Config
