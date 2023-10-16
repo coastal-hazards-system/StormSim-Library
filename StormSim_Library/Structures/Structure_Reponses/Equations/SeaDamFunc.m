@@ -110,38 +110,23 @@ RELEVANT PUBLICATIONS:
 %}
 
 function[S] = SeaDamFunc(Szero,depth,SLast,...
-    Hsig,Tm,Sslp,SDn,SG,grav,P,Nz,Szerolim,cutoff,WL,cutoff_switch,km1,K_ss)
+    Hsig,Tm,Sslp,SDn,SG,grav,P,Nz,Szerolim,cutoff,WL,cutoff_switch,km1,km2,Ks,dS)
 %% DEFINE DAMAGE PROGRESSION INCREMENT AND EMPIRICAL FACTOR
-if SLast~=0
-    dS = 0;
-    coeff=1;
-else
-    dS = 0.5;  %increment initial prediction
-    coeff=1.3; %empirical factor to increase progressive damage estimate
-end
+
 
 %% DAMAGE (S) COMPUTATION
 if ((Hsig~=0) && (depth>0) && (Szero > Szerolim))
     %% DEFINE WATER COLUM AND WAVE PARAMETERS
     % Define Water Column
     h = depth;
-    %{
-    It is recommended to use the damage equations for plunging only ,
-    uncomemnt this section and the following if statement if you are
-    interested in switching between plunging and surging damage equations
-    at your own risk.
-    
     % Estimate Wave Number
-    [km,kmest,error] = wavnum1(Tm,h,grav);
+    [km,kmest,error] = wavnum1_VG(Tm,h,grav);
     % Compute Wave Length
     Lm = 2*pi/km;
     % Compute Wave Steepness
     sm = Hsig/Lm;
-    % Determine Critical Wave Steepness Discontinous 
-    smc = -0.0035*Sslp+0.028;
     % Determine Critical Wave Steepness Continous
-    smc = Sslp^-3
-    %}
+    smc = Sslp^-3;
     
     %% MOMENTUM FLUX COMPUTATIONS
     A0 = 0.639*(Hsig/h)^2.026;
@@ -149,27 +134,27 @@ if ((Hsig~=0) && (depth>0) && (Szero > Szerolim))
     Mf = A0*(h/grav/Tm^2)^-A1;
     
     %% DETERMINE am RELATIONSHIP TO USE BASED ON WAVE STEEPNESS
-    %      if sm>=smc
-    am = 1/(km1*P^0.18*sqrt(Sslp)); %plunging
-    %      else
-    %        am = 1/(5.0*P^0.18*Sslp^(0.5-P)*sm^(-P/3)); %surging
-    %      end
+    if sm>=smc
+      am = 1/(km1*P^0.18*sqrt(Sslp)); %plunging
+    else
+      am = 1/(5.0*P^0.18*Sslp^(0.5-P)*sm^(-P/3)); %surging
+    end
     
     % Hockey Stick Equation
     % am = (km1*P^0.18*sqrt(Sslp)*(0.9*exp(2.4*sm)+7*exp(-250*sm)))^-1;
     
     %% COMPUTE Nm & Nze
-    Nm = K_ss*sqrt(Mf/(SG-1)) * h/SDn;
-    Nze = (SLast/coeff/(am*Nm)^5)^2;
+    Nm = sqrt(Mf/(SG-1)) * h/SDn;
+    Nze = (SLast/Ks/(am*Nm)^5)^2;
     
     %% CUTOFF ANALYSIS FOR STRUCTURE SUBMERGENCE
     if cutoff_switch == 0
             % Compute Damage Accumulation
-            S=coeff*(dS+sqrt(Nze+Nz)*(am*Nm)^5);
+            S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
     else
         if WL<=cutoff % (WL vs Crest Height + Cutoff Elevation Delta)
             % Compute Damage Accumulation
-            S=coeff*(dS+sqrt(Nze+Nz)*(am*Nm)^5);
+            S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
         else
             % If No New Damage Carry Previous Damage Level
             S=SLast;

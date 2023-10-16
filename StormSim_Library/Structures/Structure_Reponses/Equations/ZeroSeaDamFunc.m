@@ -108,34 +108,22 @@ RELEVANT PUBLICATIONS:
  
 %}
 
-function [Szero] = ZeroSeaDamFunc(Hsig,depth,Tm,SLast,Sslp,SDn,SG,grav,P,Nz,km1,K_ss)
+function [Szero] = ZeroSeaDamFunc(Hsig,depth,Tm,S_last,Sslp,SDn,SG,grav,P,Nz,km1,km2,Ks)
 %% DEFINE EMPIRICAL COEFFICIENTS
-if SLast~=0
-    coeff=1;
-else
-    coeff=1.3;
-end
 
 %% DAMAGE INITIATION (Szero) COMPUTATION
 if ((Hsig~=0) && (depth>0))
     %% DEFINE WATER COLUM AND WAVE PARAMETERS
     % Define Water Column
     h = depth;
-    %{
-    It is recommended to use the damage equations for plunging only ,
-    uncomemnt this section and the following if statement if you are
-    interested in switching between plunging and surging damage equations
-    at your own risk.
-    
     % Estimate Wave Number
-    [km,kmest,error] = wavnum1(Tm,h,grav);
+    [km,kmest,error] = wavnum1_VG(Tm,h,grav);
     % Compute Wave Length
     Lm = 2*pi/km;
     % Compute Wave Steepness
     sm = Hsig/Lm;
     % Determine Critical Wave Steepness
-    smc = -0.0035*Sslp+0.028;
-    %}
+    smc = Sslp^-3;
     
     %% MOMENTUM FLUX COMPUTATIONS
     A0 = 0.639*(Hsig/h)^2.026;
@@ -143,15 +131,15 @@ if ((Hsig~=0) && (depth>0))
     Mf = A0*(h/grav/Tm^2)^-A1;
     
     %% DETERMINE am RELATIONSHIP TO USE BASED ON WAVE STEEPNESS
-    %    if sm>=smc
-    am = 1/(km1*P^0.18*sqrt(Sslp)); %plunging
-    %    else
-    %      am = 1/(5.0*P^0.18*Sslp^(0.5-P)*sm^(-P/3)); %surging
-    %    end
+    if sm>=smc
+       am = 1/(km1*P^0.18*sqrt(Sslp)); %plunging
+    else
+       am = 1/(5.0*P^0.18*Sslp^(0.5-P)*sm^(-P/3)); %surging
+    end
     
     %% COMPUTE Nm & Szero
-    Nm = K_ss*sqrt(Mf/(SG-1)) * h/SDn;
-    Szero = coeff*sqrt(Nz)*(am*Nm)^5;
+    Nm = sqrt(Mf/(SG-1)) * h/SDn;
+    Szero = Ks*sqrt(Nz)*(am*Nm)^5;
     
 else
     % No Damage Initiation
