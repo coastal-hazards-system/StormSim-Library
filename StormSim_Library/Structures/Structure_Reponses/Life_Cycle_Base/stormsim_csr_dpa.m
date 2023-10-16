@@ -204,6 +204,10 @@ dr = SG*dw;
 V_ss = seaside_mass/dr;
 % Seaside Nominal Stone Diameter (m)
 SDn = V_ss^(1/3);
+% (LCBW) Seaside Median Volume of Armor Stone
+V_ss_lcbw = lcbw_mass/dr;
+% (LCBW) Seaside Nominal Stone Diameter (m)
+SDn_lcbw = V_ss_lcbw^(1/3); 
 %Leeside Median Volume of Armor Stone
 LV_ss = leeside_mass/dr;
 % Leeside Nominal Stone Diameter (m)
@@ -523,8 +527,7 @@ for NlcS = 1:nLC
             %             disp(['LC: ' num2str(NlcS) ' , Timestep: ' num2str(Ntime) ' / ' num2str(nTimes_per_LC(NlcS))]);
 
             %% toe berm limit state
-            Dn50_LCBW = SDn;
-            [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc_LC{NlcS}(Ntime),armor_delta,Dn50_LCBW);
+            [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc_LC{NlcS}(Ntime),armor_delta,SDn_lcbw);
 
             %% Overtopping limit state
             gammas = call_eurotop_ifactors(config, structure, WL{NlcS}(Ntime), Hm0{NlcS}(Ntime));
