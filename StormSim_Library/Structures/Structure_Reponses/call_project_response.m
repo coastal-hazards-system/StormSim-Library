@@ -38,12 +38,12 @@ switch workflow
         if workflow == 4
             % Define Workflow Name
             wName = 'FB';
-            subDir = [subDir filesep 'Frequency_Base_Plots' filesep];
+            subDir = [subDir filesep 'Frequency_Base' filesep];
 
         else
             % Define Workflow Name
             wName = 'RB';
-            subDir = [subDir filesep 'Response_Base_Plots' filesep];
+            subDir = [subDir filesep 'Response_Base' filesep];
         end
         % Grab "project_forcing" Structure Fields
         switch storm_sampling
@@ -215,8 +215,12 @@ switch workflow
         end
     case 3 % CSR
         %% STORMSIM: MCS-CSR
+        % Print Status
         disp('Computing structure responses with peaks....');
+        % Define Workflow ID
         wName = 'LCS';
+        % Define Workflow Subdirectory
+        subDir = [subDir filesep 'Life_Cycle_Simulation' filesep];
         % Scan Peaks Datasets
         if use_peaks == 1
             level_2 = fieldnames(project_forcing.(storm_sampling).('Peaks'));

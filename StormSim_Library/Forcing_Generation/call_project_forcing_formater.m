@@ -75,7 +75,11 @@ use_timeseries = config.use_timeseries;
 use_peaks = config.use_peaks;
 % Define Save Name
 save_name = [config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id];
+    config.case_name filesep config.project_name,'_', config.struc_id];
+% Define MCS Project Forcing Mode
+load_project_forcing = config.load_project_forcing;
+% Define Reference Case_name
+ref_case_name = config.ref_case_name;
 
 %% FORMAT FORCING DATA ACCORDING TO WORKFLOW
 % Prompt User
@@ -85,51 +89,76 @@ switch workflow
     case {1,2,4} % StormSim: PROS (Ressonse Base (RB1) Analysis)
         % Define Workflow Key Phrase
         switch workflow
-            case 1 % PROS - RB 
-            wName = 'RB';
+            case 1 % PROS - RB
+                wName = 'RB';
             case 2 % PROS - EVA
-            wName = 'RB-EVA';
+                wName = 'RB-EVA';
             case 4 % PROS - FB
-            wName = 'FB';
+                wName = 'FB';
         end
-        % Tropical Cyclones
-        if contains(storm_sampling,{'TC','CC'})
-            % Reshape Forcing Parameters For RB Analysis (nStorms * noyrmal_discretizations)
-            project_forcing.('TC') = rb_forcing_formater(config, 'TC', storm.('TC'), prob_mass);
-        end
-        % Extratropical Storms
-        if contains(storm_sampling,{'XC','CC'})
-            % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
-            project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
+        % Build Ref Case Path
+        mcs_ref_pth = [config.project_name, filesep, config.struc_id, filesep,...
+            ref_case_name, filesep, config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat'];
+        % Evaluate According To User Selection
+        if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
+            % Load Project Forcing
+            load(mcs_ref_pth,'project_forcing');
+            % Copy To Current Case
+            copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+        else
+            % Tropical Cyclones
+            if contains(storm_sampling,{'TC','CC'})
+                % Reshape Forcing Parameters For RB Analysis (nStorms * noyrmal_discretizations)
+                project_forcing.('TC') = rb_forcing_formater(config, 'TC', storm.('TC'), prob_mass);
+            end
+            % Extratropical Storms
+            if contains(storm_sampling,{'XC','CC'})
+                % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
+                project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
+            end
+            % Save Peaks Life Cycle Structures
+            save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
         end
     case 3 % StormSim: MCS-LC (Life-Cycle Base Analysis)
         % Define Workflow Key Phrase
         wName = 'LCS';
-        % Call StormSim: Monte Carlo Storm Sampler
-        if use_peaks == 1
-            % Get Storm Sampling Using Peaks Files
-            [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
-            % Do you want to use timeseries
-            if use_timeseries == 1 % Timeeseries follows the same sampling scheme as Maxima Peaks dataset
-                [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
+        % Build Ref Case Path
+        mcs_ref_pth = [config.project_name, filesep, config.struc_id, filesep,...
+            ref_case_name, filesep, config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat'];
+        % Evaluate According To User Selection
+        if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
+            % Load Project Forcing
+            load(mcs_ref_pth,'project_forcing');
+            % Copy To Current Case
+            copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+        else
+            % Call StormSim: Monte Carlo Storm Sampler
+            if use_peaks == 1
+                % Get Storm Sampling Using Peaks Files
+                [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
+                % Do you want to use timeseries
+                if use_timeseries == 1 % Timeeseries follows the same sampling scheme as Maxima Peaks dataset
+                    [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
+                end
+            else % Timeseries Only
+                % Get Storm Types In Data
+                level_1 = fieldnames(storm);
+                % Create Dummy Peaks Field
+                for kk = 1:length(level_1)
+                    dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
+                    storm.(level_1{kk}).('Peaks').('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1)),dummy_data(:,1)];
+                end
+                % Get Storm Sampling Using Peaks Files
+                [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
+                % Do you want to use timeseries
+                [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(aux_var, storm, prob_mass, storm_sampling);
             end
-        else % Timeseries Only
-            % Get Storm Types In Data
-            level_1 = fieldnames(storm);
-            % Create Dummy Peaks Field
-            for kk = 1:length(level_1)
-                dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
-                storm.(level_1{kk}).('Peaks').('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1)),dummy_data(:,1)];
-            end
-            % Get Storm Sampling Using Peaks Files
-            [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
-            % Do you want to use timeseries
-            [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(aux_var, storm, prob_mass, storm_sampling);
+            % Save Peaks Life Cycle Structures
+            save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
         end
 end
 
 %% EXPORT OUTPUTS
-% Save Peaks Life Cycle Structures
-save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
+
 
 end
