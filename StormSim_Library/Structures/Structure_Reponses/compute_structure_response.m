@@ -204,9 +204,15 @@ switch dflat
             Resp.('p1') = p1{:}; % Goda Wall Pressure
         end
         if exist('Dn50','var')
-            Resp.('Dn50') = Dn50{:}; % Median Stone Size
-            Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
-            Resp.('Dn50_Lee') = Dn50_Lee{:}; % Median Stone Size - Van Gent Leeside Stability
+            if calc_dn50_ss == 1
+                Resp.('Dn50') = Dn50{:}; % Median Stone Size
+            end
+            if calc_dn50_lcbw == 1
+                Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
+            end
+            if calc_dn50_ls == 1
+                Resp.('Dn50_Lee') = Dn50_Lee{:}; % Median Stone Size - Van Gent Leeside Stability
+            end
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
@@ -245,9 +251,15 @@ switch dflat
             Resp.('p1') = cell2struct(p1,'LCNUM');
         end
         if exist('Dn50','var')
-            Resp.('Dn50') = cell2struct(Dn50,'LCNUM');
-            Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM');
-            Resp.('Dn50_Lee') = cell2struct(Dn50_Lee,'LCNUM');% Median Stone Size - Van Gent Leeside Stability
+            if calc_dn50_ss == 1
+                Resp.('Dn50') = cell2struct(Dn50,'LCNUM'); % Median Stone Size
+            end
+            if calc_dn50_lcbw == 1
+                Resp.('Dn50_LCBW') = cell2struct(Dn50_LCBW,'LCNUM'); % Median Stone Size - Low Crested Break Water
+            end
+            if calc_dn50_ls == 1
+                Resp.('Dn50_Lee') = cell2struct(Dn50_Lee,'LCNUM');% Median Stone Size - Van Gent Leeside Stability
+            end
         end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
