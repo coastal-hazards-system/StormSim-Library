@@ -134,6 +134,8 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
                 % Create Temp Folder
                 mkdir(temp_path);
             else % Temp Does Not Exist
+                config.temp_path = 'Temp';
+                temp_path = config.temp_path;
                 mkdir('Temp');
             end
             % Decompress Zip Folder
