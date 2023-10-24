@@ -61,16 +61,16 @@ for stm = 1:length(stmID)
     WL_datestr = num2str(swl_timeseries.("yyyymmddHHMM"){wlIndx,1});
     WL = [datenum(WL_datestr,'yyyymmddHHMM'), WL];
     % STWAVE
-    try
-        waves = [hm0_timeseries.('Water Elevation'){wIndx,1},...
-            hm0_timeseries.(STWAVE_headers_location.Hm0){wIndx,1},...
-            hm0_timeseries.(STWAVE_headers_location.Tp){wIndx,1},...
-            hm0_timeseries.(STWAVE_headers_location.wDir){wIndx,1}];
-    catch
-        waves = [hm0_timeseries.('WaterElevation'){wIndx,1},...
-            hm0_timeseries.(STWAVE_headers_location.Hm0){wIndx,1},...
-            hm0_timeseries.(STWAVE_headers_location.Tp){wIndx,1},...
-            hm0_timeseries.(STWAVE_headers_location.wDir){wIndx,1}];
+    waves = [hm0_timeseries.(STWAVE_headers_location.Hm0){wIndx,1},...
+        hm0_timeseries.(STWAVE_headers_location.Tp){wIndx,1},...
+        hm0_timeseries.(STWAVE_headers_location.wDir){wIndx,1}];
+    % Append Water Elevation If Requested
+    if has_WaterElevation
+        try
+            waves = [hm0_timeseries.('Water Elevation'){wIndx,1},waves];
+        catch
+            waves = [hm0_timeseries.('WaterElevation'){wIndx,1},waves];
+        end
     end
     waves_datestr = num2str(hm0_timeseries.("yyyymmddHHMM"){wIndx,1});
     waves = [datenum(waves_datestr,'yyyymmddHHMM'), waves];
@@ -88,11 +88,11 @@ for stm = 1:length(stmID)
 
     %% REMOVE BAD ENTRIES
     % ADCIRC
-    WL_datestr(WL(:,2)==-99999,:) = [];
-    WL(WL(:,2)==-99999,:) = [];
+    WL_datestr(WL(:,2)<-90,:) = [];
+    WL(WL(:,2)<-90,:) = [];
     % STWAVE
-    waves_datestr(sum(waves==-99999,2)>=1)=[];
-    waves(sum(waves==-99999,2)>=1,:)=[];
+    waves_datestr(sum(waves<-90,2)>=1)=[];
+    waves(sum(waves<-90,2)>=1,:)=[];
     % Append To Index Variable
     if isempty(WL) || isempty(waves)
         ts_storm2rm = [ts_storm2rm;stmID(stm)];
@@ -144,20 +144,22 @@ for stm = 1:length(stmID)
     %% MATCH ADCRIC AND STWAVE OUTPUTS
 
     %{
-LC_SimOUT_hyd(lc).LCNUM(:,4);   %Datestr
-LC_SimOUT_hyd(lc).LCNUM(:,4);   %Date/Time
-            LC_SimOUT_hyd(lc).LCNUM(:,5);   %SWL, m, MSL
-            LC_SimOUT_hyd(lc).LCNUM(:,6);   %Hm0, m
-            LC_SimOUT_hyd(lc).LCNUM(:,7);   %Tp, s
-            LC_SimOUT_hyd(lc).LCNUM(:,8);   %Wave Direction
-            LC_SimOUT_hyd(lc).LCNUM(:,9)    %Duration
+            LC_SimOUT_hyd(lc).LCNUM(:,1);   %Date/Time
+            LC_SimOUT_hyd(lc).LCNUM(:,2);   %SWL, m, MSL
+            LC_SimOUT_hyd(lc).LCNUM(:,3);   %Hm0, m
+            LC_SimOUT_hyd(lc).LCNUM(:,4);   %Tp, s
+            LC_SimOUT_hyd(lc).LCNUM(:,5);   %Wave Direction
+            LC_SimOUT_hyd(lc).LCNUM(:,6)    %Duration
     %}
     storm_data(ctr,:) = [{stmID(stm)}, {[WL,...
-        waves(:,3:end),...
+        waves(:,2:end),...
         repmat(mode(diff(WL(:,1))),length(WL(:,1)),1)]}];
 
     ctr = ctr + 1;
 end
+% Remove Storms WIth No Matching ADCIRC+STWAVE Data
+ts_storm2rm = unique([cell2mat(storm_data(cellfun(@isempty,storm_data(:,2)),1)); ts_storm2rm]);
+storm_data(cellfun(@isempty,storm_data(:,2)),:) = [];
 % Print Status
 fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
 % Check For Bad Storms
