@@ -1,6 +1,6 @@
 function plot_hazard_curves(plt, use_aep)
 %% Plot hazard curves and save out
-% Define Plot Field 
+% Define Plot Field
 plt_fld = 'y_plot';%plt.y_plot;
 plt_fld_x = 'x_plot';%plt.x_plot;
 % Define Fonts
@@ -42,7 +42,7 @@ for k = 1:length(plt)
     colorstr = {'k-','b-.','r-.','r--','b--'};
     % Enabel Box
     box(ax,'on');
-    % Compute Logical Vector 
+    % Compute Logical Vector
     s_lim_indx = plt(k).(plt_fld_x)>=x_lim(1);
     % For Each CL
     for i = 1:length(plt(1).(plt_fld)(1,:))
@@ -61,7 +61,9 @@ for k = 1:length(plt)
     end
     % Define Y Lim
     if numel(plt(k).(plt_fld)(s_lim_indx, :))~=sum(isnan(plt(k).(plt_fld)(s_lim_indx, :)),'all')
-        ax.YLim = [min(plt(k).(plt_fld)(s_lim_indx, :),[],'all','omitnan'),max(plt(k).(plt_fld)(s_lim_indx, :),[],'all','omitnan')];
+        try
+            ax.YLim = [min(plt(k).(plt_fld)(s_lim_indx, :),[],'all','omitnan'),max(plt(k).(plt_fld)(s_lim_indx, :),[],'all','omitnan')];
+        end
     end
     % Set XTicks
     ax.XTick = xticks_data;
