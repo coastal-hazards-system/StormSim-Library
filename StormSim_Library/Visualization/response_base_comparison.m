@@ -1,7 +1,7 @@
 function response_base_comparison(Resp_RB1, Resp_RB3, storm_type, use_aep, orientation, outpath)
 
 %% PULL DATA
-% Define PLot Field 
+% Define PLot Field
 plt_fld = 'y_plot';
 plt_fld_x = 'x_plot';
 
@@ -26,20 +26,42 @@ end
 
 
 %% DETERMINE ABSOLUTE MIN/MAX
+% Find Mathcing Fields
+if length(Resp_RB3) > length(Resp_RB1)
+    Resp_RB3 = Resp_RB3(ismember({Resp_RB3.var},{Resp_RB1.var}));
+elseif length(Resp_RB1) > length(Resp_RB3)
+    Resp_RB1 = Resp_RB1(ismember({Resp_RB1.var},{Resp_RB3.var}));
+end
 % Compute Logical Vector
 s_lim_indx = Resp_RB1(1).(plt_fld_x)>=x_lim(1);
 % Loop Through Responses
 for ii = 1:length(Resp_RB1)
     % Get Min
-    dmin = min(Resp_RB1(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
-    dmin_2 = min(Resp_RB3(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    try
+        dmin = min(Resp_RB1(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    catch
+        dmin = NaN;
+    end
+    try
+        dmin_2 = min(Resp_RB3(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    catch
+        dmin_2 = NaN;
+    end
     % Get Max
-    dmax = max(Resp_RB1(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
-    dmax_2 = max(Resp_RB3(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    try
+        dmax = max(Resp_RB1(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    catch
+        dmax = NaN;
+    end
+    try
+        dmax_2 = max(Resp_RB3(ii).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+    catch
+        dmax_2 = NaN;
+    end
     % Store Absolute Min For Dataset/Response
-    y_min_list(ii) = min([dmin,dmin_2],[],2);
+    y_min_list(ii) = min([dmin,dmin_2],[],2,'omitnan');
     % Store Absolute Max For Dataset/Response
-    y_max_list(ii) = max([dmax,dmax_2],[],2);
+    y_max_list(ii) = max([dmax,dmax_2],[],2,'omitnan');
 end
 
 %% PLOT EACH RESPONSE FOR EACH DATASET]
@@ -106,10 +128,10 @@ for k = 1:length(Resp_RB1)
         end
         % Set XTicks
         if ll~=3
-        ax.XTick = xticks_data;
-        ax.XTickLabel = xticks_data_lbl;
-        % Define X Lim
-        ax.XLim = x_lim;
+            ax.XTick = xticks_data;
+            ax.XTickLabel = xticks_data_lbl;
+            % Define X Lim
+            ax.XLim = x_lim;
         end
         % Get Response Variable
         resp_name = plt(k).y_label;
