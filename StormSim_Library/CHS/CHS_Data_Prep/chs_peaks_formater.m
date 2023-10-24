@@ -32,7 +32,7 @@ function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_heade
             % Extract Water Level From ADyCIRC Table
             Storm(:,1) = swl_peaks_table.("Water Elevation");
             % Assign NaN's If Needed
-            Storm(Storm(:,1)==-99999,1) = NaN(1,1);
+            Storm(Storm(:,1)<-90,1) = NaN(1,1);
 
             %% WAVES (STWAVE, SWAN, WAM)
             % Sort Data Table
@@ -47,7 +47,11 @@ function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_heade
             % Extract Wave Direction From STWAVE Table
             Storm(:,4) = hm0_peaks_table.(STWAVE_headers_location.wDir);
             % Assign NaN's If Needed
-            Storm(sum(Storm(:,2:4)==-99999,2)>=1,2:4) = NaN(1,1);
+            Storm(sum(Storm(:,2:4)<-90,2)>=1,2:4) = NaN(1,1);
             Storm(sum(Storm(:,2:4)==0,2)>=1,2:4) = NaN(1,1);
-            Storm(:,6) = datenum(swl_peaks_table.("yyyymmddHHMM"),"yyyymmddHHMM");
+            % Check For 'NaN'
+            nan_rows = cell2mat(cellfun(@(x) strcmp(x,'NaN'), swl_peaks_table.("yyyymmddHHMM"), 'UniformOutput', false));
+            % Assign NaN
+            Storm(nan_rows,6) = NaN;
+            Storm(~nan_rows,6) = datenum(swl_peaks_table.("yyyymmddHHMM")(~nan_rows),"yyyymmddHHMM");
         end
