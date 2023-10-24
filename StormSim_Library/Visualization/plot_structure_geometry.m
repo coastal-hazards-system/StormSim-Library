@@ -1,4 +1,4 @@
-function [fig] = call_structure_geometry_plotter(config, structure)
+function [fig] = plot_structure_geometry(config, structure)
 %{
     %% DESCRIPTION
         This function creates MATLAB struture object containing project structure geometry.
@@ -44,6 +44,8 @@ structure_id = config.struc_id;
 structure_type = config.struc_type;
 % Define Case Name
 case_name = config.case_name;
+% Datum
+datum = config.project_datum;
 
 %% DEFINE FIGURE PROPERTIES
 % Figure Title
@@ -72,6 +74,9 @@ grid(ax,'minor');
 % Define Axes Font Size
 ax.FontSize = font_axes;
 ax.FontWeight = 'bold';
+% Labels
+xlabel(ax, 'X Distance [m]');
+ylabel(ax, ['Elevation ,' datum ' [m]']);
 % Create Title
 title(fig_title, 'FontWeight', 'bold', 'FontSize', font_title, 'Interpreter', 'none');
 
