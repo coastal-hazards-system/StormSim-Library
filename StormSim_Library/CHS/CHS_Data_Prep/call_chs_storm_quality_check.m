@@ -175,13 +175,15 @@ end
 
 %% REMOVE INVALID STORMS & ADJUST PARAMETERS ACCORDINGLY
 if use_timeseries == 1 && use_peaks == 1
-    % Maxima Dataset
+    removed_storms.Maxima = unique([storm2rm;removed_storms.Maxima;ts_storm2rm]);
     % Grab Removed Storm Ids For Maxima Dataset
-    storm2rm = unique([storm2rm;removed_storms.Maxima]);
+    storm2rm =  removed_storms.Maxima;
     % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
     storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
         removed_storms.Maxima),:) = [];
+    storm.('Timeseries')(ismember(cell2mat(storm.('Timeseries')(:,1)),...
+        storm2rm),:) = [];
     % WLP
     if WLP_switch
         % Grab Removed Storm Ids For WLP Dataset
@@ -198,13 +200,20 @@ if use_timeseries == 1 && use_peaks == 1
         storm.('Peaks').WHP(ismember(storm.('Peaks').WHP(:,5),...
             removed_storms.WHP),:) = [];
     end
-        % Compute Logical Vector Of Bad Storms
+    % Compute Logical Vector Of Bad Storms
     storm2rm = ismember(1:nTC_storms,...
         storm2rm);
 elseif use_timeseries == 1 && use_peaks == 0
     % Compute Logical Vector Of Bad Storms
     storm2rm = ismember(1:nTC_storms,...
         removed_storms.Maxima);
+elseif use_peaks == 1 && use_timeseries == 0
+    % Grab Removed Storm Ids For Maxima Dataset
+    storm2rm = unique([storm2rm;removed_storms.Maxima]);
+    % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
+    % Remove Bad storms
+    storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
+        removed_storms.Maxima),:) = [];
 end
 % Adjust storm Type Dependant Fields
 switch storm_type
