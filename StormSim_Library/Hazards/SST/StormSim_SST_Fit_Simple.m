@@ -381,9 +381,11 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
         %interpol for 0.1 aep/aef
         HCmn(kk) = interp1(dm2,dm1,log(0.1),'linear','extrap');
     end
-    
+    %%%%%%%
+    [~,ia,~]=unique(log(HC_emp(:,4)),'stable');
+    %%%%%%%%
     % Compare if mean HC > 1.75* emp HC at 0.1 AEP/AEF,
-    HCep = interp1(log(HC_emp(:,4)),HC_emp(:,1),log(0.1),'linear','extrap');
+    HCep = interp1(log(HC_emp(ia,4)),HC_emp(ia,1),log(0.1),'linear','extrap');
     str1 = {''};
     if HCmn(1)>1.75*HCep
         str1 = {'Warning: At 0.1 AEP/AEF, best estimate HC value is greater than 1.75 times the empirical HC value. Manual verification is recommended.'};
