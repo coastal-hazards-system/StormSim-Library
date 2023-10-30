@@ -8,10 +8,6 @@ u_vector = struct2cell(config);
 % Grab Uncertainty Fields 
 u_vector = u_vector(contains(u_names, {'u_a','_u'}));
 u_names = u_names(contains(u_names, {'u_a','_u'}));
-% Remove U_r Fields 
-u_vector = u_vector(~contains(u_names,{'u_r'}));
-u_names = u_names(~contains(u_names,{'u_r'}));
-
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -60,11 +56,11 @@ for j = s_indx
     % Determine Corresponding Uncertainty Field 
     switch tc_resp(j).var
         case 'R2p_SWL'
-            u_field = 0;
+            u_field = u_vector{contains(u_names, 'r2p')};
         case 'Tp'
-            u_field = 0;
+            u_field = sqrt(1+u_vector{contains(u_names, 'chs_hm0_u_r')})-1;
         case {'q_overflow', 'Q_vol_overflow'}
-            u_field = 0;
+            u_field = u_vector{contains(u_names, 'chs_swl_u_r')};
         case {'Q_vol_wave_ot','Q_vol','q_wave_ot'}
             u_field = u_vector{contains(u_names, 'q')};
         otherwise
@@ -74,7 +70,7 @@ for j = s_indx
     disp(['               Combining ' tc_resp(j).var ' hazard curves....']);
     % Combine HCs To Create Table
     cc_resp(ctr).y_table = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
-xc_resp(j).tbl_rsp_y, x_tbl_tc, tc_resp(j).y_log_scale, tc_resp(j).CL, u_field);
+        xc_resp(j).tbl_rsp_y, x_tbl_tc, tc_resp(j).y_log_scale, tc_resp(j).CL, u_field);
     % Combine HCs To Create Plot
     cc_resp(ctr).y_plot = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
         xc_resp(j).tbl_rsp_y, x_plot_tc, tc_resp(j).y_log_scale, tc_resp(j).CL, u_field);
