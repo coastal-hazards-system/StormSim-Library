@@ -45,6 +45,10 @@ for ii= 1:length(row_indx)
             helper_var = input_file(row_indx(ii)+anchor_offset:row_indx(ii+1)-next_tbl_offset,col_indx(ii):col_indx2(ii));
         end
     end
+    % Make Sure To Remove Is Missing 
+    ms_rm_idx = sum(cell2mat(cellfun(@(x) sum(ismissing(x)), helper_var, 'un', false)),2);
+    % Remove From Helper Var 
+    helper_var(ms_rm_idx > 0, :) = [];
     % Loop Through Input Table Items And Create Config
     for jj = 1:size(helper_var, 1)
         % Create "config" Structure Field
