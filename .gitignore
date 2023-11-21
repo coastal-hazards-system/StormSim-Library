@@ -38,3 +38,8 @@ config_reader_FEMA.m
 transect_excel_reader.m
 **/*.png
 StormSim_Library/Visualization/StormSim_Plot_Tool.mlapp
+Diagnostic_Tools/*
+WIP*
+priority_plots*
+StormSim_Inputs_*
+CHSUserGuide.pdf

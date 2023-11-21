@@ -46,6 +46,8 @@ structure_type = config.struc_type;
 case_name = config.case_name;
 % Datum
 datum = config.project_datum;
+%
+outfolder = config.outfolder;
 
 %% DEFINE FIGURE PROPERTIES
 % Figure Title
@@ -193,6 +195,6 @@ plot(ax,struc_geo,'FaceColor',[0.65,0.65,0.65],'FaceAlpha',1);
 plot(ax,sand_geo,'FaceColor',[0.9 0.72 0.31],'FaceAlpha',1);
 
 %% EXPORT FIGURE
-saveas(fig, [project_name filesep structure_id filesep case_name filesep project_name '_' structure_id '_' case_name '_structure_cross_section.png']);
+saveas(fig, [outfolder filesep project_name filesep structure_id filesep case_name filesep project_name '_' structure_id '_' case_name '_structure_cross_section.png']);
 warning('on','all');
 end

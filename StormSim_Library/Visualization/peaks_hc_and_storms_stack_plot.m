@@ -1,8 +1,10 @@
 function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, ts_switch, outpath)
 %% PULL DATA
-% Define Plot Field 
+% Define Plot Field
 plt_fld = 'y_plot';
 plt_fld_x = 'x_plot';
+nrows = 2;
+ncols = 4;
 %
 workflow = config.workflow;
 % Scan Peak Datasets
@@ -10,9 +12,13 @@ storm_types = sort(fieldnames(Resp));
 storm_types = storm_types(contains(storm_types,{'XC','TC'}));
 % HC Data
 if ts_switch == 0
-    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0'}),{Resp.(storm_types{1}).('Peaks').('Maxima').var},'un',false)'),2)==1);
+    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{1}).('Peaks').('Maxima').var},'un',false)'),2)==1);
 else
-    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0'}),{Resp.(storm_types{1}).('Timeseries').var},'un',false)'),2)==1);
+    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{1}).('Timeseries').var},'un',false)'),2)==1);
+end
+% 
+if isempty(resp_indx)
+    return;
 end
 % Remove Other HCs
 for ii = 1:length(storm_types)
@@ -22,6 +28,12 @@ for ii = 1:length(storm_types)
         pDatasets = fieldnames(Resp.(storm_types{ii}).Peaks);
         % Loop Through Fieldnames
         for jj = 1:length(pDatasets)
+            % HC Data
+            if ts_switch == 0
+                resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Peaks').(pDatasets{jj}).var},'un',false)'),2)==1);
+            else
+                resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Timeseries').var},'un',false)'),2)==1);
+            end
             % Grab HC Data
             hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Peaks').(pDatasets{jj})(resp_indx);
             % Grab Forcing Data (Scatter)
@@ -139,6 +151,14 @@ end
 for ii = 1:length(pDatasets)
     % Initialize Figure Handle
     Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
+    % Create textbox
+    annotation(Figure0,'textbox',...
+        [0.5 0.967812729409427 0.056835935922572 0.0343818572767479],...
+        'String',pDatasets(ii),...
+        'FontWeight','bold',...
+        'FontSize',title_fnt,...
+        'FitBoxToText','on',...
+        'EdgeColor','none');
     % Grab Storm Type Dependant Fields
     % Extratropical
     if isfield(sData,'XC')
@@ -162,102 +182,66 @@ for ii = 1:length(pDatasets)
 
     % ---- FORMAT TC STORM DATA AXES----%
     % Define Axes Handle
-    ax_tc = subplot(2,5,6);
-    % Define Axes Properties
-    set(ax_tc,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-        'FontSize',ax_tick_fnt,'box','on');
-    % Hold Properties
-    hold(ax_tc,'on');
-    % Add Y Label
-    ylabel(ax_tc,'H_{m_{0}} [m]','FontSize',ax_label_fnt,'FontWeight','bold');
-    % Add X Label
-    xlabel(ax_tc,['SWL [m, ' datum ']'],'FontSize',ax_label_fnt,'FontWeight','bold');
-    % Add Titles
-    title(ax_tc,['TC Storms | ' tc_nstm],'FontSize',title_fnt,'FontWeight','bold');
+    ax_tc = subplot(nrows, ncols, ncols+1);
+    ax_tc = ax_ini(ax_tc, ax_tick_fnt, ax_label_fnt, title_fnt, ['SWL [m, ' datum ']'], 'H_{m_{0}} [m]', ['TC Storms | ' tc_nstm]);
 
     % ------- FORMAT TC HC DATA AXES -------
+    % Add X Label
+    if use_aep == 1
+        hc_label = 'Annual Exceedance Probability, AEP';
+    else
+        hc_label = 'Annual Exceedance Frequency, AEF [1/yr]';
+    end
     % Initialize TCs Axes Handle
-    ax_tc_hc_swl = subplot(2,5,[7 8]);
-    ax_tc_hc_hm0 = subplot(2,5,[9 10]);
-    % Define TC Axes Properties
-    set(ax_tc_hc_swl,'XScale','log','YScale','linear','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-        'FontSize',ax_tick_fnt,'box','on','XDir','reverse');
-    set(ax_tc_hc_hm0,'XScale','log','YScale','linear','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-        'FontSize',ax_tick_fnt,'box','on','XDir','reverse');
-    % Hold Properties
-    hold(ax_tc_hc_swl,'on');
-    hold(ax_tc_hc_hm0,'on');
-    % Add Y Label
-    ylabel(ax_tc_hc_swl,['SWL [m, ' datum ']'],'FontSize',ax_label_fnt,'FontWeight','bold');
-    ylabel(ax_tc_hc_hm0,'H_{m_{0}} [m]','FontSize',ax_label_fnt,'FontWeight','bold');
+    ax_tc_hc_swl = subplot(nrows, ncols,ncols+2);
+    ax_tc_hc_swl = ax_ini(ax_tc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['TC  | SWL | ' region ' | SP' num2str(sp_ID)]);
+
+    ax_tc_hc_hm0 = subplot(nrows, ncols,ncols+3);
+    ax_tc_hc_hm0 = ax_ini(ax_tc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'H_{m_{0}} [m]', ['TC  | H_{m_{0}} | ' region ' | SP' num2str(sp_ID)]);
+
+    ax_tc_hc_tp = subplot(nrows, ncols,ncols+4);
+    ax_tc_hc_tp = ax_ini(ax_tc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'T_{p} [s]', ['TC  | T_{p} | ' region ' | SP' num2str(sp_ID)]);
+
 
     % ---- FORMAT XC STORM DATA AXES----%
     % Define Axes Handle
-    ax_xc = subplot(2,5,1);
-    % Define Axes Properties
-    set(ax_xc,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-        'FontSize',ax_tick_fnt,'box','on');
-    % Hold Properties
-    hold(ax_xc,'on');
-    % Add Y Label
-    ylabel(ax_xc,'H_{m_{0}} [m]','FontSize',ax_label_fnt,'FontWeight','bold');
-    % Add X Label
-    xlabel(ax_xc,['SWL [m, ' datum ']'],'FontSize',ax_label_fnt,'FontWeight','bold');
-    % Add Titles
-    title(ax_xc,['XC Storms | ' xc_nstm],'FontSize',title_fnt,'FontWeight','bold');
+    ax_xc = subplot(nrows, ncols,1);
+    ax_xc = ax_ini(ax_xc, ax_tick_fnt, ax_label_fnt, title_fnt, ['SWL [m, ' datum ']'], 'H_{m_{0}} [m]', ['XC Storms | ' xc_nstm]);
+
 
     % ------- FORMAT XC HC DATA AXES -------
-    % Initialize XCs Axes Handle
-    ax_xc_hc_swl = subplot(2,5,[2 3]);
-    ax_xc_hc_hm0 = subplot(2,5,[4 5]);
-    % Define XC Axes Properties
-    set(ax_xc_hc_swl,'XScale','log','YScale','linear','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-        'FontSize',ax_tick_fnt,'box','on','XDir','reverse'); % SWL
-    set(ax_xc_hc_hm0,'XScale','log','YScale','linear','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
-        'FontSize',ax_tick_fnt,'box','on','XDir','reverse'); % Hm0
-    % Hold Properties
-    hold(ax_xc_hc_swl,'on');
-    hold(ax_xc_hc_hm0,'on');
-    % Add Y Label
-    ylabel(ax_xc_hc_swl,['SWL [m, ' datum ']'],'FontSize',ax_label_fnt,'FontWeight','bold');
-    ylabel(ax_xc_hc_hm0,'H_{m_{0}} [m]','FontSize',ax_label_fnt,'FontWeight','bold');
 
-    % ------ FORMAT TC & XC AXES -----
-    % Add X Label
-    if use_aep == 1
-        xlabel(ax_tc_hc_swl,{'Annual Exceedance Probability, AEP'},'FontSize',ax_label_fnt,'FontWeight','bold');
-        xlabel(ax_tc_hc_hm0,{'Annual Exceedance Probability, AEP'},'FontSize',ax_label_fnt,'FontWeight','bold');
-    else
-        xlabel(ax_tc_hc_swl,{'Annual Exceedance Frequency, AEF [1/yr]'},'FontSize',ax_label_fnt,'FontWeight','bold');
-        xlabel(ax_tc_hc_hm0,{'Annual Exceedance Frequency, AEF [1/yr]'},'FontSize',ax_label_fnt,'FontWeight','bold');
-    end
-    % Add XC Titles
-    title(ax_xc_hc_swl,['XC  | SWL | ' region ' | SP' num2str(sp_ID)],'FontSize',title_fnt,'FontWeight','bold');
-    title(ax_xc_hc_hm0,['XC  | Hm0 | ' region ' | SP' num2str(sp_ID_wave)],'FontSize',title_fnt,'FontWeight','bold');
-    % Add TC Titles
-    title(ax_tc_hc_swl,['TC  | SWL | ' region ' | SP' num2str(sp_ID)],'FontSize',title_fnt,'FontWeight','bold');
-    title(ax_tc_hc_hm0,['TC  | Hm0 | ' region ' | SP' num2str(sp_ID_wave)],'FontSize',title_fnt,'FontWeight','bold');
+    % Initialize XCs Axes Handle
+    ax_xc_hc_swl = subplot(nrows, ncols,2);
+    ax_xc_hc_swl = ax_ini(ax_xc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['XC  | SWL | ' region ' | SP' num2str(sp_ID)]);
+
+    ax_xc_hc_hm0 = subplot(nrows, ncols,3);
+    ax_xc_hc_hm0 = ax_ini(ax_xc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'H_{m_{0}} [m]', ['XC  | Hm0 | ' region ' | SP' num2str(sp_ID)]);
+
+    ax_xc_hc_tp = subplot(nrows, ncols,4);
+    ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'T_{p} [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID)]);
+
     % Define SWL Y Lim
     ax_tc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
     ax_xc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
     % Defien Hm0 Y Lim
     ax_tc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
     ax_xc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
+    % Define Tp Y Lim
+    ax_tc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
+    ax_xc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
     % Set XTicks
-    helper_str = {'ax_tc_hc_swl','ax_tc_hc_hm0','ax_xc_hc_swl','ax_xc_hc_hm0'};
+    helper_str = {'ax_tc_hc_swl','ax_tc_hc_hm0', 'ax_tc_hc_tp','ax_xc_hc_swl','ax_xc_hc_hm0', 'ax_xc_hc_tp'};
     for hh = 1:length(helper_str)
         eval([helper_str{hh} '.XTick = xticks_data;']);
         eval([helper_str{hh} '.XTickLabel = xticks_data_lbl;']);
         eval([helper_str{hh} '.XLim = x_lim;']);
+        eval([helper_str{hh} '.XScale = ''log'';']);
+        eval([helper_str{hh} '.YScale = ''linear'';']);
+                eval([helper_str{hh} '.XDir = ''reverse'';']);
     end
-    % Create textbox
-    annotation(Figure0,'textbox',...
-        [0.5 0.967812729409427 0.056835935922572 0.0343818572767479],...
-        'String',pDatasets(ii),...
-        'FontWeight','bold',...
-        'FontSize',title_fnt,...
-        'FitBoxToText','on',...
-        'EdgeColor','none');
+
+
     % Add Legend
     legend2 = legend(ax_xc_hc_swl);
     % Get Legend Title Handle
@@ -270,7 +254,7 @@ for ii = 1:length(pDatasets)
     %----- PLOT DATA -------
     if contains('XC',storm_types)
         % Plot Each Storm
-        p_xc = plot(ax_xc,sData.('XC').(pDatasets{ii}).SWL,sData.('XC').(pDatasets{ii}).Hm0,'o','MarkerSize',2);
+        p_xc = plot(ax_xc,sData.('XC').(pDatasets{ii}).SWL,sData.('XC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
         % Plot Each HC
         for i = 1:length(CLs)
             % Define Curve Name
@@ -280,19 +264,30 @@ for ii = 1:length(pDatasets)
                 DataName = [num2str(CLs(i)) '%'];
             end
             % PLot CL into XC Axes
-            p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
-            % Create Data Tip Vector
-            row = dataTipTextRow('RowID', 1:length(xc_x));
-            % Append New Data Tip
-            p1.DataTipTemplate.DataTipRows(end+1) = row;
-            p2.DataTipTemplate.DataTipRows(end+1) = row;
+            for pp = 1:length({hcData.('XC').(pDatasets{ii}).var})
+                fill_str = lower(hcData.('XC').(pDatasets{ii})(pp).var);
+                eval(['p = plot(ax_xc_hc_' fill_str ',xc_x,hcData.(''XC'').(pDatasets{ii})(pp).(plt_fld)(:,i),colorstr{i},''LineWidth'',2,''DisplayName'',DataName);']);
+                % Create Data Tip Vector
+                row = dataTipTextRow('RowID', 1:length(xc_x));
+                % Append New Data Tip
+                p.DataTipTemplate.DataTipRows(end+1) = row;
+            end
+%             p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+%             p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+%             p5 = plot(ax_xc_hc_tp,xc_x,hcData.('XC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+%             % Update Data Tip
+%             % Create Data Tip Vector
+%             row = dataTipTextRow('RowID', 1:length(xc_x));
+%             % Append New Data Tip
+%             p1.DataTipTemplate.DataTipRows(end+1) = row;
+%             p2.DataTipTemplate.DataTipRows(end+1) = row;
+%             p5.DataTipTemplate.DataTipRows(end+1) = row;
         end
     end
 
     if contains('TC', storm_types)
         % Plot Each Storm
-        p_tc = plot(ax_tc,sData.('TC').(pDatasets{ii}).SWL,sData.('TC').(pDatasets{ii}).Hm0,'o','MarkerSize',2);
+        p_tc = plot(ax_tc,sData.('TC').(pDatasets{ii}).SWL,sData.('TC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
         % Plot Each HC
         for i = 1:length(CLs)
             % Define Curve Name
@@ -302,19 +297,44 @@ for ii = 1:length(pDatasets)
                 DataName = [num2str(CLs(i)) '%'];
             end
             % PLot CL into TC Axes
-            p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);            % Update Data Tip
-            % Create Data Tip Vector
-            row2 = dataTipTextRow('RowID', 1:length(tc_x));
-            % Append New Data Tip
-            p3.DataTipTemplate.DataTipRows(end+1) = row2;
-            p4.DataTipTemplate.DataTipRows(end+1) = row2;
+            for pp = 1:length({hcData.('TC').(pDatasets{ii}).var})
+                fill_str = lower(hcData.('TC').(pDatasets{ii})(pp).var);
+                eval(['p = plot(ax_tc_hc_' fill_str ',tc_x,hcData.(''TC'').(pDatasets{ii})(pp).(plt_fld)(:,i),colorstr{i},''LineWidth'',2,''DisplayName'',DataName);']);
+                % Create Data Tip Vector
+                row = dataTipTextRow('RowID', 1:length(xc_x));
+                % Append New Data Tip
+                p.DataTipTemplate.DataTipRows(end+1) = row;
+            end
+%             p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+%             p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+%             p6 = plot(ax_tc_hc_tp,tc_x,hcData.('TC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+%             % Update Data Tip
+%             % Create Data Tip Vector
+%             row2 = dataTipTextRow('RowID', 1:length(tc_x));
+%             % Append New Data Tip
+%             p3.DataTipTemplate.DataTipRows(end+1) = row2;
+%             p4.DataTipTemplate.DataTipRows(end+1) = row2;
+%             p6.DataTipTemplate.DataTipRows(end+1) = row2;
         end
     end
     % Save Figure
     saveas(Figure0,[outpath filesep 'StormSim_' pDatasets{ii} '_Project_Forcing_and_Hazard_Curve_Comparison'],'png');
     close all;
 end
+% --------- CLEAN-UP LOCAL FUNCTION ---------
+    function ax_tc = ax_ini(ax_tc, ax_tick_fnt, ax_label_fnt, title_fnt, x_label, y_label, t_label)
+        % Define Axes Properties
+        set(ax_tc,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on',...
+            'FontSize',ax_tick_fnt,'box','on');
+        % Hold Properties
+        hold(ax_tc,'on');
+        % Add Y Label
+        ylabel(ax_tc, y_label,'FontSize',ax_label_fnt,'FontWeight','bold');
+        % Add X Label
+        xlabel(ax_tc, x_label,'FontSize',ax_label_fnt,'FontWeight','bold');
+        % Add Titles
+        title(ax_tc,t_label,'FontSize',title_fnt,'FontWeight','bold');
+    end
 end
 
 

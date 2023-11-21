@@ -60,7 +60,7 @@ struc_id = config.struc_id;
 % Define Case  Name 
 case_name = config.case_name;
 % Define Save Name
-save_name = [project_name filesep struc_id filesep case_name filesep project_name...
+save_name = [config.outfolder filesep project_name filesep struc_id filesep case_name filesep project_name...
     '_' struc_id '_' case_name '_config_file.mat'];
 
 %% DEFINE VARIBALES TO GRAB FROM CONFIG PER STRUCTURE TYPE & WORKFLOW
@@ -110,13 +110,11 @@ for ii = 1:length(vars_2_grab)
 end
 
 %% CREATE CROSS_SECTION PLOT
-% Create Figure
-fig = plot_structure_geometry(config, structure);
+
 % Show/Close Figure According To User
 if show_plot == 1
-    fig.Visible = true;
-else
-    close(fig);
+% Create Figure
+fig = plot_structure_geometry(config, structure);
 end
 %% APPEND TO .MAT File 
 if exist(save_name,'file') == 2

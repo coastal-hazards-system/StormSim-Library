@@ -87,7 +87,7 @@ use_timeseries = config.use_timeseries;
 % Storm Sampling
 storm_sampling = config.storm_sampling;
 % Define File Name Prefix
-name_prefix = config.name_prefix;
+name_prefix = [config.outfolder filesep config.name_prefix];
 % Define CHS_Data file (.zip, .mat)
 chs_zip = config.chs_zip;
 % Define CHS_Data Fiel Extension
@@ -289,7 +289,9 @@ if isempty(file2look) % Process SP Data
             % Export Data
             save([name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat'],'CHS_Data');
             % Remove Temp Dir
-            rmdir(temp_path,'s');
+            if ~isempty(temp_path)
+                rmdir(temp_path,'s');
+            end
         case 2
             % Try to load CHS_Data From Provided File
             try
@@ -362,7 +364,13 @@ if isempty(file2look) % Process SP Data
         % Export Project Forcing
         save([name_prefix '.mat'], 'storm', 'prob_mass');
     end
-    save([project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' config.case_name '_config_file.mat'],...
+    save([config.outfolder filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' config.case_name '_config_file.mat'],...
         'config');
+else
+    % Add Fields To Storm
+    config.Nyrs_XC = storm.('XC').Nyrs_XC;
+    config.Nstm_XC = storm.('XC').Nstm_XC;
+    % Remove Temp Folder 
+    rmdir(temp_path,'s');
 end
 end

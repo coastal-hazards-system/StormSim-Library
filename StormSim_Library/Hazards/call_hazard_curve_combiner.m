@@ -2,10 +2,10 @@ function cc_resp = call_hazard_curve_combiner(config, structure, tc_resp, xc_res
 %% GRAB DETAILS FORM "config"
 struc_type = config.struc_type;
 workflow = config.workflow;
-% Build Uncertainty Vector 
+% Build Uncertainty Vector
 u_names = fieldnames(config);
 u_vector = struct2cell(config);
-% Grab Uncertainty Fields 
+% Grab Uncertainty Fields
 u_vector = u_vector(contains(u_names, {'u_a','_u'}));
 u_names = u_names(contains(u_names, {'u_a','_u'}));
 
@@ -53,7 +53,7 @@ cc_resp = rmfield(cc_resp,{'tbl_rsp_x','tbl_rsp_y'});
 ctr = 1;
 % Loop Through Each Parameter
 for j = s_indx
-    % Determine Corresponding Uncertainty Field 
+    % Determine Corresponding Uncertainty Field
     switch tc_resp(j).var
         case 'R2p_SWL'
             u_field = u_vector{contains(u_names, 'r2p')};
@@ -63,6 +63,8 @@ for j = s_indx
             u_field = u_vector{contains(u_names, 'chs_swl_u_r')};
         case {'Q_vol_wave_ot','Q_vol','q_wave_ot'}
             u_field = u_vector{contains(u_names, 'q')};
+        case {'Dn50','Dn50_LCBW', 'Dn50_Lee'}
+            u_field = u_vector{contains(u_names, 'dn50')};
         otherwise
             u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
     end
@@ -75,10 +77,10 @@ for j = s_indx
     cc_resp(ctr).y_plot = combine_hazard_curves(tc_resp(j).tbl_rsp_x, xc_resp(j).tbl_rsp_x,...
         xc_resp(j).tbl_rsp_y, x_plot_tc, tc_resp(j).y_log_scale, tc_resp(j).CL, u_field);
     % ADjust Figure Title
-%     cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
+    %     cc_resp(ctr).title(1) = {strrep(cc_resp(ctr).title{1},'JPM','Combined')};
     cc_resp(ctr).title(2) = {strrep(cc_resp(ctr).title{2},'TC','CC')};
     % Adjust Figure Output Names
-    cc_resp(ctr).save_name = strrep(cc_resp(ctr).save_name,'JPM','CC');
+    cc_resp(ctr).save_name = strrep(cc_resp(ctr).save_name,'TC','CC');
     % Define POT
     cc_resp(ctr).POT = {'Hazard curve computed by combining TC & XC primary responses'};
     % Increase Counter

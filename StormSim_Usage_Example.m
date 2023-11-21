@@ -8,6 +8,7 @@ MCS/CSR Requires:
 %}
 % Define StormSim Input File Name
 stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
+
 %% STEP 0: SET-UP ENVIRONMENT
 %{
  Description:

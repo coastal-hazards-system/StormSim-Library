@@ -77,7 +77,7 @@ if strcmp(storm_type, 'TC')
     vars_2_get = vars_2_get(~contains(vars_2_get,{'TC_Prob'}));
 end
 % Save Name
-save_name = [outPath filesep config.project_name,'_', config.struc_id];
+save_name = fullfile(outPath, [config.project_name,'_', config.struc_id]);
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -249,7 +249,7 @@ for ii = 1:length(vars_2_get)
             wname = ['StormSim: PROS - ' wstr ' | '  case_name ' | ' struc_id];
     end
     % Check For Full NaN Vector
-    if sum(isnan(input_data.data_values(:)))==length(input_data.data_values(:))
+    if sum(isnan(input_data.data_values(:)))==length(input_data.data_values(:)) || sum(input_data.data_values(:))==0
         % Response Variable Has NaNs For All Entries
         disp(['               No valid responses for ' staID ', Skipping response var....']);
         % Skip Iteration
@@ -278,7 +278,7 @@ for ii = 1:length(vars_2_get)
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
                     dummy.HC_plt_x(s_indx), dummy.SST_output.HC_plt(:, s_indx)',...
                     dummy.HC_tbl_x', dummy.SST_output.HC_tbl', input_data.data_values,...
-                    y_scale_log, [50,prc], [save_name '_StormSim_SST_' staID '_Hazard_Curve.png']);
+                    y_scale_log, [50,prc], [save_name '_' staID '_XC_Hazard_Curve.png']);
                 % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
                     Output(ctr).tbl_rsp_x = dummy.SST_output.HC_tbl_rsp_x'; % x here implies Responses, AEP/AEF -> Responses
@@ -306,7 +306,7 @@ for ii = 1:length(vars_2_get)
                 Output =  rb_response_appender(Output, ctr, staID, y_label, title_str,...
                     dummy.HC_plt_x(s_indx), dummy.HC_data.HC_plt_y(s_indx, :),...
                     dummy.HC_tbl_x', dummy.HC_data.HC_tbl_y, input_data.data_values,...
-                    y_scale_log, [50,prc], [save_name '_StormSim_JPM_' staID '_Hazard_Curve.png']);
+                    y_scale_log, [50,prc], [save_name '_' staID '_TC_Hazard_Curve.png']);
                 % Add "_rsp" Fields For Hazard Combinations
                 if use_aep == 1
                     Output(ctr).tbl_rsp_x = dummy.HC_data.HC_tbl_rsp_x;

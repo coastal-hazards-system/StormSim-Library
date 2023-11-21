@@ -22,6 +22,7 @@ function config = call_input_parser(input_filename)
 str_ref = 'Model Variable Symbol';
 % Define Anchor Point Offset (Location Of First Data Point)
 anchor_offset = 1;
+next_tbl_offset = 3;
 % Read StormSim Project Input File
 input_file = readcell(input_filename);
 % Add Filename To Config
@@ -30,59 +31,28 @@ config.stormsim_input_file = input_filename;
 %% PARSE INPUT FILE AND CREATE CONFIG STRUCTURE
 % Find Row And Column Index For "str_ref" In "input_file"
 [row_indx,col_indx] = find(cell2mat(cellfun(@(x) strcmp(x,str_ref),input_file,'un',false))==1);
+[row_indx2,col_indx2] = find(cell2mat(cellfun(@(x) strcmp(x,'Value'),input_file,'un',false))==1);
 % Loop Through Found Instances (Matched Cases Represent Input Tables)
 for ii= 1:length(row_indx)
-    % Grab Dummy Section To Determine Current Table Size
-    helper_var = input_file(row_indx(ii)+anchor_offset:end,:);
-    % Determine "helper_var" Cells With Data Size
-    helper_var_indx = cellfun(@ismissing,helper_var(:,col_indx(ii)),'UniformOutput',false); % Returns arrays in cells with chars, interested in 1x1 entries {1x1 missing}
-    % Determine 1x1 Entries Locations In "helper_var"
-    helper_var_indx = find(cellfun(@length,helper_var_indx)==1)-1; % -1 is to get last valid data point in col
-    if ~isempty(helper_var_indx)
-        % Grab Input Table Rows
-        table_rows = helper_var_indx(1); % Always want to use 1st index of "helper_var_indx"
+    % Extract Input Table
+    if ii == length(row_indx2)
+        helper_var = input_file(row_indx(ii)+anchor_offset:end,col_indx(ii):col_indx2(ii));
+        helper_var = helper_var(sum(cellfun(@isempty,helper_var),2)<4, :);
     else
-        table_rows = length(helper_var(:,1));
-    end
-    % Grab All Cols In Table Header Row
-    table_width = input_file(row_indx(ii),:);
-    % Find "ismissing" Cols
-    table_width = cellfun(@ismissing,table_width,'un',false);
-    % Determine 1x1 Entries Locations In "table_width"
-    table_width = cellfun(@length,table_width)==1;
-    %
-    if col_indx(ii) > 1
-        % Get Col Index Of Empty Cells
-        if isempty(find(table_width(col_indx(ii):end) == 1))
-            table_width = length(table_width(col_indx(ii):end));
+        if row_indx(ii+1) == row_indx(1)
+            helper_var = input_file(row_indx(ii)+anchor_offset:end,col_indx(ii):col_indx2(ii));
         else
-            table_width = find(table_width(col_indx(ii):end) == 1)-1+col_indx(ii);
-            table_width = table_width(1) - col_indx(ii);
+            helper_var = input_file(row_indx(ii)+anchor_offset:row_indx(ii+1)-next_tbl_offset,col_indx(ii):col_indx2(ii));
         end
-    else % First Col
-        % Get Col Index Of Empty Cells
-        table_width = find(table_width == 1);
-        % Get Table Width
-        table_width = table_width(1)-1;
     end
-    % Initialize "helper_var2"
-    helper_var2 = [];
+    % Remove Is Missing
+    helper_var = helper_var(~cell2mat(cellfun(@(x) isa(x,'missing'),helper_var(:,1),'UniformOutput',false)),:);
+    % Fill Others
+    helper_var(cell2mat(cellfun(@(x) isa(x,'missing'),helper_var(:,end),'UniformOutput',false)),end) = {''};
     % Loop Through Input Table Items And Create Config
-    for jj = 1:table_rows
-        if contains(helper_var{jj,col_indx(ii)},{'chs_tc_swl','chs_xc_swl','chs_tc_hm0','chs_xc_hm0'})
-            helper_var2 = [helper_var2;helper_var(jj,col_indx(ii)+3)];
-        end
-        % Handle According To Table Size
-        switch table_width
-            case 4 % Only Has Mean Values
-                % Create "config" Structure Field
-                config.(helper_var{jj,col_indx(ii)}) = helper_var{jj,col_indx(ii)+3};
-            case 5 % Has Mean Value + Std
-                % Store Mean Value
-                config.(helper_var{jj,col_indx(ii)}).mean = helper_var{jj,col_indx(ii)+3};
-                % Store Std Value
-                config.(helper_var{jj,col_indx(ii)}).std = helper_var{jj,col_indx(ii)+4};
-        end
+    for jj = 1:size(helper_var, 1)
+        % Create "config" Structure Field
+        config.(helper_var{jj,1}) = helper_var{jj,end};
     end
 end
 % Project Name
@@ -91,15 +61,9 @@ project_name = config.project_name;
 struc_id = config.struc_id;
 % Case Name
 case_name = config.case_name;
-% Workflow
-workflow = config.workflow;
-%
-if ismissing(config.chs_bias_file)
-    config.chs_bias_file = 'none';
-end
 % Make Temp Path Empty
 config.temp_path = '';
-%
+% Overwrite Bias & Uncertainty WIth Loadeed 
 if exist([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'], 'file')
     % Load Config
     config_load = load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
@@ -179,7 +143,11 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
             % Add CHS Wave SP
             config.sp_ID_wave = str2double(chs_ident{5}(3:end));
         else
-            error('Error ID: 001 | call_input_parser.missing_dependency | CHS zip folder not found. Please verify file path...');
+            try
+                config.region = evalin('base', 'h5_region');
+            catch
+                error('Error ID: 001 | call_input_parser.missing_dependency | CHS zip folder not found. Please verify file path...');
+            end
         end
         % Create String Pattern For Naming Convention
         config.name_prefix = [project_name filesep struc_id filesep...
@@ -223,9 +191,15 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
                 chs_ident = strsplit(fname,'_');% [Region Storm_Type Sim_Type Post_Type SP_ID Model File_Type]
                 % Add CHS ADCIRC SP
                 config.sp_ID_wave = str2double(chs_ident{5}(3:end));
-                % Create String Pattern For Naming Convention
-                config.name_prefix = [project_name filesep struc_id filesep...
-                    project_name '_' struc_id '_CHS_' config.region];
+                if contains(config.region,'CHS')
+                    % Create String Pattern For Naming Convention
+                    config.name_prefix = [project_name filesep struc_id filesep...
+                        project_name '_' struc_id '_' config.region];
+                else
+                    % Create String Pattern For Naming Convention
+                    config.name_prefix = [project_name filesep struc_id filesep...
+                        project_name '_' struc_id '_CHS_' config.region];
+                end
                 % Define Naming Convention
                 file2look = [config.name_prefix '_SP*'];
             case 1 % Custom Modeling (External Model) (Lacking Identifiers)

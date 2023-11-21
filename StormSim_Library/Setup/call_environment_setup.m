@@ -23,8 +23,10 @@ struc_id = config.struc_id;
 case_name = config.case_name;
 % Probability Masses
 PM_path = config.prob_mass_source;
+% outfolkder
+outfolder = config.outfolder;
 % OutDir
-outDir = [project_name filesep struc_id filesep case_name];
+outDir = fullfile(outfolder, project_name, struc_id, case_name);
 % Project And Transect ID Folder And Subfolder
 if ~exist(outDir,'dir')
     mkdir(outDir);

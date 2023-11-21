@@ -34,9 +34,6 @@ if any(contains(fieldnames(project_forcing),{'XC'}))
     [Resp.('XC').(f_str), project_forcing] = compute_structure_response(config, structure, project_forcing, emp_coeff, 'XC');
     % 2. Compute Project Forcing & Structure Responses Hazard Curves
     HC_out.('XC').(f_str) = call_hazard_curve_builder(config, structure, project_forcing.('XC'), Resp.('XC').(f_str), 'XC', use_aep, outPath);
-    % 3. Plot Outputs
-    disp('            Plotting hazard curves....');
-    plot_hazard_curves(HC_out.('XC').(f_str), use_aep);
 end
 
 %% TROPICAL STORMS
@@ -48,18 +45,12 @@ if any(contains(fieldnames(project_forcing),{'TC'}))
     [Resp.('TC').(f_str), project_forcing] = compute_structure_response(config, structure, project_forcing, emp_coeff, 'TC');
     % 2. Compute Project Forcing & Structure Responses Hazard Curves
     HC_out.('TC').(f_str) = call_hazard_curve_builder(config, structure, project_forcing.('TC'), Resp.('TC').(f_str), 'TC', use_aep, outPath);
-    % 3. Plot Outputs
-    disp('            Plotting hazard curves....');
-    plot_hazard_curves(HC_out.('TC').(f_str), use_aep);
 end
 
 %% COMBINE HAZARD CURVES
 if strcmp(storm_sampling,'CC')
     disp('         Combining project primary responses hazard curves...');
     [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);
-    % 3. Plot Outputs
-    disp('            Plotting hazard curves....');
-    plot_hazard_curves(HC_out.('CC').(f_str), use_aep);
 end
 
 %% COMPUTE FREQUENCY BASED RESPONSES (IF NEEDED)
