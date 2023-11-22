@@ -16,10 +16,7 @@ if ts_switch == 0
 else
     resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{1}).('Timeseries').var},'un',false)'),2)==1);
 end
-% 
-if isempty(resp_indx)
-    return;
-end
+
 % Remove Other HCs
 for ii = 1:length(storm_types)
     % Timeseries/Peaks
@@ -29,10 +26,10 @@ for ii = 1:length(storm_types)
         % Loop Through Fieldnames
         for jj = 1:length(pDatasets)
             % HC Data
-            if ts_switch == 0
-                resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Peaks').(pDatasets{jj}).var},'un',false)'),2)==1);
-            else
-                resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Timeseries').var},'un',false)'),2)==1);
+            resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Peaks').(pDatasets{jj}).var},'un',false)'),2)==1);
+            %
+            if isempty(resp_indx)
+                continue;
             end
             % Grab HC Data
             hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Peaks').(pDatasets{jj})(resp_indx);
@@ -50,6 +47,12 @@ for ii = 1:length(storm_types)
         pDatasets = {'Maxima'};
         % Loop Through Fieldnames
         for jj = 1:length(pDatasets)
+            %
+            resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Timeseries').var},'un',false)'),2)==1);\
+            %
+            if isempty(resp_indx)
+                continue;
+            end
             % Grab HC Data
             hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Timeseries')(resp_indx);
             % Grab Forcing Data (Scatter)
@@ -62,6 +65,10 @@ for ii = 1:length(storm_types)
             end
         end
     end
+end
+
+if isempty(hcData)
+    return;
 end
 
 %% GRAB INFROMATION FROM "config"
@@ -238,7 +245,7 @@ for ii = 1:length(pDatasets)
         eval([helper_str{hh} '.XLim = x_lim;']);
         eval([helper_str{hh} '.XScale = ''log'';']);
         eval([helper_str{hh} '.YScale = ''linear'';']);
-                eval([helper_str{hh} '.XDir = ''reverse'';']);
+        eval([helper_str{hh} '.XDir = ''reverse'';']);
     end
 
 
@@ -272,16 +279,16 @@ for ii = 1:length(pDatasets)
                 % Append New Data Tip
                 p.DataTipTemplate.DataTipRows(end+1) = row;
             end
-%             p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-%             p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-%             p5 = plot(ax_xc_hc_tp,xc_x,hcData.('XC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-%             % Update Data Tip
-%             % Create Data Tip Vector
-%             row = dataTipTextRow('RowID', 1:length(xc_x));
-%             % Append New Data Tip
-%             p1.DataTipTemplate.DataTipRows(end+1) = row;
-%             p2.DataTipTemplate.DataTipRows(end+1) = row;
-%             p5.DataTipTemplate.DataTipRows(end+1) = row;
+            %             p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            %             p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            %             p5 = plot(ax_xc_hc_tp,xc_x,hcData.('XC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            %             % Update Data Tip
+            %             % Create Data Tip Vector
+            %             row = dataTipTextRow('RowID', 1:length(xc_x));
+            %             % Append New Data Tip
+            %             p1.DataTipTemplate.DataTipRows(end+1) = row;
+            %             p2.DataTipTemplate.DataTipRows(end+1) = row;
+            %             p5.DataTipTemplate.DataTipRows(end+1) = row;
         end
     end
 
@@ -305,16 +312,16 @@ for ii = 1:length(pDatasets)
                 % Append New Data Tip
                 p.DataTipTemplate.DataTipRows(end+1) = row;
             end
-%             p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-%             p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-%             p6 = plot(ax_tc_hc_tp,tc_x,hcData.('TC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-%             % Update Data Tip
-%             % Create Data Tip Vector
-%             row2 = dataTipTextRow('RowID', 1:length(tc_x));
-%             % Append New Data Tip
-%             p3.DataTipTemplate.DataTipRows(end+1) = row2;
-%             p4.DataTipTemplate.DataTipRows(end+1) = row2;
-%             p6.DataTipTemplate.DataTipRows(end+1) = row2;
+            %             p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            %             p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            %             p6 = plot(ax_tc_hc_tp,tc_x,hcData.('TC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
+            %             % Update Data Tip
+            %             % Create Data Tip Vector
+            %             row2 = dataTipTextRow('RowID', 1:length(tc_x));
+            %             % Append New Data Tip
+            %             p3.DataTipTemplate.DataTipRows(end+1) = row2;
+            %             p4.DataTipTemplate.DataTipRows(end+1) = row2;
+            %             p6.DataTipTemplate.DataTipRows(end+1) = row2;
         end
     end
     % Save Figure
