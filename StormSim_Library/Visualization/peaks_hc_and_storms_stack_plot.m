@@ -48,7 +48,7 @@ for ii = 1:length(storm_types)
         % Loop Through Fieldnames
         for jj = 1:length(pDatasets)
             %
-            resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Timeseries').var},'un',false)'),2)==1);\
+            resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Timeseries').var},'un',false)'),2)==1);
             %
             if isempty(resp_indx)
                 continue;
