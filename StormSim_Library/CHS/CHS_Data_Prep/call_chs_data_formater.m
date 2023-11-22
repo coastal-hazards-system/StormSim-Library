@@ -371,6 +371,8 @@ else
     config.Nyrs_XC = storm.('XC').Nyrs_XC;
     config.Nstm_XC = storm.('XC').Nstm_XC;
     % Remove Temp Folder 
-    rmdir(temp_path,'s');
+    if exist(temp_path,'dir')
+        rmdir(temp_path,'s');
+    end
 end
 end
