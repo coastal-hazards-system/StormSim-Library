@@ -63,8 +63,8 @@ struc_id = config.struc_id;
 case_name = config.case_name;
 % Make Temp Path Empty
 config.temp_path = '';
-% Overwrite Bias & Uncertainty WIth Loadeed 
-if exist([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'], 'file')
+% Overwrite Bias & Uncertainty WIth Loadeed
+if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file')
     % Load Config
     config_load = load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
     config_load = config_load.config;
@@ -151,7 +151,7 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
         end
         % Create String Pattern For Naming Convention
         config.name_prefix = [project_name filesep struc_id filesep...
-            project_name '_' struc_id '_CHS_' config.region];
+            project_name '_' struc_id '_' config.region];
         % Define Naming Convention
         file2look = [config.name_prefix '_SP*'];
     case 2 % .mat -> CSTORM or Other
@@ -261,7 +261,15 @@ end
 config.u_engine = 0;
 % Forcing Adjustments Field Initialization
 config.f_adjust = 0;
-
+%
+try
+    dummy = strsplit(config.project_CLs,{' ','[',']'});
+    dummy = dummy(2:end-1);
+    dummy = sort(cellfun(@str2double, dummy), "ascend");
+    config.project_CLs = ['[',strtrim(sprintf('%d ', dummy)),']'];
+catch
+    config.project_CLs = '[16 84]';
+end
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
 config = call_environment_setup(config, isempty(file2look));
