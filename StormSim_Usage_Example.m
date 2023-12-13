@@ -195,7 +195,7 @@ t6 = toc(t6);
 
 %% STEP 6: COMPUTE  PROJECT RESPONSES 
 t7 = tic;
-Resp = call_project_response(config, project_forcing, structure);
+Resp = call_project_response(config, project_forcing, structure, prob_mass);
 t7 = toc(t7);
 
 %% PRINT TIME 
