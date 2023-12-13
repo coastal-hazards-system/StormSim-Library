@@ -1,4 +1,4 @@
-function [Resp] = call_project_response(config, project_forcing, structure)
+function [Resp] = call_project_response(config, project_forcing, structure, prob_mass)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
 workflow = config.workflow;
@@ -21,10 +21,9 @@ struc_id = config.struc_id;
 % Define Case  Name
 case_name = config.case_name;
 % Define
-subDir = [project_name filesep struc_id filesep case_name filesep];
+subDir = fullfile(project_name, struc_id, case_name);
 % Output Save Dir
-outDir = [project_name, filesep, struc_id, filesep,...
-    project_name,'_', struc_id];
+outDir = fullfile(project_name, struc_id, [project_name,'_', struc_id]);
 % Load Empirical Coefficients
 [emp_coeff] = load_empirical_coefficients();
 
@@ -35,13 +34,12 @@ switch workflow
         % Define Workflow ID String
         if workflow == 4
             % Define Workflow Name
-            wName = 'FB';
-            subDir = [subDir filesep 'Frequency_Base' filesep];
-
+            wName = 'PROS-FB';
+            subDir = [fullfile(subDir, 'PROS-FB'), filesep];
         else
             % Define Workflow Name
-            wName = 'RB';
-            subDir = [subDir filesep 'PROS' filesep];
+            wName = 'PROS';
+            subDir = [fullfile(subDir, 'PROS'), filesep];
         end
         % Grab "project_forcing" Structure Fields
         switch storm_sampling
@@ -78,7 +76,7 @@ switch workflow
                     end
                     % Call StormSim: PROS RB1
                     helper_var = stormsim_pros(config,...
-                        aux_var, structure, emp_coeff, [subDir wName '1_' level_2{ii}]);
+                        aux_var, structure, emp_coeff, fullfile(subDir, [ wName '_RB1_' level_2{ii} ]));
                     % Get Available Storm Types
                     level_a = fieldnames(helper_var);
                     %
@@ -107,7 +105,7 @@ switch workflow
             % Call StormSim: PROS RB3
             if use_peaks == 1 % Append To Existing
                 aux_var = stormsim_pros(config,...
-                    aux_var, structure, emp_coeff, [subDir wName '3']);
+                    aux_var, structure, emp_coeff, fullfile(subDir, [ wName '_RB3' ]));
                 % Check If XC & TC Exist
                 level_a = fieldnames(helper_var);
                 % Assign Results
@@ -116,11 +114,11 @@ switch workflow
                 end
             else % Create Resp Variable
                 Resp = stormsim_pros(config,...
-                    aux_var, structure, emp_coeff, [subDir wName '3']);
+                    aux_var, structure, emp_coeff, fullfile(subDir, [ wName '_RB3' ]));
             end
         end
         % Plot Results
-        call_pros_plots(config, structure, project_forcing, Resp);
+        call_pros_plots(config, structure, project_forcing, prob_mass, Resp);
     case 3 % CSR
         %% STORMSIM: MCS-CSR
         % Print Status
