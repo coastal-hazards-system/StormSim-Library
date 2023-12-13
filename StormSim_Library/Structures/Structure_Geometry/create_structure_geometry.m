@@ -116,46 +116,5 @@ if show_plot == 1
 % Create Figure
 fig = plot_structure_geometry(config, structure);
 end
-%% APPEND TO .MAT File 
-if exist(save_name,'file') == 2
-    % Append To Existing .mat For Loading
-    save(save_name,'structure','-append');
-end
-%% RESHAPE STRUCTURE TO MATCH FORCING FIELD
-% Evaluate Case According To Workflow
-% switch workflow
-%     case 1 % Response Base Analysis (RB1) - PROS
-%         % Define Structure Fields To Reshape
-%         vars_2_reshape = fieldnames(structure);
-%         % Remove Standard Deviation
-%         vars_2_reshape = vars_2_reshape(~strcmp(vars_2_reshape,'std'));
-%         % Need To Discuss With Jeff - Hardcoded For Now
-%         %         vars_2_reshape = {'toe_elevation'};
-%         % Reshape Variables
-%         for kk = 1:length(vars_2_reshape)
-%                 % Store Reshape Fields For RB 1 Analysis
-%                 structure.Peaks.(vars_2_reshape{kk}) = structure.(vars_2_reshape{kk});%repmat(structure.(vars_2_reshape{kk}),xc_shape);
-%         end
-%     otherwise % Lice Cycle Base Analyssi (MCS/CSR)
-%                 % Define Structural Parameters 
-%         vars_2_reshape = [fieldnames(structure.std),struct2cell(structure.std)];
-%         % Remove Parameters That Have No Uncertainty 
-%         indx = ~contains(cellfun(@class,vars_2_reshape(:,2),'un',false),'char');
-%         % Remove Parameter
-%         vars_2_reshape = vars_2_reshape(indx,:);
-%         % Reshape Variables
-%         for lc = 1:length(project_forcing.(storm_sampling).Peaks.Maxima)
-%             for kk = 1:length(vars_2_reshape)
-%                 % Check For Timeseries
-%                 if isfield(project_forcing.(storm_sampling),'Timeseries')
-%                     % Store Reshaped Fields For Timeseries Analysis
-%                     structure.(storm_sampling).Timeseries(lc).(vars_2_reshape{kk}) = repmat(structure.(vars_2_reshape{kk}),size(project_forcing.(storm_sampling).Timeseries(lc).LCNUM,1),1);
-%                 end
-%                 % Store Reshaped Fields For Peaks Analysis (Maxima, WLP & WHP have the same shape)
-%                 structure.(storm_sampling).Peaks(lc).(vars_2_reshape{kk}) = repmat(structure.(vars_2_reshape{kk}),size(project_forcing.(storm_sampling).Peaks.Maxima(lc).LCNUM,1),1);
-%             end
-%         end
-% end
-
 end
 
