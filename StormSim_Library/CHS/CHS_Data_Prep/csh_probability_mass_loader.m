@@ -29,7 +29,9 @@ pm_version = pm_version{end};
 % Load According To Region (this will be replaced with PM v2)
 if exist(pm_path,'dir')
     switch pm_version
-        case 'NACCS'
+        case {'CHS-NA', 'NACCS'}
+            % Make Sure TO Correct NACCS
+            pm_version = 'CHS-NA';
             try
                 % Listing of closest (CRL) to each save point.
                 load(fullfile(pm_path,[pm_version '_CRL_ic.mat']),'ic');% nNodes x 1 (double)
@@ -115,9 +117,8 @@ if exist(pm_path,'dir')
             %}
 
             % Find CRL closest to savepoint
-            distDeg = distance(staID(Nsvpt,2),staID(Nsvpt,3),CRL(:,1),CRL(:,2)); %output = degrees
-            dist = distdim(distDeg,'deg','km'); %converts from deg to km
-            ic=find(dist == min(dist));
+            [nearest_lat, nearest_lon, ~, dist, ~] = find_nearest_latlon(staID(Nsvpt,2),staID(Nsvpt,3),CRL(:,1),CRL(:,2), []);
+            [~, ic] = min(dist); % km
 
             % Convert LI SRR to storms/year using a 600 km diameter.
             TC_SRR = SRR_LI(ic)*600;
@@ -135,8 +136,6 @@ if exist(pm_path,'dir')
             % Find storms within 200 km of savepoint
             trk_dist=200;
             trk_lat=Param(:,4); trk_lon=Param(:,5);
-            distDeg = distance(trk_lat,trk_lon,staID(Nsvpt,2),staID(Nsvpt,3)); %output = degrees
-            dist = distdim(distDeg,'deg','km')'; %converts from deg to km
             dist200=find(dist<=trk_dist);
 
             % Low Intensity Storm Population
@@ -145,6 +144,8 @@ if exist(pm_path,'dir')
             smpl1 = dist200((Param(dist200,7)>=28) & (Param(dist200,7)<48));
             % High Intensity Storm Population
             smpl2 = dist200(Param(dist200,7)>=48);
+            % Make DP Col Be The 5
+            Param = [Param(:,1:4), Param(:,7), Param(:,5:6)];
     end
 else
     Param = [];
