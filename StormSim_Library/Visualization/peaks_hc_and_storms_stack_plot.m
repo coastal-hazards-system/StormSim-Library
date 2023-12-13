@@ -1,4 +1,4 @@
-function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, ts_switch, outpath)
+function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, prob_mass, ts_switch, outpath)
 %% PULL DATA
 % Define Plot Field
 plt_fld = 'y_plot';
@@ -204,16 +204,16 @@ for ii = 1:length(pDatasets)
     ax_tc_hc_swl = ax_ini(ax_tc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['TC  | SWL | ' region ' | SP' num2str(sp_ID)]);
 
     ax_tc_hc_hm0 = subplot(nrows, ncols,ncols+3);
-    ax_tc_hc_hm0 = ax_ini(ax_tc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'H_{m_{0}} [m]', ['TC  | H_{m_{0}} | ' region ' | SP' num2str(sp_ID)]);
+    ax_tc_hc_hm0 = ax_ini(ax_tc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Hm0 [m]', ['TC  | Hm0 | ' region ' | SP' num2str(sp_ID)]);
 
     ax_tc_hc_tp = subplot(nrows, ncols,ncols+4);
-    ax_tc_hc_tp = ax_ini(ax_tc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'T_{p} [s]', ['TC  | T_{p} | ' region ' | SP' num2str(sp_ID)]);
+    ax_tc_hc_tp = ax_ini(ax_tc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Tp [s]', ['TC  | Tp | ' region ' | SP' num2str(sp_ID)]);
 
 
     % ---- FORMAT XC STORM DATA AXES----%
     % Define Axes Handle
     ax_xc = subplot(nrows, ncols,1);
-    ax_xc = ax_ini(ax_xc, ax_tick_fnt, ax_label_fnt, title_fnt, ['SWL [m, ' datum ']'], 'H_{m_{0}} [m]', ['XC Storms | ' xc_nstm]);
+    ax_xc = ax_ini(ax_xc, ax_tick_fnt, ax_label_fnt, title_fnt, ['SWL [m, ' datum ']'], 'Hm0 [m]', ['XC Storms | ' xc_nstm]);
 
 
     % ------- FORMAT XC HC DATA AXES -------
@@ -223,10 +223,10 @@ for ii = 1:length(pDatasets)
     ax_xc_hc_swl = ax_ini(ax_xc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['XC  | SWL | ' region ' | SP' num2str(sp_ID)]);
 
     ax_xc_hc_hm0 = subplot(nrows, ncols,3);
-    ax_xc_hc_hm0 = ax_ini(ax_xc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'H_{m_{0}} [m]', ['XC  | Hm0 | ' region ' | SP' num2str(sp_ID)]);
+    ax_xc_hc_hm0 = ax_ini(ax_xc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Hm0 [m]', ['XC  | Hm0 | ' region ' | SP' num2str(sp_ID)]);
 
     ax_xc_hc_tp = subplot(nrows, ncols,4);
-    ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'T_{p} [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID)]);
+    ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Tp [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID)]);
 
     % Define SWL Y Lim
     ax_tc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
@@ -252,16 +252,18 @@ for ii = 1:length(pDatasets)
     % Add Legend
     legend2 = legend(ax_xc_hc_swl);
     % Get Legend Title Handle
-    htitle = get(legend2,'Title');
+%     htitle = get(legend2,'Title');
     % Define Legend Location
-    set(legend2,'Location','southeast','FontSize',ax_tick_fnt,'Orientation','horizontal','NumColumns',3);
+    set(legend2,'Location','southeast','FontSize',ax_tick_fnt,...
+        'Orientation','horizontal','NumColumns',3,...
+        'FontSize', 16);
     % Define Legened Title
-    set(htitle,'String','Confidence Levels');
+%     set(htitle,'String','Confidence Levels','FontSize',16);
 
     %----- PLOT DATA -------
     if contains('XC',storm_types)
         % Plot Each Storm
-        p_xc = plot(ax_xc,sData.('XC').(pDatasets{ii}).SWL,sData.('XC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
+        p_xc = plot(ax_xc,sData.('XC').(pDatasets{ii}).SWL, sData.('XC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
         % Plot Each HC
         for i = 1:length(CLs)
             % Define Curve Name
@@ -295,6 +297,8 @@ for ii = 1:length(pDatasets)
     if contains('TC', storm_types)
         % Plot Each Storm
         p_tc = plot(ax_tc,sData.('TC').(pDatasets{ii}).SWL,sData.('TC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
+%         p_tc = scatter(ax_tc, sData.('TC').(pDatasets{ii}).SWL, sData.('TC').(pDatasets{ii}).Hm0, 5, prob_mass.Param(:,5), 'filled');
+
         % Plot Each HC
         for i = 1:length(CLs)
             % Define Curve Name
