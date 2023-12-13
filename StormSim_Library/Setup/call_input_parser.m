@@ -1,4 +1,4 @@
-function config = call_input_parser(input_filename)
+function [config, structure] = call_input_parser(input_filename)
 %{
     %% DESCRIPTION
     This function parses StormSim's project input file and creates "config"
@@ -272,5 +272,5 @@ catch
 end
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
-config = call_environment_setup(config, isempty(file2look));
+[config, structure] = call_environment_setup(config, isempty(file2look));
 end % End of Function

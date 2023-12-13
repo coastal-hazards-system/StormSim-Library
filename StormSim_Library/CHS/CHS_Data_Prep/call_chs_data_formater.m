@@ -370,7 +370,7 @@ if isempty(file2look) % Process SP Data
     end
     
     save(fullfile(config.outfolder, project_name, struc_id, case_name,[ project_name '_' struc_id '_' config.case_name '_config_file.mat']),...
-        'config');
+        'config', '-append');
 else
     % Add Fields To Storm
     config.Nyrs_XC = storm.('XC').Nyrs_XC;

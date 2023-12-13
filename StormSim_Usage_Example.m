@@ -9,7 +9,7 @@ MCS/CSR Requires:
 % Define StormSim Input File Name
 stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
 
-%% STEP 0: SET-UP ENVIRONMENT
+%% STEP 1: SET-UP PROJECT ENVIRONMENT
 %{
  Description:
    In order to use the full functionalities included within the StormSim
@@ -19,14 +19,14 @@ stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in 
    toolbox in its entirety.
   Outputs:
    1. config: Contains parsed information from StormSim input file | 1 x 1 | structure, with nFields 
-    
+   2. structure: Contains parsed information for the specified structure type. | 1x1 | structure, with nFields
 %}
 t1 = tic;
 % Parse StormSim Configuration File
-config = call_input_parser(stormsim_input_file);
+[config, structure] = call_input_parser(stormsim_input_file);
 t1 = toc(t1);
 
-%% STEP 1: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
+%% STEP 2: IMPORT, PROCESS & FORMAT COASTAL HAZARD SYSTEM (CHS) DATA (h5 -> MATLAB Memory)
 %{
  Description:
    First step of any project is to screen and format the forcing data. In
@@ -84,7 +84,7 @@ t2 = tic;
 [storm, ~, prob_mass, config] = call_chs_data_formater(config);
 t2 = toc(t2);
 
-%% STEP 2: CREATE STORM FORCING 
+%% STEP 3: CREATE STORM FORCING 
 %{
  Description:
    Once input storm data has been formated the next step is to generate the
@@ -149,57 +149,28 @@ Outputs:
 t3 = tic;
 [project_forcing] = call_project_forcing_formater(config, storm, prob_mass);
 t3 = toc(t3);
- 
-%% STEP 3: CREATE STRUCTURE GEOMETRY
-%{
- Description:
-   Extracts relevant Protective System Element (PSE) geometry and
-   properties. Currently supports the following PSE's:
-    1. Levee
-    2. Flodwall w/o Berm
-    3. Rubble mound
-
-Inputs:
-   Vars:
-    1. config
-    2. figure visibility: 1 - show plot 0 - hide plot (PSE cross-section)
-
-Outputs: 
-  MATLAB data structure with all relevant structural parameters based on
-  specified PSE.
-
-Files (.png & .mat):
-    1. PSE cross-section image  -> exported to project_folder/Transect_ID/Case_name 
-    2. Formated structural parameters are appended to config .mat -> exported to project_folder/Transect_ID/Case_name 
-Vars:
-    1. structure: Contains parsed structural information from config | 1 x 1 | with nFields 
-%}
-t4 = tic;
-% Create Project Structure Geometry
-[structure] = create_structure_geometry(config, 1);% Second input argument: 1 - show plot 0 - hide plot
-t4 = toc(t4);
 
 %% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
-t5 = tic;
+t4 = tic;
 [project_forcing, config] = call_uncertainty_engine(config, project_forcing);
-t5 = toc(t5);
+t4 = toc(t4);
 
 %% STEP 5: APPLY PORJECT FORCING ADJUSTMENTS 
 % For Response Base Analysis:
 % _no_rep fields are used for SWL, Hm0, Tp, hazard curve calculations
 % Hence will not have depth limitation applied. Hm0 @ Savepoint Depth 
 % SLR, Rand Tide, Depth Limitation
-t6 = tic;
+t5 = tic;
 [project_forcing, config] = call_project_forcing_adjuster(config, project_forcing, structure);
-t6 = toc(t6);
+t5 = toc(t5);
 
 %% STEP 6: COMPUTE  PROJECT RESPONSES 
-t7 = tic;
+t6 = tic;
 Resp = call_project_response(config, project_forcing, structure, prob_mass);
-t7 = toc(t7);
+t6 = toc(t6);
 
 %% PRINT TIME 
-disp(['Simulation Completed. Total run time: ' num2str(round(sum([t1,t2,t3,t4,t5,t6,t7])/60,2)) ' mins...']);
+disp(['Simulation Completed. Total run time: ' num2str(round(sum([t1,t2,t3,t4,t5,t6])/60,2)) ' mins...']);
 % diary 'off';
 
 

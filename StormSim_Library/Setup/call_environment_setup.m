@@ -1,4 +1,4 @@
-function [config] = call_environment_setup(config, run_flag)
+function [config, structure] = call_environment_setup(config, run_flag)
 %{
 %% DESCRIPTION
 This function initializes the StormSim library.
@@ -70,7 +70,7 @@ if run_flag == 1
         case {1,4} % StormSim: PROS
             welcome_message = ['************************************************************************' newline...
                 '***           Stochastic Storm Simulation System (StormSim)          ***' newline...
-                '*** StormSim: Probabilistic Run-up, Overtopping, Stone Sizing (PROS) ***' newline...
+                '***        StormSim: Probabilistic Responses of Structures (PROS)    ***' newline...
                 '***                          Version 1.0.0                           ***' newline...
                 '***                        FOR  TESTING  ONLY                        ***' newline...
                 '************************************************************************'];
@@ -123,12 +123,10 @@ if run_flag == 1
     %         disp('  Discretized normal curve not found...');
     %     end
 
-else
+end
     % Create Strucutre Variable
     [structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot
-    assignin('base','structure',structure);
     % Save Out Configuration File
-    save([outDir filesep project_name '_' struc_id '_' case_name '_config_file.mat'],...
+    save(fullfile(outDir, [project_name '_' struc_id '_' case_name '_config_file.mat']),...
         'config','structure');
-end
 end
