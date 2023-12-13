@@ -218,18 +218,24 @@ end
 % Adjust storm Type Dependant Fields
 switch storm_type
     case 'TC'% Tropical Cyclones
-        % Remove storms From Frequency Vector
-        prob_mass.TC_Freq(storm2rm,:)=[];
-        % Redifine New Frequency Vector
-        if ~isempty(storm2rm)
-            prob_mass.TC_Freq = prob_mass.TC_Freq*prob_mass.TotalFreq/sum(prob_mass.TC_Freq);
+        if isempty(prob_mass.TC_Freq)
+            % Something Went Wrong In PM Load
+            warning(['Something went wrong loading probability masses..']);
+        else
+            % Remove storms From Frequency Vector
+            prob_mass.TC_Freq(storm2rm,:)=[];
+            % Redifine New Frequency Vector
+            if ~isempty(storm2rm)
+                prob_mass.TC_Freq = prob_mass.TC_Freq*prob_mass.TotalFreq/sum(prob_mass.TC_Freq);
+            end
+            % Remove storms From Other Vars
+            prob_mass.Param(storm2rm,:)=[];
+            prob_mass.dist(:,storm2rm)=[];
+            %
+            prob_mass.smpl1(ismember(prob_mass.smpl1,removed_storms.Maxima)) = [];
+            prob_mass.smpl0(ismember(prob_mass.smpl0,removed_storms.Maxima)) = [];
+            prob_mass.smpl2(ismember(prob_mass.smpl2,removed_storms.Maxima)) = [];
         end
-        % Remove storms From Other Vars
-        prob_mass.Param(storm2rm,:)=[];
-        prob_mass.dist(:,storm2rm)=[];
-        %
-        prob_mass.smpl1(ismember(prob_mass.smpl1,removed_storms.Maxima)) = [];
-        prob_mass.smpl0(ismember(prob_mass.smpl0,removed_storms.Maxima)) = [];
         % Define EMpty Var For Outputs
         XC_Nyrs = [];XC_Nstm = [];
     case 'XC' % Extratropical storms
