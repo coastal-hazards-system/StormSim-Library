@@ -115,7 +115,9 @@ for k = 1:plen
                 p.DataTipTemplate.DataTipRows(end+1) = row;
             end
             % Define Y Lim
-            ax.YLim = [y_min_list(k) y_max_list(k)];
+            try
+                ax.YLim = [y_min_list(k) y_max_list(k)];
+            end
             % Set XTicks
             ax.XTick = xticks_data;
             if ll==xticks_label || xticks_label==-9
