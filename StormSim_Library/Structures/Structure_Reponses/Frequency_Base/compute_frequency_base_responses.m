@@ -38,54 +38,11 @@ for ii = 1:length(level_1)
         % Define Station ID
         staID = resp_names{kk};
         % Assign Uncertainty Based On Station
-        switch staID
-            case 'SWL'
-                % Define Var Properties
-                unit_label = 'm'; % Unit
-                y_label = ['SWL [' unit_label ']']; % Y Label
-                var_name = 'SWL'; % Response Variable Name
-                y_scale_log = 0; % Y Axis Logarithmic Scale
-            case 'Hm0'
-                unit_label = 'm';
-                y_label = ['H_{m_{0}} [' unit_label ']'];
-                var_name = 'H_{m_{0}}';
-                y_scale_log = 0;
-            case 'Tp'
-                unit_label = 's';
-                y_label = ['T_p [' unit_label ']'];
-                var_name = 'T_p';
-                y_scale_log = 0;
-            case {'R2p','R2p_SWL'}
-                unit_label = 'm';
-                y_label = ['R_{2%} [' unit_label ']'];
-                var_name = 'R_{2%}';
-                if strcmp(staID,'R2p_SWL')
-                    y_label = ['R_{2%} + SWL [' unit_label ']'];
-                    var_name = 'R_{2%} + SWL';
-                end
-                y_scale_log = 0;
-            case {'Dn50','Dn50_LCBW'}
-                unit_label = 'm';
-                y_label = ['D_{n_{50}} [' unit_label ']'];
-                var_name = 'D_{n_{50}}';
-                if strcmp(staID,'Dn50_LCBW')
-                    y_label = ['D_{n_{50}} LCBW' unit_label ''];
-                    var_name = 'D_{n_{50}} LCBW';
-                end
-                y_scale_log = 0;
-            case 'p1'
-                unit_label = 'Pa';
-                y_label = ['P_1 [ ' unit_label ']'];
-                var_name = 'P_1';
-                y_scale_log = 0;
-            case 'q'
-                unit_label = 'm^3/s per m';
-                y_label = ['q [ ' unit_label ']'];
-                var_name = 'q';
-                y_scale_log = 1;
-        end
+            [~, ~, ~,...
+    ~, ~,...
+    ~, y_label, y_scale_log] = response_library_headers(config, staID);
         % Adjust Title String
-        row_ref.title{2} = [level_1{ii} '|' y_label];
+        row_ref.title{2} = [level_1{ii} ' | ' y_label];
         % Split Save Name
         [s_path, s_name, s_ext] = fileparts(row_ref.save_name);
         % Split File Name
@@ -93,12 +50,18 @@ for ii = 1:length(level_1)
         % Replace Response Variable
         new_s_name(end-2) = {staID};
         % Remove SST/JPM
-        new_s_name(end-3) = {[level_1{ii} '_Frequency_Base']};
+        new_s_name(end-3) = {[level_1{ii} '_PROS-FB']};
         % Append New Save Name ANd Store
         new_s_name = [s_path filesep strjoin(new_s_name,'_') s_ext];
         %% APPEND RESPONSE TO "HC_out"
         HC_out.(level_1{ii}).(f_str) = rb_response_appender(HC_out.(level_1{ii}).(f_str), r_indx, staID, y_label, row_ref.title,...
             row_ref.x_plot, resp_plot.(resp_names{kk}), row_ref.x_table, resp_table.(resp_names{kk}), {'Derived from primary responses hazard curves'}, y_scale_log, row_ref.CL, new_s_name);
+        % Append ARIs
+        if use_aep == 1
+            HC_out.(level_1{ii}).(f_str)(r_indx).x_table_ARI = ceil(1./aep2aef(HC_out.(level_1{ii}).(f_str)(1).x_table));
+        else
+            HC_out.(level_1{ii}).(f_str)(r_indx).x_table_ARI = ceil(1./HC_out.(level_1{ii}).(f_str)(1).x_table);
+        end
         % Increase Index
         r_indx = r_indx + 1;
     end
@@ -109,10 +72,10 @@ for ii = 1:length(level_1)
     if struc_type == 2 % Floodwall
         % Create Aux Variable
         Output = HC_out.(level_1{ii}).(f_str);
-        % Find Data Indexes
-        sIndx = cell2mat(cellfun(@(x) find(contains({Output.var}',x)==1),{'p1','Hm0','Tp','SWL','q'},'un',false));
         % If All Primary responses Are Valid
-        if length(sIndx)==5
+        if sum(ismember({Output.var}',{'p1','Hm0','Tp','SWL','q'}))==5
+            % Find Data Indexes
+            sIndx = cell2mat(cellfun(@(x) find(strcmp(x, {Output.var}')), {'p1','Hm0','Tp','SWL','q'}, 'un', false));
             % Grab Example Save Name
             outName = strsplit(Output(sIndx(5)).save_name,'q');
             % Compute Water Depth @ Structure Toe
@@ -158,6 +121,12 @@ for ii = 1:length(level_1)
                 Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
                     Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), {'Derived from primary responses hazard curves'},...
                     y_scale_log, row_ref.CL, [outName{1} sVar outName{2}]);
+                % Append ARIs
+                if use_aep == 1
+                    Output(rIndx+kk).x_table_ARI = ceil(1./aep2aef(Output(1).x_table));
+                else
+                    Output(rIndx+kk).x_table_ARI = ceil(1./Output(1).x_table);
+                end
             end
             % Compute Nappe Response (Table)
             [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
@@ -180,13 +149,19 @@ for ii = 1:length(level_1)
                 Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
                     Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}), {'Derived from primary responses hazard curves'},...
                     y_scale_log, row_ref.CL, [outName{1} pFields{kk} outName{2}]);
+                % Append ARIs
+                if use_aep == 1
+                    Output(rIndx+kk).x_table_ARI = ceil(1./aep2aef(Output(1).x_table));
+                else
+                    Output(rIndx+kk).x_table_ARI = ceil(1./Output(1).x_table);
+                end
             end
         end
         % Append To HC_Out
         HC_out.(level_1{ii}).(f_str) = [HC_out.(level_1{ii}).(f_str),Output];
     end
-    % Plot Frequency Based HCs
-    plot_hazard_curves(HC_out.(level_1{ii}).(f_str), use_aep);
+    %     % Plot Frequency Based HCs
+    %     plot_hazard_curves(HC_out.(level_1{ii}).(f_str), use_aep);
 end
 
 %% AUX FUNCTIONS (CONSOLIDATE LINES OF CODE)
