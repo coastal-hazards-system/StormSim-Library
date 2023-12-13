@@ -66,6 +66,7 @@ CONTRIBUTORS:
 HISTORY OF REVISIONS:
 20200903-ERS: revised.
 20200914-ERS: revised.
+20231207-LAA: Revised to add noice to duplicate values in POT sample.
 
 ***************  ALPHA  VERSION  ***************  FOR TESTING  ************
 %}
@@ -153,5 +154,11 @@ POTout(:,4) = dt(ParINDEX(:,3),1); %upper bound
 
 %% Remove NaN / Inf / negative values
 POTout(isnan(POTout(:,2))|isinf(POTout(:,2))|POTout(:,2)<=0,:)=[];
+
+%% Add noise to duplicates in POT sample - LAA 2023/12/07
+[~,w]=unique(POTout,'stable');
+duplicate_indices=setdiff(1:numel(POTout),w);
+POTout(duplicate_indices)=POTout(duplicate_indices)+1e-6;
+%%
 
 end

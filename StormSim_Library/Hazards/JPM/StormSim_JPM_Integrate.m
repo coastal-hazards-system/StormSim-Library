@@ -235,6 +235,7 @@ HISTORY OF REVISIONS:
     compatible with existing CHS studies.
 20210601-ERS: corrected bugs. Added capability to run in parallel.
 20210831-ERS: duplicates now removed from x values when interpolating HC plot in the integration script.
+20231207-LAA: duplicates now removed from y values when interpolating HC plot in the integration script.
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY  ***********
 %}
@@ -465,6 +466,10 @@ if ~isempty(id2)
                 % remove duplicates from x values
                 [~,ia,~]=unique(x,'stable');y=y(ia);x=x(ia);
 
+                %%% remove duplicates from y values - LAA 2023/12/07
+                [~,iy,~]=unique(y,'stable');y=y(iy);x=x(iy);
+                %%%
+
                 % Compute percentiles
                 resp_perc = CL_unc(y,U_tide(:,N));
                 
@@ -518,6 +523,10 @@ if ~isempty(id2)
                 
                 % remove duplicates from x values
                 [~,ia,~]=unique(x,'stable');y=y(ia);x=x(ia);
+
+                %%% remove duplicates from y values - LAA 2023/12/07
+                [~,iy,~]=unique(y,'stable');y=y(iy);x=x(iy);
+                %%%
 
                 % Compute percentiles
                 resp_perc = CL_unc(y,U_tide(:,N)); %#ok<PFBNS>

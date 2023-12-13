@@ -443,6 +443,7 @@ HISTORY OF REVISIONS:
 20210719-ERS: alpha v0.5: added warning message when mean HC > 1.75*emp HC.
 20210727-ERS: alpha v0.5: minor correction.
 20210809-ERS: alpha v0.5: revised.
+20231207-LAA: Revised to add noise to repeated values in the POT samples.
 
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
@@ -923,6 +924,17 @@ switch DataType
         end
 
     case 2 %POT
+
+        %%% Add noise to duplicates in POT sample - LAA 2023/12/07
+        for i=sz %dataset loop
+            aux_pot=procData(i).dat(:,2);
+            [~,w]=unique(aux_pot,'stable');
+            duplicate_indices=setdiff(1:numel(aux_pot),w);
+            aux_pot(duplicate_indices)=aux_pot(duplicate_indices)+1e-6;
+            procData(i).dat(:,2)=aux_pot;
+        end
+        %%%
+
         if GPD_TH_crit==0
             for i=sz %dataset loop
                 if stat_print == 1
