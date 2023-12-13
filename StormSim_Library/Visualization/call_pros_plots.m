@@ -120,7 +120,7 @@ for ii = 1:length(level_1) % For Each Storm Type
                 delete([fullfile(subDir, [ wName '_RB1_Comparison']) filesep '*' level_1{ii} '*']);
             end
             % Create Comparison Figure
-            peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', fullfile(subDir, [ wName '-RB1_Comparison']));
+            peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', fullfile(subDir, [ wName '_RB1_Comparison']));
         end
     end
 end
