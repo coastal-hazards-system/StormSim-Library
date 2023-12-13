@@ -1,4 +1,4 @@
-function call_pros_plots(config, structure, project_forcing, Resp)
+function call_pros_plots(config, structure, project_forcing, prob_mass, Resp)
 %% GRAB INPUTS
 % Define Workflow
 workflow = config.workflow;
@@ -26,12 +26,12 @@ subDir = fullfile(config.outfolder, project_name, struc_id, case_name);
 % Define Workflow ID String
 if workflow == 4
     % Define Workflow Name
-    wName = 'FB';
-    subDir = [subDir filesep 'Frequency_Base' filesep];
+    wName = 'PROS-FB';
+    subDir = fullfile(subDir, 'PROS-FB');
 else
     % Define Workflow Name
-    wName = 'RB';
-    subDir = [subDir filesep 'PROS' filesep];
+    wName = 'PROS';
+    subDir = fullfile(subDir, 'PROS');
 end
 plot_prioty_comp = config.pros_plot_prioty_comp;
 plot_hc_xsec = config.pros_plot_hc_xsec;
@@ -52,13 +52,13 @@ for ii = 1:length(level_1) % For Each Storm Type
             % Define Aux Variables
             switch level_2{jj}
                 case 'Peaks'
-                    fill_str = ['1_' level_3{kk}];
-                    fill_str2 = '1';
+                    fill_str = ['_RB1_' level_3{kk}];
+                    fill_str2 = '_RB1';
                     ts_switch = 0;
                     var_list = {Resp.(level_1{ii}).('Peaks').(level_3{kk}).var};
                 case 'Timeseries'
-                    fill_str = '3';
-                    fill_str2 = '3';
+                    fill_str = '_RB3';
+                    fill_str2 = '_RB3';
                     ts_switch = 1;
                     var_list = {Resp.(level_1{ii}).('Timeseries').var};
             end
@@ -68,11 +68,11 @@ for ii = 1:length(level_1) % For Each Storm Type
             % ---------- Individual Responses Hazard Curves -----------
             if plot_hc == 1
                 % Make Directory
-                if ~exist([subDir wName fill_str ],'dir')
-                    mkdir([subDir wName fill_str ]);
+                if ~exist(fullfile(subDir, [ wName fill_str ]),'dir')
+                    mkdir(fullfile(subDir, [ wName fill_str ]));
                 else % Directory Exist
                     % Delete Existing Files
-                    delete([subDir wName fill_str filesep '*' level_1{ii} '*']);
+                    delete([fullfile(subDir, [ wName fill_str ]) filesep '*' level_1{ii} '*']);
                 end
                 % Extract HC Data From Resp
                 switch level_2{jj}
@@ -87,7 +87,7 @@ for ii = 1:length(level_1) % For Each Storm Type
             % ---------- Forcing Hazard Curves & POT's Screening Plots -----------
             if plot_forcing_hc_w_pot == 1
                 % Create Project Forcing + HC Comparison Figure
-                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, ts_switch, [subDir wName fill_str2 '_Project_Forcing_Comparison']);
+                peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, prob_mass, ts_switch, fullfile(subDir, [ wName fill_str2 '_Project_Forcing_Comparison']));
             end
             % ---------- Hazard Cross-Section Plots -----------
             if plot_hc_xsec == 1 && pass_flag
@@ -99,11 +99,11 @@ for ii = 1:length(level_1) % For Each Storm Type
                         aux_var = Resp.(level_1{ii}).('Timeseries');
                 end
                 %
-                if ~exist([subDir wName fill_str '_Hazards_Cross-Sections'],'dir')
-                    mkdir([subDir wName fill_str '_Hazards_Cross-Sections']);
+                if ~exist(fullfile(subDir, [ wName fill_str '_Hazards_Cross-Sections']),'dir')
+                    mkdir(fullfile(subDir, [ wName fill_str '_Hazards_Cross-Sections']));
                 else % Directory Exist
                     % Delete Existing Files
-                    delete([subDir wName fill_str '_Hazards_Cross-Sections' filesep '*' level_1{ii} '*']);
+                    delete([fullfile(subDir, [ wName fill_str '_Hazards_Cross-Sections']) filesep '*' level_1{ii} '*']);
                 end
                 %
                 plot_structure_and_forcing(config, aux_var,...
@@ -113,14 +113,14 @@ for ii = 1:length(level_1) % For Each Storm Type
         % ---------- Peaks Priority Individual Responses Hazard Curves Comparison -----------
         if plot_prioty_comp == 1 && contains(level_2{jj},'Peaks') && length(level_3) > 1
             % Make Directory
-            if ~exist([subDir wName '1_Comparison'],'dir')
-                mkdir([subDir wName '1_Comparison' ]);
+            if ~exist(fullfile(subDir, [ wName '_RB1_Comparison']),'dir')
+                mkdir(fullfile(subDir, [ wName '_RB1_Comparison']));
             else % Directory Exist
                 % Delete Existing Files
-                delete([subDir wName '1_Comparison' filesep '*' level_1{ii} '*']);
+                delete([fullfile(subDir, [ wName '_RB1_Comparison']) filesep '*' level_1{ii} '*']);
             end
             % Create Comparison Figure
-            peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', [subDir wName '1_Comparison']);
+            peaks_hc_stack_plot(Resp, level_1{ii}, use_aep, 'h', fullfile(subDir, [ wName '-RB1_Comparison']));
         end
     end
 end
