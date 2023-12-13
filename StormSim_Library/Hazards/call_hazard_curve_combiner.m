@@ -65,6 +65,9 @@ for j = s_indx
             u_field = u_vector{contains(u_names, 'q')};
         case {'Dn50','Dn50_LCBW', 'Dn50_Lee'}
             u_field = u_vector{contains(u_names, 'dn50')};
+        case {'p2dyn','p2sta','p2total','p3dyn','p3sta','p3total','pu','X_low','theta_low','X_up','theta_up','Bx','X_c_surge','theta_center','Bjet','Vjet','Fjet'}
+            % Skip Until Issues Are Sorted 
+            continue;
         otherwise
             u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
     end
@@ -88,11 +91,12 @@ for j = s_indx
 end
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES (P2, P3, Pu, Nappe)
+
 if struc_type == 2 && ~ismember(workflow,[2,4])
-    % Find Data Indexes
-    sIndx = cell2mat(cellfun(@(x) find(contains({cc_resp.var}',x)==1),{'p1','Hm0','Tp','SWL','q'},'un',false));
-    % MAke Sure Primary Responses Exist
-    if length(sIndx) == 5
+    % If All Primary responses Are Valid
+    if sum(ismember({cc_resp.var}',{'p1','Hm0','Tp','SWL','q'}))==5
+        % Find Data Indexes
+        sIndx = cell2mat(cellfun(@(x) find(strcmp(x, {cc_resp.var}')), {'p1','Hm0','Tp','SWL','q'}, 'un', false));
         % Secondary responses are HCs that are generated as a function of other HC.
         for j = s_indx2
             % Grab Example Save Name
@@ -132,6 +136,12 @@ if struc_type == 2 && ~ismember(workflow,[2,4])
                 cc_resp(v_indx).y_table = eval([sVar '_tbl']);
                 % Define POT
                 cc_resp(v_indx).POT = {'Derived from primary responses hazard curves'};
+                % Append ARIs
+                if use_aep == 1
+                    cc_resp(v_indx).x_table_ARI = ceil(1./aep2aef(cc_resp(1).x_table));
+                else
+                    cc_resp(v_indx).x_table_ARI = ceil(1./cc_resp(1).x_table);
+                end
             end
             % Compute Nappe Response (Table)
             [Nappe_tbl] = floodwall_nappe_response(cc_resp(sIndx(4)).y_table, cc_resp(sIndx(2)).y_table, cc_resp(sIndx(5)).y_table, hw, rho_w);
@@ -148,6 +158,12 @@ if struc_type == 2 && ~ismember(workflow,[2,4])
                 cc_resp(v_indx).y_table = Nappe_tbl.(pFields{kk});
                 % Define POT
                 cc_resp(v_indx).POT = {'Derived from primary responses hazard curves'};
+                % Append ARIs
+                if use_aep == 1
+                    cc_resp(v_indx).x_table_ARI = ceil(1./aep2aef(cc_resp(1).x_table));
+                else
+                    cc_resp(v_indx).x_table_ARI = ceil(1./cc_resp(1).x_table);
+                end
             end
         end
     end

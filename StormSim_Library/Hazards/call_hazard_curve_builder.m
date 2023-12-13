@@ -54,22 +54,12 @@ vars_2_get = [];
 if ~isempty(Resp)
     % Add Structure Responses To List
     vars_2_get = [vars_2_get;fieldnames(Resp)];
-    % Grab Response Uncertainty
-    r2p_u = config.r2p_u; % Runup
-    q_u = config.q_u; % Overtopping
-    dn50_u = config.dn50_u; % Median Stone Size
-    p1_u = config.p1_u; % Goda Pressure (P1)
 end
 % Get Project Forcing Fields If Provided
 if ~isempty(project_forcing) && compute_forcing_hc == 1
     % Add Project Forcing To List
     vars_2_get = [vars_2_get;fieldnames(project_forcing)];
 end
-% Grab Forcing Uncertainty
-swl_u_a = config.chs_swl_u_a; % SWL Absolute
-swl_u_r = config.chs_swl_u_r; % SWL Proportional
-hm0_u_a = config.chs_hm0_u_a; % Hm0 Absolute
-hm0_u_r = config.chs_hm0_u_r; % Hm0 Proportional
 % Grab Prob Masses
 if strcmp(storm_type, 'TC')
     TC_Prob = project_forcing.TC_Prob;
@@ -98,8 +88,6 @@ if use_aep == 1
 else
     x_lim = num2str(10^-4);
 end
-% Define Default Log Scale
-y_scale_log = 0;
 
 %% COMPUTE HAZARD CURVES WITH STORMSIM: SST/JPM
 % Initialize Counter
@@ -108,118 +96,17 @@ ctr = 1;Output = [];
 for ii = 1:length(vars_2_get)
     % Define Workflow String
     wstr = strsplit(outPath,filesep);
-    wstr = wstr{end}(1:3);
+    wstr = wstr{end};
+    wstr = strsplit(wstr,'_');
+    wstr = wstr{1};
     % Define Default Log Scale
     y_scale_log = 0;
     % Define Station ID
     staID = vars_2_get{ii};
     % Assign Uncertainty Based On Station
-    switch staID
-        case 'SWL'
-            % Define Uncertainty Parameters
-            U_a = swl_u_a; % Define Absolute Uncertainty
-            U_r = swl_u_r; % Define Relative Uncertainty
-            uncert_treatment_jpm = 'combined';% JPM Uncertainty Treatment
-            uncert_treatment_sst = 'combined';% SST Uncertainty Treatment
-            % Define Var Properties
-            unit_label = 'm';
-            y_label = ['SWL [' unit_label ']'];
-            var_name = 'SWL';
-        case 'Hm0'
-            U_a = hm0_u_a;
-            U_r = hm0_u_r;
-            uncert_treatment_jpm = 'combined';
-            uncert_treatment_sst = 'combined';
-            unit_label = 'm';
-            y_label = ['H_{m_{0}} [' unit_label ']'];
-            var_name = 'H_{m_{0}}';
-        case 'Tp'
-            U_a = 0;
-            U_r = sqrt(1+hm0_u_r)-1;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 's';
-            y_label = ['T_p [' unit_label ']'];
-            var_name = 'T_p';
-        case {'R2p','R2p_SWL'}
-            U_a=0;
-            U_r = r2p_u;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'm';
-            y_label = ['R_{2%} [' unit_label ']'];
-            var_name = 'R_{2%}';
-            if strcmp(staID,'R2p_SWL')
-                y_label = ['R_{2%} + SWL [' unit_label ']'];
-                var_name = 'R_{2%} + SWL';
-            end
-        case {'Dn50','Dn50_LCBW', 'Dn50_Lee'}
-            U_a=0;
-            U_r = dn50_u;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'm';
-            y_label = ['D_{n_{50}} [' unit_label ']'];
-            var_name = 'D_{n_{50}}';
-            if any(strcmp(staID,{'Dn50_LCBW', 'Dn50_Lee'}))
-                switch staID
-                    case 'Dn50_LCBW'
-                        str_suffix = 'LCBW';
-                    case 'Dn50_Lee'
-                        str_suffix = 'Lee';
-                end
-                y_label = ['D_{n_{50}} ' str_suffix ' [' unit_label ']'];
-                var_name = ['D_{n_{50}} ' str_suffix];
-            end
-        case 'p1'
-            U_a=0;
-            U_r = p1_u;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'Pa';
-            y_label = ['P_1 [ ' unit_label ']'];
-            var_name = 'P_1';
-        case 'q'
-            U_a=0;
-            U_r = q_u;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'm^3/s per m';
-            y_label = ['q [ ' unit_label ']'];
-            var_name = 'q';
-            y_scale_log = 1;
-        case 'q_wave_ot'
-            U_a=0;
-            U_r = q_u;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'm^3/s per m';
-            y_label = ['q_{wave OT} [ ' unit_label ']'];
-            var_name = 'q_{wave OT}';
-            y_scale_log = 1;
-        case 'q_overflow'
-            U_a=0;
-            U_r = swl_u_a;
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'm^3/s per m';
-            y_label = ['q_{overflow} [ ' unit_label ']'];
-            var_name = 'q_{overflow}';
-            y_scale_log = 0;
-        case 'Q_vol'
-            U_a=0;
-            if strcmp(staID, 'Q_vol_overflow')
-                U_r = swl_u_a;
-            else
-                U_r = q_u;
-            end
-            uncert_treatment_jpm = 'relative';
-            uncert_treatment_sst = 'relative';
-            unit_label = 'm^3 per m';
-            y_label = ['Q [ ' unit_label ']'];
-            var_name = 'Q_{vol}';
-            y_scale_log = 1;
-    end
+    [U_a, U_r, uncert_treatment_jpm,...
+    uncert_treatment_sst, unit_label,...
+    var_name, y_label, y_scale_log] = response_library_headers(config, staID);
     % Assign Input Data
     if contains(staID,{'SWL','Hm0','Tp'}) && ~contains(staID,'R2p_SWL')
         if contains(storm_type,{'TC'})
@@ -227,7 +114,7 @@ for ii = 1:length(vars_2_get)
             input_data.data_values = project_forcing.(staID);
             input_data.time_values = zeros(size(project_forcing.(staID)));
             if workflow == 4
-                wstr(1:2) = 'RB';
+                wstr = 'PROS-RB';
             end
         else
             c_indx = 1;% Only process 1st replicate, no double dipping for uncertainty
@@ -242,11 +129,11 @@ for ii = 1:length(vars_2_get)
     % Define Workflow Name
     switch workflow
         case 1
-            wname = ['StormSim: PROS - ' wstr ' | '  case_name ' | ' struc_id];
+            wname = ['StormSim: ' wstr ' | '  case_name ' | ' struc_id];
         case 2
-            wname = ['StormSim: EVA - ' wstr ' | '  case_name ' | ' struc_id];
+            wname = ['StormSim: ' wstr ' | '  case_name ' | ' struc_id];
         case 4
-            wname = ['StormSim: PROS - ' wstr ' | '  case_name ' | ' struc_id];
+            wname = ['StormSim: ' wstr ' | '  case_name ' | ' struc_id];
     end
     % Check For Full NaN Vector
     if sum(isnan(input_data.data_values(:)))==length(input_data.data_values(:)) || sum(input_data.data_values(:))==0
@@ -324,17 +211,21 @@ for ii = 1:length(vars_2_get)
     ctr = ctr + 1;
 end
 % Remove Empty Entries (If Any)
-rm_indx = cell2mat(cellfun(@(x) isempty(x), {Output.y_table}, 'un', false));% Get Logical Index
-Output = Output(~rm_indx);% Keep Valid Fields
+if ~isempty(Output)
+    rm_indx = cell2mat(cellfun(@(x) isempty(x), {Output.y_table}, 'un', false));% Get Logical Index
+    Output = Output(~rm_indx);% Keep Valid Fields
+else
+    return;
+end
 
 %% COMPUTE SECONDARY STRUCTURE RESPONSES FROM HC (P2, P3, Nappe)
 if compute_forcing_hc == 1 && ~ismember(workflow,[2,4])
     switch struc_type
         case 2 % Floodwall
-            % Find Data Indexes
-            sIndx = cell2mat(cellfun(@(x) find(contains({Output.var}',x)==1),{'p1','Hm0','Tp','SWL','q'},'un',false));
             % If All Primary responses Are Valid
-            if length(sIndx)==5
+            if sum(ismember({Output.var}',{'p1','Hm0','Tp','SWL','q'}))==5
+                % Find Data Indexes
+                sIndx = cell2mat(cellfun(@(x) find(strcmp(x, {Output.var}')), {'p1','Hm0','Tp','SWL','q'}, 'un', false));
                 % Grab Example Save Name
                 outName = strsplit(Output(sIndx(5)).save_name,'q');
                 % Compute Water Depth @ Structure Toe
@@ -380,6 +271,12 @@ if compute_forcing_hc == 1 && ~ismember(workflow,[2,4])
                     Output =  rb_response_appender(Output, rIndx+kk, sVar, y_labels{kk}, title_str,...
                         Output(rIndx).x_plot, eval([sVar '_plt;']), Output(rIndx).x_table, eval([sVar '_tbl;']), {'Derived from primary responses hazard curves'},...
                         y_scale_log, [50,prc], [outName{1} sVar outName{2}]);
+                    % Append ARIs
+                    if use_aep == 1
+                        Output(rIndx+kk).x_table_ARI = ceil(1./aep2aef(Output(1).x_table));
+                    else
+                        Output(rIndx+kk).x_table_ARI = ceil(1./Output(1).x_table);
+                    end
                 end
                 % Compute Nappe Response (Table)
                 [Nappe_tbl] = floodwall_nappe_response(Output(sIndx(4)).y_table, Output(sIndx(2)).y_table, Output(sIndx(5)).y_table, hw, rho_w);
@@ -402,6 +299,12 @@ if compute_forcing_hc == 1 && ~ismember(workflow,[2,4])
                     Output =  rb_response_appender(Output, rIndx+kk, pFields{kk,1}, [y_labels{kk,1} ' [' y_labels{kk,2} ']'], title_str,...
                         Output(rIndx).x_plot, Nappe_plt.(pFields{kk}), Output(rIndx).x_table, Nappe_tbl.(pFields{kk}), {'Derived from primary responses hazard curves'},...
                         y_scale_log, [50,prc], [outName{1} pFields{kk} outName{2}]);
+                    % Append ARIs
+                    if use_aep == 1
+                        Output(rIndx+kk).x_table_ARI = ceil(1./aep2aef(Output(1).x_table));
+                    else
+                        Output(rIndx+kk).x_table_ARI = ceil(1./Output(1).x_table);
+                    end
                 end
             end
     end
