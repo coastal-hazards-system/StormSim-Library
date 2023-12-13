@@ -75,7 +75,7 @@ use_timeseries = config.use_timeseries;
 use_peaks = config.use_peaks;
 % Define Save Name
 save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
-        config.case_name , [config.project_name,'_', config.struc_id]);
+    config.case_name , [config.project_name,'_', config.struc_id]);
 % Define MCS Project Forcing Mode
 load_project_forcing = config.load_project_forcing;
 % Define Reference Case_name
@@ -90,15 +90,15 @@ switch workflow
         % Define Workflow Key Phrase
         switch workflow
             case 1 % PROS - RB
-                wName = 'RB';
+                wName = 'PROS';
             case 2 % PROS - EVA
-                wName = 'RB-EVA';
+                wName = 'PROS-EVA';
             case 4 % PROS - FB
-                wName = 'FB';
+                wName = 'PROS-FB';
         end
         % Build Ref Case Path
-        mcs_ref_pth = [config.outfolder filesep config.project_name, filesep, config.struc_id, filesep,...
-            ref_case_name, filesep, config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat'];
+        mcs_ref_pth = fullfile(config.outfolder, config.project_name, config.struc_id,...
+            ref_case_name, [config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat']);
         % Evaluate According To User Selection
         if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
             % Load Project Forcing
@@ -123,8 +123,8 @@ switch workflow
         % Define Workflow Key Phrase
         wName = 'LCS';
         % Build Ref Case Path
-        mcs_ref_pth = [config.outfolder filesep config.project_name, filesep, config.struc_id, filesep,...
-            ref_case_name, filesep, config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat'];
+        mcs_ref_pth = fullfile(config.outfolder, config.project_name, config.struc_id,...
+            ref_case_name, [config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat']);
         % Evaluate According To User Selection
         if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
             % Load Project Forcing
