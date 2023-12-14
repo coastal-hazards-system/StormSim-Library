@@ -101,10 +101,27 @@ switch workflow
             ref_case_name, [config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat']);
         % Evaluate According To User Selection
         if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
-            % Load Project Forcing
-            load(mcs_ref_pth,'project_forcing');
-            % Copy To Current Case
-            copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+            try
+                % Load Project Forcing
+                load(mcs_ref_pth,'project_forcing');
+                % Copy To Current Case
+                if ~exist([save_name '_' wName '_project_forcing.mat'], 'file')
+                    copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+                end
+            catch
+                % Tropical Cyclones
+                if contains(storm_sampling,{'TC','CC'})
+                    % Reshape Forcing Parameters For RB Analysis (nStorms * noyrmal_discretizations)
+                    project_forcing.('TC') = rb_forcing_formater(config, 'TC', storm.('TC'), prob_mass);
+                end
+                % Extratropical Storms
+                if contains(storm_sampling,{'XC','CC'})
+                    % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
+                    project_forcing.('XC') = rb_forcing_formater(config, 'XC', storm.('XC'), []);
+                end
+                % Save Peaks Life Cycle Structures
+                save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
+            end
         else
             % Tropical Cyclones
             if contains(storm_sampling,{'TC','CC'})
@@ -127,10 +144,38 @@ switch workflow
             ref_case_name, [config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat']);
         % Evaluate According To User Selection
         if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
-            % Load Project Forcing
-            load(mcs_ref_pth,'project_forcing');
-            % Copy To Current Case
-            copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+            try
+                % Load Project Forcing
+                load(mcs_ref_pth,'project_forcing');
+                % Copy To Current Case
+                if ~exist([save_name '_' wName '_project_forcing.mat'], 'file')
+                    copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+                end
+            catch
+                % Call StormSim: Monte Carlo Storm Sampler
+                if use_peaks == 1
+                    % Get Storm Sampling Using Peaks Files
+                    [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
+                    % Do you want to use timeseries
+                    if use_timeseries == 1 % Timeeseries follows the same sampling scheme as Maxima Peaks dataset
+                        [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
+                    end
+                else % Timeseries Only
+                    % Get Storm Types In Data
+                    level_1 = fieldnames(storm);
+                    % Create Dummy Peaks Field
+                    for kk = 1:length(level_1)
+                        dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
+                        storm.(level_1{kk}).('Peaks').('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1)),dummy_data(:,1)];
+                    end
+                    % Get Storm Sampling Using Peaks Files
+                    [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
+                    % Do you want to use timeseries
+                    [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(aux_var, storm, prob_mass, storm_sampling);
+                end
+                % Save Peaks Life Cycle Structures
+                save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
+            end
         else
             % Call StormSim: Monte Carlo Storm Sampler
             if use_peaks == 1
@@ -157,8 +202,4 @@ switch workflow
             save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
         end
 end
-
-%% EXPORT OUTPUTS
-
-
 end
