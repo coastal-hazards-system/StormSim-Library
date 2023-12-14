@@ -16,7 +16,7 @@ toe_elev = structure.toe_elevation; % Flip convention
 
 %% ADJUST PROJECT FORCING DATA - RESPONSE BASE
 switch data_type
-    case 'RB'
+    case 'PROS'
         %------ SWL ADJUSTMENTS -----
         % Apply Random Tide To SWL
         if exist(tide_file,'file') == 2 && use_tides == 1
