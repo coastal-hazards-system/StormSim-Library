@@ -233,8 +233,8 @@ switch storm_type
             prob_mass.dist(:,storm2rm)=[];
             %
             prob_mass.smpl1(ismember(prob_mass.smpl1,removed_storms.Maxima)) = [];
-            prob_mass.smpl0(ismember(prob_mass.smpl0,removed_storms.Maxima)) = [];
             prob_mass.smpl2(ismember(prob_mass.smpl2,removed_storms.Maxima)) = [];
+            prob_mass.smpl3(ismember(prob_mass.smpl3,removed_storms.Maxima)) = [];
         end
         % Define EMpty Var For Outputs
         XC_Nyrs = [];XC_Nstm = [];
