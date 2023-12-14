@@ -18,18 +18,21 @@ if flag==0
         end
     end
 else
-    smpl0 = prob_mass.smpl0;
     smpl1 = prob_mass.smpl1;
+    smpl2 = prob_mass.smpl2;
+    smpl3 = prob_mass.smpl3;
     % Format Data
     storm_timeseries = storm.('TC').Timeseries{cell2mat(storm.('TC').Timeseries(:,1))==stIndx,2};
     % Make Sure Storm Has Data And Correct If Necessary
     if isempty(storm_timeseries) || length(storm_timeseries)<10
         while isempty(storm_timeseries) || length(storm_timeseries)<10
-            if TC_iclass==0
-                sample_indx = smpl0;
-            end
-            if TC_iclass==1
-                sample_indx = smpl1;
+            switch TC_iclass
+                case 0 % Low
+                    sample_indx = smpl1;
+                case 1 % High
+                    sample_indx = smpl2;
+                case 2 % Mid
+                    sample_indx = smpl3;
             end
             % Remove Storm From List (If found)
             sample_indx(sample_indx==stIndx)=[];

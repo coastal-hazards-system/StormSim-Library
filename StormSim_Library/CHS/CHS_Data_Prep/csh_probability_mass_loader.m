@@ -1,4 +1,4 @@
-function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl0, smpl1, smpl2] = csh_probability_mass_loader(pm_path, region, Nsvpt)
+function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl1, smpl2, smpl3] = csh_probability_mass_loader(pm_path, region, Nsvpt)
 %{
     %% DESCRIPTION
         This function is responsible for leading CHS TC storm probability
@@ -59,10 +59,12 @@ if exist(pm_path,'dir')
                 %%%% NEED TO ADD CASES WITH MORE INTENSITY LEVELS (400 km diameter might change)
                 % Convert LI SRR to storms/year using a 400 km diameter.
                 TC_SRR = SRR_LI(ic(Nsvpt))*400;
+                % Mid Intensity 
+                TC_SRR(1,2) = 0; % No Mid Intensity Storms
                 % Convert HI SRR to storms/year using a 400 km diameter.
-                TC_SRR(1,2) = SRR_HI(ic(Nsvpt))*400;
+                TC_SRR(1,3) = SRR_HI(ic(Nsvpt))*400;
                 % SRR for all TC intensities.
-                TC_SRR(1,3) = TC_SRR(1,1) + TC_SRR(1,2);
+                TC_SRR(1,4) = TC_SRR(1,1) + TC_SRR(1,2);
                 % Get Frequency Vector
                 TC_Freq = Freq(Nsvpt).TC;
                 % Extract Distance Vector For Specified Save Point
@@ -72,18 +74,18 @@ if exist(pm_path,'dir')
                 % Find Storms Within 200 km radius
                 dist200 = find(dist<=200);
                 % Low Intensity Storm Population
-                smpl0 = dist200(Param(dist200,5)<48);
+                smpl1 = dist200(Param(dist200,5)<48);
                 % High Intensity Storm Population
-                smpl1 = dist200(Param(dist200,5)>=48);
-                smpl2 = [];
+                smpl3 = dist200(Param(dist200,5)>=48);
+                smpl2 = [];% Mid Intensity
             catch
                 Param = [];
                 TC_SRR = [];
                 TC_Freq = [];
                 dist = [];
                 TotalFreq=[];
-                smpl0 = [];
                 smpl1 = [];
+                smpl3 = [];
                 smpl2 = [];
             end
         otherwise %{'CHS-NA','CHS-SA','CHS-GoM','CHS-PR','CHS-TX','CHS-LA'}
@@ -103,8 +105,6 @@ if exist(pm_path,'dir')
             Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
             % Savepoint location info
             staID = dload([pm_path filesep,[region,'_staID.mat']]);
-
-
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The
                 SRR was computed at 1050 coastal reference locations (CRL) and the SRR from the closest CRL to the
@@ -139,11 +139,11 @@ if exist(pm_path,'dir')
             dist200=find(dist<=trk_dist);
 
             % Low Intensity Storm Population
-            smpl0 = dist200(Param(dist200,7)<28);
+            smpl1 = dist200(Param(dist200,7)<28);
             % Medium Intensity Storm Population
-            smpl1 = dist200((Param(dist200,7)>=28) & (Param(dist200,7)<48));
+            smpl2 = dist200((Param(dist200,7)>=28) & (Param(dist200,7)<48));
             % High Intensity Storm Population
-            smpl2 = dist200(Param(dist200,7)>=48);
+            smpl3 = dist200(Param(dist200,7)>=48);
             % Make DP Col Be The 5
             Param = [Param(:,1:4), Param(:,7), Param(:,5:6)];
     end
@@ -153,8 +153,8 @@ else
     TC_Freq = [];
     dist = [];
     TotalFreq=[];
-    smpl0 = [];
     smpl1 = [];
+    smpl3 = [];
     smpl2 = [];
 end
 end
