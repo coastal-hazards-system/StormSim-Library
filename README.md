@@ -1,5 +1,5 @@
 ![SSLogo](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/2b532547-1716-4bdb-815e-9e646b93615a)
-## 👋 Welcome, Amazing Beta Testers!
+## 👋 Welcome, Beta Testers!
 Thank you for being a part of our exciting journey as we unveil CHG's cutting-edge probabilistic tool suite, the StormSim-Library. Your interest and participation are truly appreciated, and we're genuinely excited to have you on board.
 As you explore this early distribution of our software, we want to share a few friendly reminders:
 
@@ -13,9 +13,8 @@ As you explore this early distribution of our software, we want to share a few f
 
 Once again, thank you for being a part of this exciting beta testing phase. Together, we're paving the way for a future of robust and innovative probabilistic workflows. Let's make it an incredible journey!
 
-## Requirements (External)
-The following files will be provided with the software to allow users to use data from any CHS regional study.
-* Coastal Hazard System (CHS) regional study modeling results (Peaks and/or timeseries files) for Base Conditions from https://chs.erdc.dren.mil. 
+## StormSim External Dependencies 
+### 1. Coastal Hazard System (CHS) regional study modeling results (Peaks and/or timeseries files) for Base Conditions from https://chs.erdc.dren.mil. 
 * Probability Masses/Distributed Storm Weights -> PMs for each CHS  regional study. Required for tropical cyclone events analysis.
 * Regional SWL Bias & Uncertainty Files -> CHS ADCIRC SWL bias and uncertainty per savepoint.
 Download here ---> insert link
