@@ -19,7 +19,6 @@ A project can be characterized within StormSim trough 4 main components: project
 
 
 -PSE's: levee, floodwall, rubblmounds
--
 
 
 ## Available StormSim Modules
@@ -52,8 +51,6 @@ Storm data is stored by storm type, data type, and data matching type. Forexampl
 4. *_config_file.mat: This file is created in “call_input_parser.m”. This file contains the parsed StormSim configuration file. Additionally, it may also include the structure geometry being evaluated for the specified case. Config also gets some additional information appended to it in “call_chs_data_formater.m”. Config serves as the central schema for the whole StormSim library.
 
 5. XX_project_responses.mat: XX represents the workflow called to create this file (LCS or RB). This file is created in “call_project_response.m”. Contains the project responses computed by the StormSim library based on user specified workflow.
-
-   
 
 ## Bug Reporting 
 Create an issue with the following information:
