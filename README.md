@@ -25,7 +25,7 @@ Description is pending
 5. StormSim: Joint Probability Method (JPM): Description pending
 
 ## Project Folder Structure (Outputs)
-<img align="right" width="33%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe">
+<img align="right" width="33%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/6d82b958-c5a6-48f6-b5f1-17b9711498bf">
 StormSim stablishes and keeps track of all associated project files by storing outputs in a folder heirarchy built with: 
 
 1. project name: StormSim project parent folder. 
