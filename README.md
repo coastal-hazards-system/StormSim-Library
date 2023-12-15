@@ -15,7 +15,9 @@ Once again, thank you for being a part of this exciting beta testing phase. Toge
 
 ## StormSim External Dependencies 
 ### 1. Coastal Hazard System (CHS) regional study modeling results (https://chs.erdc.dren.mil)
-<img align="center" width="33%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/f8f5a12f-3e75-44bd-a6b5-e7af0845a877">
+<p align="center" width="100%">
+    <img width="33%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/f8f5a12f-3e75-44bd-a6b5-e7af0845a877">
+</p>
 CHS is a unique data resource that: Spans probability space, was developed with high fidelity modeling, is spatially uniform and dense on a national scale, and Includes aleatory and epistemic uncertainty information that are necessary to determine probabilistic response. 
 
 
