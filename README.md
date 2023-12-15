@@ -15,11 +15,7 @@ Download here ---> insert link
 * Tidal prediction file -> File can be created by running auxiliary routine "" with the specification of a NOAA water level station ID. Active stations can be found at: https://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels File must be a 2 column csv file with headers [Date, Prediction]. 
 
 ## Getting Started 
-A project can be characterized within StormSim trough 4 main components: project forcing, Protective System Element (PSE), uncertainty and the configuration file (StormSim_Inputs.xlsx).
-
-
--PSE's: levee, floodwall, rubblmounds
-
+Description is pending
 
 ## Available StormSim Modules
 1. StormSim: Probabilistic Responses  Of Structures (PROS): Description pending 
