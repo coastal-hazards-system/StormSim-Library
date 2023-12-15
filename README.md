@@ -14,22 +14,39 @@ As you explore this early distribution of our software, we want to share a few f
 Once again, thank you for being a part of this exciting beta testing phase. Together, we're paving the way for a future of robust and innovative probabilistic workflows. Let's make it an incredible journey!
 
 ## StormSim External Dependencies 
-### 1. Coastal Hazard System (CHS) regional study modeling results (Peaks and/or timeseries files) for Base Conditions from https://chs.erdc.dren.mil. 
+### 1. Coastal Hazard System (CHS) regional study modeling results (https://chs.erdc.dren.mil)
+CHS is a unique data resource that: Spans probability space, was developed with high fidelity modeling, is spatially uniform and dense on a national scale, and Includes aleatory and epistemic uncertainty information that are necessary to determine probabilistic response. 
+
+
+
+ 
 * Probability Masses/Distributed Storm Weights -> PMs for each CHS  regional study. Required for tropical cyclone events analysis.
 * Regional SWL Bias & Uncertainty Files -> CHS ADCIRC SWL bias and uncertainty per savepoint.
 Download here ---> insert link
-* Tidal prediction file -> File can be created by running auxiliary routine "create_tide_file.m" with the specification of a NOAA water level station ID. Active stations can be found at: https://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels File must be a 2 column csv file with headers [Date, Prediction]. 
+### 2. Tidal prediction file
+File can be created by running auxiliary routine "create_tide_file.m" with the specification of a NOAA water level station ID. Active stations can be found at: https://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels File must be a 2 column csv file with headers [Date, Prediction]. 
 
 ## Getting Started 
 Description is pending
 
-### **Available StormSim Modules**
+### Available StormSim Modules
 1. StormSim: Probabilistic Responses  Of Structures (PROS): Description pending 
 2. StormSim: Life Cycle Simulation (LCS): Description pending
 3. StormSim: LCS - Coastal Structure Reliability (LCS-CSR): Description pending
 4. StormSim: Stochastic Simulation Technique (SST): Description pending
 5. StormSim: Joint Probability Method (JPM): Description pending
 
+## StromSim Input File (config)
+The StormSim-Library is fully controlled trhough the configuration file (StormSim_Inputs.xlsx). The following section will cover all items in the input file. 
+1. StormSim Project General Inputs
+   *
+3. StormSim Project Foricng Data
+4. Structure Geometry
+5. Structure Properties
+6. StormSim Project Forcing Uncertainty
+7. StormSim Project Structure Response Uncertainty
+8. StormSim Module Specific 
+ 
 ## Project Folder Structure (Outputs)
 <img align="right" width="33%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/6d82b958-c5a6-48f6-b5f1-17b9711498bf">
 StormSim stablishes and keeps track of all associated project files by storing outputs in a folder heirarchy built with: 
