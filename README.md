@@ -12,7 +12,7 @@ The following files will be provided with the software to allow users to use dat
 * Probability Masses/Distributed Storm Weights -> PMs for each CHS  regional study. Required for tropical cyclone events analysis.
 * Regional SWL Bias & Uncertainty Files -> CHS ADCIRC SWL bias and uncertainty per savepoint.
 Download here ---> insert link
-* Tidal prediction file -> File can be created by running auxiliary routine "" with the specification of a NOAA water level station ID. Active stations can be found at: https://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels File must be a 2 column csv file with headers [Date, Prediction]. 
+* Tidal prediction file -> File can be created by running auxiliary routine "create_tide_file.m" with the specification of a NOAA water level station ID. Active stations can be found at: https://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels File must be a 2 column csv file with headers [Date, Prediction]. 
 
 ## Getting Started 
 Description is pending
@@ -29,6 +29,7 @@ StormSim stablishes and keeps track of all associated project files by storing o
 1. project name: StormSim project parent folder. 
 2. transect id: Second level in the StormSim project output folder. Represents the PSE being designed/evaluated
 3. case name: Third level in the StormSim project output folder. Used to evaluate different alternatives for the same transect.
+![image](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/d5386f99-9db7-46d2-9c58-4aa43538929e)
 
 The files stored within these folders serve as checkpoints or points of reference for the StormSim library. These checkpoints help reduce computational times across all workflows when iterating different alternatives for a project.
 
