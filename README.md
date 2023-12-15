@@ -16,18 +16,14 @@ Once again, thank you for being a part of this exciting beta testing phase. Toge
 ## StormSim External Dependencies 
 ### 1. Coastal Hazard System (CHS) regional study modeling results (https://chs.erdc.dren.mil)
 CHS is a unique data resource that spans probability space, was developed with high-fidelity modeling, is spatially uniform and dense on a national scale, and includes aleatory and epistemic uncertainty information necessary for determining probabilistic responses. Modeling results are reported through save points across regional studies. Save points include modeling results for both circulation (ADCIRC) and wave models (STWAVE/WAM/SWAN). Additionally, results hosted on CHS include different Sea Level Rise (SLR) scenarios and tidal conditions for tropical (TC) and/or extra-tropical (XC) events. Currently, StormSim supports the use of Base Conditions modeling results (peaks and timeseries) for the following regional studies: CHS-NACCS, CHS_SACSS, FEMA RiskMap. Additional CHS regional study statistical results can be downloaded (here) (Distributed Storm Weights & SWL Bias/Uncertainty) <-----Link
+
 ![image](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/df664577-5593-4410-99c1-b967f68ba59f)
+
 The following figure summaryces the CHS data download process. Through CHS you will be able to choose the best suited save point for your project. When selecting project forcing data consider the following: what hazards do you want to include (XC vs TC vs both), what level of fidelity (Peaks vs Timeseries vs both) and the location. Currently StormSim only supports base modeling conditions as a forcing input. Using CHS data means any analysis done will be using the full storm suite for a given regional study. Downloaded zip folder must contain Peaks and/or Timeseries files for both models associated to a savepoint (ADCIRC + Wave Model). For a more detail guide on to how to acces and navigate CHS files/website visit (https://chs.erdc.dren.mil/Content/documents/CHSQuickGuide.pdf).
 <p align="center" width="100%">
     <img width="100%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/f8f5a12f-3e75-44bd-a6b5-e7af0845a877">
 </p>
 
-
-
- 
-* Probability Masses/Distributed Storm Weights -> PMs for each CHS  regional study. Required for tropical cyclone events analysis.
-* Regional SWL Bias & Uncertainty Files -> CHS ADCIRC SWL bias and uncertainty per savepoint.
-Download here ---> insert link
 ### 2. Tidal prediction file
 File can be created by running auxiliary routine "create_tide_file.m" with the specification of a NOAA water level station ID. Active stations can be found at: https://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels File must be a 2 column csv file with headers [Date, Prediction]. 
 
