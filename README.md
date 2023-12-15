@@ -1,10 +1,17 @@
 ![SSLogo](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/2b532547-1716-4bdb-815e-9e646b93615a)
-## 👋 Welcome Beta Testers!
- We are happy that you are interested in testing the CHG's probabilistic tool's suite. The StormSim-Library is a collection of functions/modules that are interconnected to build robust probabilistic workflows. While using this early distribution of the software please have in mind the following:
-* This has all been developed without a direct source of funding.
-* Although we have extensively tested the existing tools this is still in the development stage. This means bugs can arise based on inputs/application.
-* Limited to CHS native data for the time being. Custom modeling is supported but requires one-on-one to set-up.
-* We encourage feedback on ease of use, missing physics/responses, data visualizations, post-processing computations.
+## 👋 Welcome, Amazing Beta Testers!
+Thank you for being a part of our exciting journey as we unveil CHG's cutting-edge probabilistic tool suite, the StormSim-Library. Your interest and participation are truly appreciated, and we're genuinely excited to have you on board.
+As you explore this early distribution of our software, we want to share a few friendly reminders:
+
+🚀 Passion Project: The entire development of this tool suite has been without a direct source of funding. Your enthusiasm and engagement make it all worthwhile!
+
+🧪 Development Stage: While we've put the existing tools through extensive testing, remember that we're still in the development stage. Bugs might pop up based on inputs or application, but fear not—we're here to tackle them head-on.
+
+🗺️ Limited Data Landscape: Currently, we're working with CHS native data, but don't let that hold you back! Custom modeling is absolutely supported; it just requires a little one-on-one setup. Let's make it happen together.
+
+🤝 Your Input Matters: We value your feedback on various aspects—whether it's about the ease of use, missing physics or responses, data visualizations, or post-processing computations. Your insights help us shape this tool into something extraordinary.
+
+Once again, thank you for being a part of this exciting beta testing phase. Together, we're paving the way for a future of robust and innovative probabilistic workflows. Let's make it an incredible journey!
 
 ## Requirements (External)
 The following files will be provided with the software to allow users to use data from any CHS regional study.
