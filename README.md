@@ -19,7 +19,7 @@ Description is pending
 
 ## Available StormSim Modules
 1. StormSim: Probabilistic Responses  Of Structures (PROS): Description pending 
-2  StormSim: Life Cycle Simulation (LCS): Description pending
+2.  StormSim: Life Cycle Simulation (LCS): Description pending
 3. StormSim: LCS - Coastal Structure Reliability (LCS-CSR): Description pending
 4. StormSim: Stochastic Simulation Technique (SST): Description pending
 5. StormSim: Joint Probability Method (JPM): Description pending
