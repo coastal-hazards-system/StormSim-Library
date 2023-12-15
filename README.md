@@ -29,6 +29,7 @@ StormSim stablishes and keeps track of all associated project files by storing o
 1. project name: StormSim project parent folder. 
 2. transect id: Second level in the StormSim project output folder. Represents the PSE being designed/evaluated
 3. case name: Third level in the StormSim project output folder. Used to evaluate different alternatives for the same transect.
+
 The files stored within these folders serve as checkpoints or points of reference for the StormSim library. These checkpoints help reduce computational times across all workflows when iterating different alternatives for a project.
 
 ## Project Files (Outputs)
