@@ -26,6 +26,7 @@ Description is pending
 
 ## Project Folder Structure (Outputs)
 StormSim stablishes and keeps track of all associated project files by storing outputs in a folder heirarchy built with: 
+<img align="right" width="33%" src="[https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe]">
 1. project name: StormSim project parent folder. 
 2. transect id: Second level in the StormSim project output folder. Represents the PSE being designed/evaluated
 3. case name: Third level in the StormSim project output folder. Used to evaluate different alternatives for the same transect.
