@@ -19,7 +19,8 @@ CHS is a unique data resource that spans probability space, was developed with h
 
 ![image](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/df664577-5593-4410-99c1-b967f68ba59f)
 
-The following figure summaryces the CHS data download process. Through CHS you will be able to choose the best suited save point for your project. When selecting project forcing data consider the following: what hazards do you want to include (XC vs TC vs both), what level of fidelity (Peaks vs Timeseries vs both) and the location. Currently StormSim only supports base modeling conditions as a forcing input. Using CHS data means any analysis done will be using the full storm suite for a given regional study. Downloaded zip folder must contain Peaks and/or Timeseries files for both models associated to a savepoint (ADCIRC + Wave Model). For a more detail guide on to how to acces and navigate CHS files/website visit (https://chs.erdc.dren.mil/Content/documents/CHSQuickGuide.pdf).
+The following figure summarizes the CHS data download process. Through CHS, you can choose the most suitable save point for your project. When selecting project-forcing data, consider the hazards you want to include (XC vs TC vs both) and the level of fidelity (Peaks vs Timeseries vs both). Currently, StormSim only supports base modeling conditions as a forcing input. Utilizing CHS data means any analysis will involve the full storm suite for a given regional study. The downloaded zip folder must contain Peaks and/or Timeseries files for both models associated with a savepoint (ADCIRC + Wave Model). For a more detailed guide on accessing and navigating CHS files/website, visit (https://chs.erdc.dren.mil/Content/documents/CHSQuickGuide.pdf).
+
 <p align="center" width="100%">
     <img width="100%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/f8f5a12f-3e75-44bd-a6b5-e7af0845a877">
 </p>
