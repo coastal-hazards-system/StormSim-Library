@@ -25,14 +25,12 @@ Description is pending
 5. StormSim: Joint Probability Method (JPM): Description pending
 
 ## Project Folder Structure (Outputs)
-<img align="right" width="33%" src="[https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe]">
+<img align="right" width="33%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe">
 StormSim stablishes and keeps track of all associated project files by storing outputs in a folder heirarchy built with: 
-[Arduino](https://en.wikipedia.org/wiki/Arduino) (/ɑːrˈdwiːnoʊ/) is an open-source hardware and software company, project and user community that designs and manufactures single-board microcontrollers and microcontroller kits for building digital devices. Its hardware products are licensed under a [CC-BY-SA][4] license, while software is licensed under the GNU Lesser General Public License (LGPL) or the GNU General Public License (GPL),[1] permitting the manufacture of Arduino boards and software distribution by anyone. Arduino boards are available commercially from the official website or through authorized distributors. Arduino board designs use a variety of microprocessors and controllers. The boards are equipped with sets of digital and analog input/output (I/O) pins that may be interfaced to various expansion boards ('shields') or breadboards (for prototyping) and other circuits.
 
 1. project name: StormSim project parent folder. 
 2. transect id: Second level in the StormSim project output folder. Represents the PSE being designed/evaluated
 3. case name: Third level in the StormSim project output folder. Used to evaluate different alternatives for the same transect.
-![image](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/0c1d96cb-1b13-4e1a-b444-907d47cab3fe)
 
 The files stored within these folders serve as checkpoints or points of reference for the StormSim library. These checkpoints help reduce computational times across all workflows when iterating different alternatives for a project.
 
