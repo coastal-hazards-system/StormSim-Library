@@ -19,7 +19,7 @@ CHS is a unique data resource that spans probability space, was developed with h
 
 ![image](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/df664577-5593-4410-99c1-b967f68ba59f)
 
-The following figure summarizes the CHS data download process. Through CHS, you can choose the most suitable save point for your project. When selecting project-forcing data, consider the hazards you want to include (XC vs TC vs both) and the level of fidelity (Peaks vs Timeseries vs both). Currently, StormSim only supports base modeling conditions as a forcing input. Utilizing CHS data means any analysis will involve the full storm suite for a given regional study. The downloaded zip folder must contain Peaks and/or Timeseries files for both models associated with a savepoint (ADCIRC + Wave Model). For a more detailed guide on accessing and navigating CHS files/website, visit (https://chs.erdc.dren.mil/Content/documents/CHSQuickGuide.pdf).
+The following figure summarizes the CHS data download process; 1) choose a regional study, 2) apply the **Base Modeling** filter, 3). Through CHS, you can choose the most suitable save point for your project. When selecting project-forcing data, consider the hazards you want to include (XC vs TC vs both) and the level of fidelity (Peaks vs Timeseries vs both). Currently, StormSim only supports base modeling conditions as a forcing input. Utilizing CHS data means any analysis will involve the full storm suite for a given regional study. The downloaded zip folder must contain Peaks and/or Timeseries files for both models associated with a savepoint (ADCIRC + Wave Model). For a more detailed guide on accessing and navigating CHS files/website, visit (https://chs.erdc.dren.mil/Content/documents/CHSQuickGuide.pdf).
 
 <p align="center" width="100%">
     <img width="100%" src="https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/f8f5a12f-3e75-44bd-a6b5-e7af0845a877">
@@ -44,7 +44,7 @@ File can be created by running auxiliary routine "create_tide_file.m" with the s
 4. StormSim: Stochastic Simulation Technique (SST): Description pending
 5. StormSim: Joint Probability Method (JPM): Description pending
 
-## StromSim Input File (config)
+## StormSim Input File (config)
 The StormSim-Library is fully controlled trhough the configuration file (StormSim_Inputs.xlsx). The following section will cover all items in the input file. 
 1. StormSim Project General Inputs
    *
