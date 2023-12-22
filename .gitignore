@@ -2,7 +2,6 @@
 *.asv
 *.mat
 **/*.mat
-*.csv
 *.zip
 MCSim_Inputs
 Temp
