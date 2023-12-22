@@ -572,4 +572,24 @@ else % V2
         cData.Table_StormData = cell2table(data,'VariableNames',cData.headers);
     end
 end % END V1 or V2 If
+%% DEAL WITH LADFALL TIME
+if any(contains(cData.headers, {'Landfall Time'}))
+    % Find Reference Time Header Index
+    l_indx = find(strcmp(cData.headers, 'Landfall Time'));
+    % Find Peak Time Index
+    p_indx = find(strcmp(cData.headers, 'Storm Name'));
+    % Grab Reference Time
+    ref_time = strsplit(cData.units{l_indx}, {'hrs since ', 'Z'});
+    ref_time = datetime(ref_time{2});
+    switch FileType
+        case 'Peaks'
+            % Grab Peak Time
+            total_time = string(ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time")));
+            %
+            cData.headers = [cData.headers(1:p_indx), {'yyyymmddHHMM'}, cData.headers(p_indx+1:end)];
+            cData.units = [cData.units(1:p_indx), {''}, cData.units(p_indx+1:end)];
+            cData.StormData = [cData.StormData(:, 1:p_indx), cellstr(total_time), cData.StormData(:, p_indx+1:end)];
+            cData.Table_StormData = [cData.Table_StormData(:, 1:p_indx), table(char(total_time), 'VariableNames', {'yyyymmddHHMM'}) , cData.Table_StormData(:, p_indx+1:end)];
+    end
+end
 end
