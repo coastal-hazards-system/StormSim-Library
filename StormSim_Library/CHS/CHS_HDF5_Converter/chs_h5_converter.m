@@ -28,7 +28,8 @@ A = strsplit(AA,'_');
 PostType = A{1,4};
 % Get File Type
 FileType = A{1,end};
-
+% Storm Type
+storm_type = A{1,2};
 %-----------------------------------------------------------------------------------------------------------------------------
 
 %% CHECK HDF5 FILE HIERARCHY
@@ -584,7 +585,12 @@ if any(contains(cData.headers, {'Landfall Time'}))
     switch FileType
         case 'Peaks'
             % Grab Peak Time
-            total_time = string(ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time")));
+            switch storm_type
+                case {'XH','XC'}
+                    total_time = [char(cData.Table_StormData.("Storm Name")), repmat('00', height(cData.Table_StormData), 1)];
+                otherwise
+                    total_time = string(ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time")));
+            end
             %
             cData.headers = [cData.headers(1:p_indx), {'yyyymmddHHMM'}, cData.headers(p_indx+1:end)];
             cData.units = [cData.units(1:p_indx), {''}, cData.units(p_indx+1:end)];
