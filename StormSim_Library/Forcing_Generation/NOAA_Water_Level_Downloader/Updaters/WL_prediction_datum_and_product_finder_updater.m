@@ -34,7 +34,7 @@ WL_prediction_datum_finder.m and predicted_WL_product_finder.m
             [ia] = ismember(dummy2,col);
             [ia] = find(ia==0);
             % Load Reference List
-            load('Measured_datums_reference_list.mat');
+            datums_reference = readcell('Measured_datums_reference_list.csv');
             % Find Datums in Reference List
             chk = cell2mat(cellfun(@(c)strcmp(c,datums_reference(:,1)),pred_datum(ia),'UniformOutput',false)');
             % Get Reference List Indexes
