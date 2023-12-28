@@ -129,8 +129,12 @@ if use_timeseries == 1
     tc_indx = contains({timeseries_data.Filename},storm_if);
     % Find ADCIRC Filename
     ad_indx_timeseries = contains({timeseries_data(tc_indx).Filename},{'ADCIRC'});
+        % Mismatch ing Headers Failsafe 
+    timeseries_data_temp = timeseries_data(tc_indx);
     % Progress One Level
     timeseries_data = [timeseries_data(tc_indx).Conv_Data];
+        % Get Headers For Hm0,Tp,wDir
+    [STWAVE_headers_location_ts,Tp_special_ts] = chs_wave_model_header_locator(timeseries_data_temp(ad_indx_timeseries==0));
     % Create Alternate Datastes (WHP,WLP)
     if use_peaks == 1
         % Run QA/QC Using TimeSeries
@@ -140,7 +144,7 @@ if use_timeseries == 1
             removed_storms.WLP] = chs_timeseries_qaqc(storm2rm,...
             peaks_data(ad_indx==1).Table_StormData, peaks_data(ad_indx==0).Table_StormData,...
             timeseries_data(ad_indx_timeseries==1).Table_StormData, timeseries_data(ad_indx_timeseries==0).Table_StormData,...
-            has_WaterElevation, STWAVE_headers_location, WLP_switch, WHP_switch, Tp_special, storm_type);
+            has_WaterElevation, STWAVE_headers_location, STWAVE_headers_location_ts, WLP_switch, WHP_switch, Tp_special, Tp_special_ts, storm_type);
         % Remove Alternate Datasets If Empty
         if WLP_switch == 0
             storm.('Peaks') = rmfield(storm.('Peaks'),'WLP');
@@ -164,7 +168,7 @@ if use_timeseries == 1
     % Create ADCIRC-STWAVE TimeSeries Dataset
     [storm.Timeseries, ts_storm2rm] = chs_timeseries_formater(timeseries_data(ad_indx_timeseries==1).Table_StormData,...
         timeseries_data(ad_indx_timeseries==0).Table_StormData,...
-        removed_storms.Maxima, has_WaterElevation, STWAVE_headers_location, Tp_special);
+        removed_storms.Maxima, has_WaterElevation, STWAVE_headers_location_ts, Tp_special_ts);
     % Use Timeseries Indes If Peaks Are Missing
     if use_peaks == 0
         % Remove Bad Storms
@@ -222,6 +226,24 @@ switch storm_type
             % Something Went Wrong In PM Load
             warning(['Something went wrong loading probability masses..']);
         else
+            % Dimension Mismatch Safeguard 
+            if length(prob_mass.Param(:, 1))~=length(storm2rm)
+                % Get Storm ID List 
+                if use_peaks == 1
+                    dummy = cellfun(@str2double, peaks_data(1).Table_StormData.("Storm ID"));
+                else
+                    dummy = cellfun(@str2double, timeseries_data(1).Table_StormData.("Storm ID"));
+                end
+                %
+                dummy = ismember(prob_mass.Param(:, 1), dummy);
+                % Remove Additional Storms Not Found On Data (CHS_Data)
+                fields2edit = {'TC_Freq','Param'};
+                for ll = 1:length(fields2edit)
+                    if length(prob_mass.(fields2edit{ll})(:,1))~=length(storm2rm)
+                        prob_mass.(fields2edit{ll}) = prob_mass.(fields2edit{ll})(dummy, :);
+                    end
+                end
+            end
             % Remove storms From Frequency Vector
             prob_mass.TC_Freq(storm2rm,:)=[];
             % Redifine New Frequency Vector
@@ -230,7 +252,6 @@ switch storm_type
             end
             % Remove storms From Other Vars
             prob_mass.Param(storm2rm,:)=[];
-            prob_mass.dist(:,storm2rm)=[];
             %
             prob_mass.smpl1(ismember(prob_mass.smpl1,removed_storms.Maxima)) = [];
             prob_mass.smpl2(ismember(prob_mass.smpl2,removed_storms.Maxima)) = [];

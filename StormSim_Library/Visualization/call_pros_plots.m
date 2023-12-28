@@ -107,7 +107,7 @@ for ii = 1:length(level_1) % For Each Storm Type
                 end
                 %
                 plot_structure_and_forcing(config, aux_var,...
-                    structure, level_1{ii}, [subDir wName fill_str '_Hazards_Cross-Sections']);
+                    structure, level_1{ii}, fullfile(subDir, [ wName fill_str '_Hazards_Cross-Sections']));
             end
         end
         % ---------- Peaks Priority Individual Responses Hazard Curves Comparison -----------

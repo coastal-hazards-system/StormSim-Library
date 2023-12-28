@@ -1,4 +1,4 @@
-function  [Param, TC_SRR, TC_Freq, dist, TotalFreq, smpl1, smpl2, smpl3] = csh_probability_mass_loader(pm_path, region, Nsvpt)
+function  [Param, TC_SRR, TC_Freq, TotalFreq, smpl1, smpl2, smpl3] = csh_probability_mass_loader(pm_path, region, Nsvpt)
 %{
     %% DESCRIPTION
         This function is responsible for leading CHS TC storm probability
