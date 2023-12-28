@@ -1,6 +1,6 @@
 function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timeseries_qaqc(storm2rm,...
         swl_peaks,hm0_peaks, swl_timeseries, hm0_timeseries,...
-        has_WaterElevation, STWAVE_headers_location, WLP_switch, WHP_switch, Tp_special, sample_type)
+        has_WaterElevation, STWAVE_headers_location, STWAVE_headers_location_ts, WLP_switch, WHP_switch, Tp_special, Tp_special_ts, sample_type)
     %{
     %% DESCRIPTION
         This function verifies if wave model timeseries outputs for all storms reside
@@ -75,9 +75,9 @@ function [storm2rm,WLP_matrix,WHP_matrix,storm2rm_WHP,storm2rm_WLP] = chs_timese
             fprintf(1,'\b\b\b\b%3.0f%%',(100*(stm/length(stmID))));
             % Find Table Row To Extract
             eIndx = str2double(hm0_timeseries.("Storm ID"))==stmID(stm);
-            wData.("ZeroMomentWaveHeight") = hm0_timeseries.(STWAVE_headers_location.Hm0){eIndx,1};
-            wData.("PeakPeriod") = hm0_timeseries.(STWAVE_headers_location.Tp){eIndx,1};
-            wData.("MeanWaveDirection") = hm0_timeseries.(STWAVE_headers_location.wDir){eIndx,1};
+            wData.("ZeroMomentWaveHeight") = hm0_timeseries.(STWAVE_headers_location_ts.Hm0){eIndx,1};
+            wData.("PeakPeriod") = hm0_timeseries.(STWAVE_headers_location_ts.Tp){eIndx,1};
+            wData.("MeanWaveDirection") = hm0_timeseries.(STWAVE_headers_location_ts.wDir){eIndx,1};
             wData.("yyyymmddHHMM") = hm0_timeseries.('yyyymmddHHMM'){eIndx,1};
             wData = struct2table(wData);
             % Find Table Row To Extract

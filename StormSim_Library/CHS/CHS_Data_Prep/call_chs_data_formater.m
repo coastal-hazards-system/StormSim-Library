@@ -273,12 +273,12 @@ if isempty(file2look) % Process SP Data
         case 1 % Zip Folder -> Native CHS Data
             % Remove Unwanted Storm Types
             if strcmp(storm_sampling,'XC')
-                chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'TC'));
-                chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'TC'));
+                chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert, {'XC', 'XH'}));
+                chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert, {'XC', 'XH'}));
             end
             if strcmp(storm_sampling,'TC')
-                chs_files_2_convert_paths = chs_files_2_convert_paths(~contains(chs_files_2_convert,'XC'));
-                chs_files_2_convert = chs_files_2_convert(~contains(chs_files_2_convert,'XC'));
+                chs_files_2_convert_paths = chs_files_2_convert_paths(contains(chs_files_2_convert, {'TC', 'TS'}));
+                chs_files_2_convert = chs_files_2_convert(contains(chs_files_2_convert, {'TC', 'TS'}));
             end
             % Append Filenames With Paths
             full_file_path = cellfun(@(x,y) [x filesep y],chs_files_2_convert_paths,chs_files_2_convert,'un',false);
@@ -321,7 +321,7 @@ if isempty(file2look) % Process SP Data
             case 1
                 % Load Storm Probability Massess
                 [prob_mass.Param, prob_mass.TC_SRR,...
-                    prob_mass.TC_Freq, prob_mass.dist, prob_mass.TotalFreq,...
+                    prob_mass.TC_Freq, prob_mass.TotalFreq,...
                     prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = csh_probability_mass_loader(pm_path, region,sp_ID);
             case 2
                 try
