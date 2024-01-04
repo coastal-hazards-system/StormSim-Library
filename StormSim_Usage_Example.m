@@ -7,7 +7,7 @@ MCS/CSR Requires:
     MCSim_Inputs -> TC Storm Probability Masses 
 %}
 % Define StormSim Input File Name
-stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
+stormsim_input_file = 'StormSim_Inputs_2144.xlsx'; % Include relative path if not in parent directory
 
 %% STEP 1: SET-UP PROJECT ENVIRONMENT
 %{

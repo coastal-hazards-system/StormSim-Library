@@ -331,6 +331,23 @@ if isempty(file2look) % Process SP Data
                     % prob_mass Was Not Found
                     error(['Error ID: 002 | call_chs_data_formater.naming_mismatch | Failed to load variable ''prob_mass'' from ' pm_file]);
                 end
+                % Make Sure Storminess Bins Are There
+                stm_bins = any(cell2mat(cellfun(@(x) strcmp(x, fieldnames(prob_mass)), {'smpl1','smpl2','smpl3'}, 'un', false)),1);
+                %
+                if sum(stm_bins)==0
+                    config.storm_sampling = 'XC';
+                    prob_mass = [];
+                    warning('Warning ID: 001 | call_chs_data_formater.missing_dependency | CHS probability masses have wrong storminess bins naming. Storm sampling limited to extratropical only (XC)....');
+                else
+                    % Add Empty Fields
+                    dummy = {'smpl1','smpl2','smpl3'};
+                    %
+                    dummy = dummy(~stm_bins);
+                    % Create Fields On Prob Mass Structure
+                    for ll = 1:length(dummy)
+                        prob_mass.(dummy{ll}) = [];
+                    end
+                end
         end
         % Format And Inspect Storm Peaks Files
         [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
@@ -368,14 +385,14 @@ if isempty(file2look) % Process SP Data
         % Export Project Forcing
         save([name_prefix '.mat'], 'storm', 'prob_mass');
     end
-    
+
     save(fullfile(config.outfolder, project_name, struc_id, case_name,[ project_name '_' struc_id '_' config.case_name '_config_file.mat']),...
         'config', '-append');
 else
     % Add Fields To Storm
     config.Nyrs_XC = storm.('XC').Nyrs_XC;
     config.Nstm_XC = storm.('XC').Nstm_XC;
-    % Remove Temp Folder 
+    % Remove Temp Folder
     if exist(temp_path,'dir')
         rmdir(temp_path,'s');
     end
