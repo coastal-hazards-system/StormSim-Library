@@ -235,7 +235,7 @@ switch storm_type
                     dummy = cellfun(@str2double, timeseries_data(1).Table_StormData.("Storm ID"));
                 end
                 %
-                dummy = ismember(prob_mass.Param(:, 1), dummy);
+                dummy = ismember(dummy, prob_mass.Param(:, 1));
                 % Remove Additional Storms Not Found On Data (CHS_Data)
                 fields2edit = {'TC_Freq','Param'};
                 for ll = 1:length(fields2edit)
