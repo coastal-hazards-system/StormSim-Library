@@ -129,11 +129,11 @@ if use_timeseries == 1
     tc_indx = contains({timeseries_data.Filename},storm_if);
     % Find ADCIRC Filename
     ad_indx_timeseries = contains({timeseries_data(tc_indx).Filename},{'ADCIRC'});
-        % Mismatch ing Headers Failsafe 
+    % Mismatch ing Headers Failsafe
     timeseries_data_temp = timeseries_data(tc_indx);
     % Progress One Level
     timeseries_data = [timeseries_data(tc_indx).Conv_Data];
-        % Get Headers For Hm0,Tp,wDir
+    % Get Headers For Hm0,Tp,wDir
     [STWAVE_headers_location_ts,Tp_special_ts] = chs_wave_model_header_locator(timeseries_data_temp(ad_indx_timeseries==0));
     % Create Alternate Datastes (WHP,WLP)
     if use_peaks == 1
@@ -226,24 +226,6 @@ switch storm_type
             % Something Went Wrong In PM Load
             warning(['Something went wrong loading probability masses..']);
         else
-            % Dimension Mismatch Safeguard 
-            if length(prob_mass.Param(:, 1))~=length(storm2rm)
-                % Get Storm ID List 
-                if use_peaks == 1
-                    dummy = cellfun(@str2double, peaks_data(1).Table_StormData.("Storm ID"));
-                else
-                    dummy = cellfun(@str2double, timeseries_data(1).Table_StormData.("Storm ID"));
-                end
-                %
-                dummy = ismember(dummy, prob_mass.Param(:, 1));
-                % Remove Additional Storms Not Found On Data (CHS_Data)
-                fields2edit = {'TC_Freq','Param'};
-                for ll = 1:length(fields2edit)
-                    if length(prob_mass.(fields2edit{ll})(:,1))~=length(storm2rm)
-                        prob_mass.(fields2edit{ll}) = prob_mass.(fields2edit{ll})(dummy, :);
-                    end
-                end
-            end
             % Remove storms From Frequency Vector
             prob_mass.TC_Freq(storm2rm,:)=[];
             % Redifine New Frequency Vector
