@@ -64,7 +64,7 @@ if exist(pm_path,'dir')
                 % Convert HI SRR to storms/year using a 400 km diameter.
                 TC_SRR(1,3) = SRR_HI(ic(Nsvpt))*400;
                 % SRR for all TC intensities.
-                TC_SRR(1,4) = TC_SRR(1,1) + TC_SRR(1,2);
+                TC_SRR(1,4) = sum(TC_SRR);
                 % Get Frequency Vector
                 TC_Freq = Freq(Nsvpt).TC;
                 % Extract Distance Vector For Specified Save Point
@@ -78,7 +78,7 @@ if exist(pm_path,'dir')
                 % High Intensity Storm Population
                 smpl3 = dist200(Param(dist200,5)>=48);
                 % 
-                smpl2 = [];% Mid Intensity
+                smpl2 =  [];% Mid Intensity
             catch
                 Param = [];
                 TC_SRR = [];
