@@ -21,9 +21,9 @@ struc_id = config.struc_id;
 % Define Case  Name
 case_name = config.case_name;
 % Define
-subDir = fullfile(project_name, struc_id, case_name);
+subDir = fullfile(config.outfolder, project_name, struc_id, case_name);
 % Output Save Dir
-outDir = fullfile(project_name, struc_id, [project_name,'_', struc_id]);
+outDir = fullfile(config.outfolder, project_name, struc_id, [project_name,'_', struc_id]);
 % Load Empirical Coefficients
 [emp_coeff] = load_empirical_coefficients();
 
