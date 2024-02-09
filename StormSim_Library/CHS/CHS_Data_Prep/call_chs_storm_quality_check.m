@@ -213,7 +213,7 @@ elseif use_timeseries == 1 && use_peaks == 0
         removed_storms.Maxima);
 elseif use_peaks == 1 && use_timeseries == 0
     % Grab Removed Storm Ids For Maxima Dataset
-    storm2rm = unique([storm2rm;removed_storms.Maxima]);
+    removed_storms.Maxima = storm2rm;
     % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
     storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
