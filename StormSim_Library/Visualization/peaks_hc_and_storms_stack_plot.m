@@ -196,18 +196,20 @@ for ii = 1:length(pDatasets)
     % Add X Label
     if use_aep == 1
         hc_label = 'Annual Exceedance Probability, AEP';
+        hc_label2 = 'AEP';
     else
         hc_label = 'Annual Exceedance Frequency, AEF [1/yr]';
+                hc_label2 = 'AEF [1/yr]';
     end
     % Initialize TCs Axes Handle
     ax_tc_hc_swl = subplot(nrows, ncols,ncols+2);
     ax_tc_hc_swl = ax_ini(ax_tc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['TC  | SWL | ' region ' | SP' num2str(sp_ID)]);
 
     ax_tc_hc_hm0 = subplot(nrows, ncols,ncols+3);
-    ax_tc_hc_hm0 = ax_ini(ax_tc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Hm0 [m]', ['TC  | Hm0 | ' region ' | SP' num2str(sp_ID)]);
+    ax_tc_hc_hm0 = ax_ini(ax_tc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Hm0 [m]', ['TC  | Hm0 | ' region ' | SP' num2str(sp_ID_wave)]);
 
     ax_tc_hc_tp = subplot(nrows, ncols,ncols+4);
-    ax_tc_hc_tp = ax_ini(ax_tc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Tp [s]', ['TC  | Tp | ' region ' | SP' num2str(sp_ID)]);
+    ax_tc_hc_tp = ax_ini(ax_tc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Tp [s]', ['TC  | Tp | ' region ' | SP' num2str(sp_ID_wave)]);
 
 
     % ---- FORMAT XC STORM DATA AXES----%
@@ -223,10 +225,10 @@ for ii = 1:length(pDatasets)
     ax_xc_hc_swl = ax_ini(ax_xc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['XC  | SWL | ' region ' | SP' num2str(sp_ID)]);
 
     ax_xc_hc_hm0 = subplot(nrows, ncols,3);
-    ax_xc_hc_hm0 = ax_ini(ax_xc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Hm0 [m]', ['XC  | Hm0 | ' region ' | SP' num2str(sp_ID)]);
+    ax_xc_hc_hm0 = ax_ini(ax_xc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Hm0 [m]', ['XC  | Hm0 | ' region ' | SP' num2str(sp_ID_wave)]);
 
     ax_xc_hc_tp = subplot(nrows, ncols,4);
-    ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, 'Tp [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID)]);
+    ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Tp [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID_wave)]);
 
     % Define SWL Y Lim
     ax_tc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
@@ -311,10 +313,10 @@ for ii = 1:length(pDatasets)
             for pp = 1:length({hcData.('TC').(pDatasets{ii}).var})
                 fill_str = lower(hcData.('TC').(pDatasets{ii})(pp).var);
                 eval(['p = plot(ax_tc_hc_' fill_str ',tc_x,hcData.(''TC'').(pDatasets{ii})(pp).(plt_fld)(:,i),colorstr{i},''LineWidth'',2,''DisplayName'',DataName);']);
-                % Create Data Tip Vector
-                row = dataTipTextRow('RowID', 1:length(xc_x));
-                % Append New Data Tip
-                p.DataTipTemplate.DataTipRows(end+1) = row;
+                % % Create Data Tip Vector
+                % row = dataTipTextRow('RowID', 1:length(xc_x));
+                % % Append New Data Tip
+                % p.DataTipTemplate.DataTipRows(end+1) = row;
             end
             %             p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
             %             p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
