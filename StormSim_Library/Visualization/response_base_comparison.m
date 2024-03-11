@@ -179,8 +179,10 @@ for k = 1:length(Resp_RB1)
         case 'CC'
             modelstr = 'CC';
     end
-
-    saveas(Figure0,[outpath filesep  'RB1_vs_RB3_' modelstr '_' Resp_RB1(k).var '_Hazard_Curve_Comparison'],'png');
+    if ~exist(outpath, 'dir')
+        mkdir(outpath);
+    end
+    saveas(Figure0,fullfile(outpath,['RB1_vs_RB3_' modelstr '_' Resp_RB1(k).var '_Hazard_Curve_Comparison.png']));
     close all;
 end
 
