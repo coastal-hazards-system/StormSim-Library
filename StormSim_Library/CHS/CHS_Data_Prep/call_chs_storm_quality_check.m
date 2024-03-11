@@ -288,6 +288,10 @@ else
     config.chs_swl_u_a = Comb.U_a(spID); % SWL absolute uncertainty
     config.chs_swl_u_r = Comb.U_r(spID); % SWL Proportional uncertainty
 end
+%
+if strcmp(storm_type, 'XC') && config.apply_xc_bias == 0
+    bias_tgr = 0;
+end
 % Apply Bias Correction (If Applicable)
 if bias_tgr == 1
     % Determine Structure Fields
