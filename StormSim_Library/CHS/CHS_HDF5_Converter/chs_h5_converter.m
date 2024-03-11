@@ -603,12 +603,13 @@ if any(contains(cData.headers, {'Landfall Time'}))
 end
 
 %% STORM ID Wrong Format
-if ~ischar(cData.Table_StormData.("Storm ID")(1))
-    % Get Storm ID Col Index
-    col_indx = strcmp('Storm ID', cData.headers);
-    % Convert Form Number To Char (Table)
-    cData.Table_StormData.("Storm ID") = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
-    % Convert From Number To Char
-    cData.StormData(:, col_indx) = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
-end
+if isfield(cData.Table_StormData, 'Storm ID')
+    if ~ischar(cData.Table_StormData.("Storm ID")(1))
+        % Get Storm ID Col Index
+        col_indx = strcmp('Storm ID', cData.headers);
+        % Convert Form Number To Char (Table)
+        cData.Table_StormData.("Storm ID") = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
+        % Convert From Number To Char
+        cData.StormData(:, col_indx) = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
+    end
 end
