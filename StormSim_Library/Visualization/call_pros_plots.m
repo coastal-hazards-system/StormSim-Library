@@ -18,6 +18,8 @@ level_2 = level_2(contains(level_2,{'Peaks','Timeseries'}));
 % Look For Additional Level If Peaks Exist
 if any(contains(level_2, 'Peaks'))
     level_3 = fieldnames(Resp.(level_1{1}).('Peaks'));
+    % Check For EMpty Entries
+    level_3 = level_3(~cell2mat(cellfun(@(x) isempty(Resp.(level_1{1}).('Peaks').(x)), level_3, 'UniformOutput', false)));
 else
     level_3 = [];
 end

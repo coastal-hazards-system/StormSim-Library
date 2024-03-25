@@ -26,6 +26,8 @@ end
 %% DETERMINE ABSOLUTE MIN/MAX
 % Scan Peak Datasets
 pDatasets = fieldnames(Resp);
+% Check For EMpty Entries
+pDatasets = pDatasets(~cell2mat(cellfun(@(x) isempty(Resp.(x)), pDatasets, 'UniformOutput', false)));
 % Compute Logical Vector
 s_lim_indx = Resp.(pDatasets{1})(1).x_plot>=x_lim(1);
 
@@ -79,7 +81,7 @@ for k = 1:plen
     for ll = 1:length(pDatasets)
         plt = Resp.(pDatasets{ll});
         if any(strcmp(resp_list{k}, {plt.var}))
-            % Grab Variable Index 
+            % Grab Variable Index
             pvar_indx = strcmp({plt.var}, resp_list{k});
             % Initialize Axes Handle
             ax = subplot(srow,scol,ll);
@@ -146,7 +148,7 @@ for k = 1:plen
             end
             % Define Y Label
             if ll == y_indx_label || y_indx_label == -9
-                ylabel(ax,plt(k).y_label,'FontSize',ax_label_fnt,'FontWeight','bold');
+                ylabel(ax,plt(pvar_indx).y_label,'FontSize',ax_label_fnt,'FontWeight','bold');
             end
             % Add Legend
             if ll==1

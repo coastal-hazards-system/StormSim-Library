@@ -49,21 +49,27 @@ end
 
 %% COMBINE HAZARD CURVES
 if strcmp(storm_sampling,'CC')
-    disp('         Combining project primary responses hazard curves...');
-    [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);
+    if ~isempty(HC_out.('TC').(f_str)) & ~isempty(HC_out.('TC').(f_str))
+        disp('         Combining project primary responses hazard curves...');
+        [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);
+    end
 end
 
 %% COMPUTE FREQUENCY BASED RESPONSES (IF NEEDED)
 if workflow == 4
-        disp('         Computing & Plotting frequency base responses...');
+    disp('         Computing & Plotting frequency base responses...');
     HC_out = compute_frequency_base_responses(config, structure, emp_coeff, HC_out, f_str, use_aep);
 end
 %% REMOVE UNWANTED FIELDS FROM OUTPUT VAR
 if any(contains(fieldnames(project_forcing),{'TC'}))
-    HC_out.('TC').(f_str) = rmfield(HC_out.('TC').(f_str), {'tbl_rsp_x','tbl_rsp_y'});
+    if ~isempty(HC_out.('TC').(f_str))
+        HC_out.('TC').(f_str) = rmfield(HC_out.('TC').(f_str), {'tbl_rsp_x','tbl_rsp_y'});
+    end
 end
 if any(contains(fieldnames(project_forcing),{'XC'}))
-    HC_out.('XC').(f_str) = rmfield(HC_out.('XC').(f_str), {'tbl_rsp_x','tbl_rsp_y'});
+    if ~isempty(HC_out.('XC').(f_str))
+        HC_out.('XC').(f_str) = rmfield(HC_out.('XC').(f_str), {'tbl_rsp_x','tbl_rsp_y'});
+    end
 end
 
 warning('on');
