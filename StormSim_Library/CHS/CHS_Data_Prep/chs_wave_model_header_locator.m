@@ -65,7 +65,7 @@ function [STWAVE_headers_location,Tp_special] = chs_wave_model_header_locator(ST
         % Dataset Offers Tp
         Tp_special = 0;
         % Define Posible Header Values
-        headerName = {'Peak Spectral Wave Period Total Sea','Peak Period','Mean Absolute Wave Period TM01','Peak Wave Period'};
+        headerName = {'Peak Spectral Wave Period Total Sea','Peak Period','Smoothed Peak Period','Peak Wave Period'};
     end
     % Store Header To Use
     STWAVE_headers_location.Tp = headerName{headerIndx};

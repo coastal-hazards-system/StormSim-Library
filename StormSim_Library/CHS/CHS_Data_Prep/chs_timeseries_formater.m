@@ -123,6 +123,9 @@ for stm = 1:length(stmID)
             elseif round(ts_chk,4)== 0.0208 % 30 Min
                 waves = waves(1:2:end,:);
                 waves_datestr = waves_datestr(1:2:end,:);
+            elseif round(ts_chk,4) == 0.0139 % 20 min
+                waves = waves(1:3:end,:);
+                waves_datestr = waves_datestr(1:3:end,:);
             else
                 error(['Unrecognized timestep for data']);
             end
