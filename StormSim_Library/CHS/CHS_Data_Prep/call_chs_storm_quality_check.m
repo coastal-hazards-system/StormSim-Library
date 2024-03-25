@@ -42,6 +42,7 @@ spID = config.sp_ID;
 chs_bias_file = config.chs_bias_file;
 % Define SWL Hydrograph Switch
 use_waves_swl = config.use_waves_swl;
+pm_path = config.prob_mass_source;
 
 %% DEFINE AUX VARIABLES
 % storm Type Flag To Search For
@@ -280,13 +281,27 @@ bias_tgr = 1;
 if ~exist(chs_bias_file,'file')
     bias_tgr = 0;
 else
+    switch chs_region
+        case 'CHS-LA'
+            % Load Grid Files 
+            load(fullfile(pm_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
+            load(fullfile(pm_path, 'CHS-LA_staID.mat'), 'staID');  % staID -> [SP_ID Node_ID Lon Lat Depth]
+            % Get Row
+            adcirc_node_id = SPs(SPs(:,1) == spID, 2);
+            % Find Correct Row ID For Bias & Uncertainty
+            bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
+        otherwise
+            bias_indx = spID;
+    end
     % Load Bias Correction File
     load(chs_bias_file, 'Comb');
     % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
-    B_a_SWL=Comb.B_a(spID); B_r_SWL=Comb.B_r(spID);
+    B_a_SWL=Comb.B_a(bias_indx); B_r_SWL=Comb.B_r(bias_indx);
+    config.chs_swl_b_a = B_a_SWL; 
+    config.chs_swl_b_r = B_r_SWL;
     % Overwrite Manual Value
-    config.chs_swl_u_a = Comb.U_a(spID); % SWL absolute uncertainty
-    config.chs_swl_u_r = Comb.U_r(spID); % SWL Proportional uncertainty
+    config.chs_swl_u_a = Comb.U_a(bias_indx); % SWL absolute uncertainty
+    config.chs_swl_u_r = Comb.U_r(bias_indx); % SWL Proportional uncertainty
 end
 %
 if strcmp(storm_type, 'XC') && config.apply_xc_bias == 0
