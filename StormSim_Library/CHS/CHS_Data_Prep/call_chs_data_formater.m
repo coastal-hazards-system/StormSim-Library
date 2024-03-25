@@ -184,9 +184,11 @@ if ~isempty(storm_data_filename) % New Case Run
     if use_timeseries == 1
         % Check If Timeseries Exist In storm
         chk3 = contains('Timeseries',storm_level_2);
+    else
+        chk3 = false;
     end
     % Determine If Pre-Processing Needs To Be Run
-    if sum([chk1, chk2, chk3]) == 1 + sum([use_timeseries, use_peaks])
+    if chk1 && sum([chk2,chk3]) == sum([use_timeseries, use_peaks])
         % .mats Have The Necessary information For Requested Config. Do Nothing.
         disp(['Project forcing detected. Loading processed SP data....']);
     else % .mats Do Not Have Required Data For Requested Config
@@ -389,9 +391,11 @@ if isempty(file2look) % Process SP Data
     save(fullfile(config.outfolder, project_name, struc_id, case_name,[ project_name '_' struc_id '_' config.case_name '_config_file.mat']),...
         'config', '-append');
 else
-    % Add Fields To Storm
-    config.Nyrs_XC = storm.('XC').Nyrs_XC;
-    config.Nstm_XC = storm.('XC').Nstm_XC;
+    if contains(storm_sampling, {'XC', 'CC'})
+        % Add Fields To Storm
+        config.Nyrs_XC = storm.('XC').Nyrs_XC;
+        config.Nstm_XC = storm.('XC').Nstm_XC;
+    end
     % Remove Temp Folder
     if exist(temp_path,'dir')
         rmdir(temp_path,'s');
