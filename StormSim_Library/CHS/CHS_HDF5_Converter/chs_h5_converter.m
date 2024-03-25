@@ -603,7 +603,7 @@ if any(contains(cData.headers, {'Landfall Time'}))
 end
 
 %% STORM ID Wrong Format
-if isfield(cData.Table_StormData, 'Storm ID')
+if any(strcmp(cData.headers, "Storm ID"))
     if ~ischar(cData.Table_StormData.("Storm ID")(1))
         % Get Storm ID Col Index
         col_indx = strcmp('Storm ID', cData.headers);
