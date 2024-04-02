@@ -270,6 +270,9 @@ try
 catch
     config.project_CLs = '[16 84]';
 end
+% Hardcoded Flag Until Further Dev
+config.slope_type = 0; % Idealized Slope 
+
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
 [config, structure] = call_environment_setup(config, isempty(file2look));
