@@ -58,7 +58,11 @@ berm_width = structure.berm_width;
 % Berm Slope
 berm_slope = structure.berm_slope;
 % Seaside Slope (cot(alpha))
-slope = structure.seaside_slope;
+if config.slope_type == 1 % This flag will be harcoded for distirbutable version
+    slope = structure.(storm_type).seaward_slope; % []
+else % Idealized Slope
+    slope = structure.seaside_slope;
+end
 % Leeside Slope
 slope_lee = structure.leeside_slope;
 % Rubblemound Fields
@@ -122,12 +126,16 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
     % Compute Structure Type Dependant Responses
     switch struc_type
         case 2 % Floodwall
+            % Reformat Slope If Needed
+            if length(slope) == 1
+                slope_aux = cellfun(@(y) repmat(berm_slope, size(y)), SWL, 'un', false);
+            end
             % Compute runup & Overtopping
             if calc_q == 1
-                [~,~, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
-                    berm_slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+                [~,~, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e, f) Eurotop_r2p_q_Final(a, b, c, d,...
+                    f, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     wall_bottom_elev, berm_width, struc_type),...
-                    Hm0, Tp, SWL, Rc, gammas,'un',false);
+                    Hm0, Tp, SWL, Rc, gammas, slope_aux,'un',false);
             end
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
@@ -139,12 +147,18 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
                     zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
             end
         case {1,3} % Levees & Rubblemound
+            % Reformat Slope If Needed
+            if length(slope) == 1
+                slope_aux = cellfun(@(y) repmat(slope, size(y)), SWL, 'un', false);
+            else
+                slope_aux = slope;
+            end
             % Compute runup & Overtopping
             if calc_r2p == 1 || calc_q == 1 || calc_q_vol == 1
-                [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e) Eurotop_r2p_q_Final(a, b, c, d,...
-                    slope, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
+                [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=cellfun(@(a, b, c, d, e,f) Eurotop_r2p_q_Final(a, b, c, d,...
+                    f, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     toe_elev, berm_width, struc_type),...
-                    Hm0, Tp, SWL, Rc, gammas,'un',false);
+                    Hm0, Tp, SWL, Rc, gammas, slope_aux,'un',false);
             end
             % Remove Unwanted Fields
             if calc_r2p == 0
