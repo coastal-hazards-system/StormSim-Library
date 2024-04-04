@@ -59,7 +59,7 @@ if exist(pm_path,'dir')
                 %%%% NEED TO ADD CASES WITH MORE INTENSITY LEVELS (400 km diameter might change)
                 % Convert LI SRR to storms/year using a 400 km diameter.
                 TC_SRR = SRR_LI(ic(Nsvpt))*400;
-                % Mid Intensity 
+                % Mid Intensity
                 TC_SRR(1,2) = 0; % No Mid Intensity Storms
                 % Convert HI SRR to storms/year using a 400 km diameter.
                 TC_SRR(1,3) = SRR_HI(ic(Nsvpt))*400;
@@ -77,7 +77,7 @@ if exist(pm_path,'dir')
                 smpl1 = dist200(Param(dist200,5)<48);
                 % High Intensity Storm Population
                 smpl3 = dist200(Param(dist200,5)>=48);
-                % 
+                %
                 smpl2 =  [];% Mid Intensity
             catch
                 Param = [];
@@ -100,12 +100,16 @@ if exist(pm_path,'dir')
             SRR_HI = dload([pm_path filesep '..' filesep,'SRR_TC_HI_600km.mat']);%SRR_HI = SRR_HI.SRR;
             % All storm SRR at each CRL.
             SRR_All = dload([pm_path filesep '..' filesep,'SRR_TC_All_600km.mat']);%SRR_HI = SRR_HI.SRR;
+%             % Storms relative probability at each save point.
+%             ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
+%             % NACCS Synthetic Storm Parameters
+%             Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
             % Storms relative probability at each save point.
-            ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
+            ProbMass = dload([pm_path filesep,[region,'_ITCS_DSW_600km.mat']]);
             % NACCS Synthetic Storm Parameters
-            Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
+            Param = dload([pm_path filesep,[region,'_ITCS_Param.mat']]);
             % Savepoint location info
-            staID = dload([pm_path filesep,[region,'_staID.mat']]);
+            staID = dload([pm_path filesep,[region,'_staID.mat']]); % staID -> [SP_ID Node_ID Lon Lat Depth]
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The
                 SRR was computed at 1050 coastal reference locations (CRL) and the SRR from the closest CRL to the
@@ -116,9 +120,21 @@ if exist(pm_path,'dir')
                 storms passing within 200 km of the coastal reference location (CRL)
                 closest to save point
             %}
-
+            switch pm_version
+                case 'CHS-LA'
+                    % Load Grid Files
+                    load(fullfile(pm_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
+                    % Load Selected Nodes List
+                    load(fullfile(pm_path, 'CHS-LA_staID.mat'), 'staID');
+                    % Get Row
+                    adcirc_node_id = SPs(SPs(:,1) == Nsvpt, 2);
+                    % Find Correct Row ID For DSWs
+                    bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
+                otherwise
+                    bias_indx = Nsvpt;
+            end
             % Find CRL closest to savepoint
-            [nearest_lat, nearest_lon, ~, dist, ~] = find_nearest_latlon(staID(Nsvpt,2),staID(Nsvpt,3),CRL(:,1),CRL(:,2), []);
+            [nearest_lat, nearest_lon, ~, dist, ~] = find_nearest_latlon(staID(bias_indx,3),staID(bias_indx,4),CRL(:,1),CRL(:,2), []);
             [~, ic] = min(dist); % km
 
             % Convert LI SRR to storms/year using a 600 km diameter.
