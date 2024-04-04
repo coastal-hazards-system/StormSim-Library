@@ -575,41 +575,44 @@ else % V2
 end % END V1 or V2 If
 
 %% DEAL WITH LADFALL TIME
-if any(contains(cData.headers, {'Landfall Time'}))
-    % Find Reference Time Header Index
-    l_indx = find(strcmp(cData.headers, 'Landfall Time'));
-    % Find Peak Time Index
-    p_indx = find(strcmp(cData.headers, 'Storm Name'));
-    % Grab Reference Time
-    ref_time = strsplit(cData.units{l_indx}, {'hrs since ', 'Z'});
-    ref_time = datetime(ref_time{2});
-    switch FileType
-        case 'Peaks'
-            % Grab Peak Time
-            switch storm_type
-                case {'XH','XC'}
-                    total_time = [char(cData.Table_StormData.("Storm Name")), repmat('00', height(cData.Table_StormData), 1)];
-                otherwise
-                    total_time =ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time"));
-                    total_time.Format = "uuuuMMddHHmm";
-                    total_time = string(total_time);
-            end
-            %
-            cData.headers = [cData.headers(1:p_indx), {'yyyymmddHHMM'}, cData.headers(p_indx+1:end)];
-            cData.units = [cData.units(1:p_indx), {''}, cData.units(p_indx+1:end)];
-            cData.StormData = [cData.StormData(:, 1:p_indx), cellstr(total_time), cData.StormData(:, p_indx+1:end)];
-            cData.Table_StormData = [cData.Table_StormData(:, 1:p_indx), table(cellstr(total_time), 'VariableNames', {'yyyymmddHHMM'}) , cData.Table_StormData(:, p_indx+1:end)];
+if length(cData) == 1
+    if any(contains(cData.headers, {'Landfall Time'}))
+        % Find Reference Time Header Index
+        l_indx = find(strcmp(cData.headers, 'Landfall Time'));
+        % Find Peak Time Index
+        p_indx = find(strcmp(cData.headers, 'Storm Name'));
+        % Grab Reference Time
+        ref_time = strsplit(cData.units{l_indx}, {'hrs since ', 'Z'});
+        ref_time = datetime(ref_time{2});
+        switch FileType
+            case 'Peaks'
+                % Grab Peak Time
+                switch storm_type
+                    case {'XH','XC'}
+                        total_time = [char(cData.Table_StormData.("Storm Name")), repmat('00', height(cData.Table_StormData), 1)];
+                    otherwise
+                        total_time =ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time"));
+                        total_time.Format = "uuuuMMddHHmm";
+                        total_time = string(total_time);
+                end
+                %
+                cData.headers = [cData.headers(1:p_indx), {'yyyymmddHHMM'}, cData.headers(p_indx+1:end)];
+                cData.units = [cData.units(1:p_indx), {''}, cData.units(p_indx+1:end)];
+                cData.StormData = [cData.StormData(:, 1:p_indx), cellstr(total_time), cData.StormData(:, p_indx+1:end)];
+                cData.Table_StormData = [cData.Table_StormData(:, 1:p_indx), table(cellstr(total_time), 'VariableNames', {'yyyymmddHHMM'}) , cData.Table_StormData(:, p_indx+1:end)];
+        end
+    end
+
+    %% STORM ID Wrong Format
+    if any(strcmp(cData.headers, "Storm ID"))
+        if ~ischar(cData.Table_StormData.("Storm ID")(1))
+            % Get Storm ID Col Index
+            col_indx = strcmp('Storm ID', cData.headers);
+            % Convert Form Number To Char (Table)
+            cData.Table_StormData.("Storm ID") = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
+            % Convert From Number To Char
+            cData.StormData(:, col_indx) = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
+        end
     end
 end
-
-%% STORM ID Wrong Format
-if any(strcmp(cData.headers, "Storm ID"))
-    if ~ischar(cData.Table_StormData.("Storm ID")(1))
-        % Get Storm ID Col Index
-        col_indx = strcmp('Storm ID', cData.headers);
-        % Convert Form Number To Char (Table)
-        cData.Table_StormData.("Storm ID") = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
-        % Convert From Number To Char
-        cData.StormData(:, col_indx) = cellfun(@num2str, cData.StormData(:, col_indx), 'UniformOutput', false);
-    end
 end
