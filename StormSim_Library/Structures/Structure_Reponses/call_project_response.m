@@ -1,4 +1,4 @@
-function [Resp] = call_project_response(config, project_forcing, structure, prob_mass)
+function [Resp] = call_project_response(config, project_forcing, structure, prob_mass, create_plots)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
 workflow = config.workflow;
@@ -118,7 +118,11 @@ switch workflow
             end
         end
         % Plot Results
-        call_pros_plots(config, structure, project_forcing, prob_mass, Resp);
+        if create_plots == 1
+            call_pros_plots(config, structure, project_forcing, prob_mass, Resp);
+        else
+            mkdir(subDir);
+        end
     case 3 % CSR
         %% STORMSIM: MCS-CSR
         % Print Status
