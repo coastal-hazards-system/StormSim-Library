@@ -218,9 +218,9 @@ switch structure_type
             R2p_a = min([Hm0(indx2).*runup_coeff3./(1./slope(indx2)) + 1.6 , (3.*Hm0(indx2))],[],2,"omitnan");
             R2p(indx2) = max([zeros(size(SWL(indx2))),max([R2p_a,(1.8.*Hm0(indx2))],[],2,"omitnan")],[],2,"omitnan");
             % EurOtop Overtopping eq 5.18- assumes only smooth slopes
-            a_a = (0.09 - 0.01.*(2-(1./slope(indx2))).^2.1);
+            a_a = (0.09 - 0.01.*(2-(slope(indx2))).^2.1);
             a = a_a+(a_a.*0.15.*randn);
-            b_a = min((1.5+0.42.*(2-(1./slope(indx2))).^1.5),2.35);
+            b_a = min((1.5+0.42.*(2-(slope(indx2))).^1.5),2.35);
             b = b_a+(b_a.*0.10.*randn);
             q_wave_ot(indx2) = sqrt(g.*Hm0(indx2).^3).*a.*exp(-(b.*Rc_corrt(indx2)./Hm0(indx2)./gamma_beta_OT(indx2)).^1.3);
         end
