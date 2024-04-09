@@ -1,4 +1,4 @@
-function [aep_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, aep_list, log_scale, prc, u_a)
+function [aep_out] = combine_hazard_curves(tc_prob, xc_prob, xc_resp_vector, aep_list, log_scale, prc, u_a, resp_var)
 % Initialize Out Var
 aep_out = NaN(length(aep_list), size(xc_prob, 2));
 % Loop Through Each CL
@@ -49,49 +49,52 @@ end
 % At this point we have a final combined BE HC
 
 %% Interpolate to compute ARI for each y-value for tropical storms
-for ii=1:size(tc_prob,2)
-    x1 = tc_prob(:,ii); % CLs use tropical only
-    y1 = xc_resp_vector;
+switch resp_var
+    case {'q', 'q_wave_ot', 'Q_vol', 'Q_vol_wave_ot'}
+        % ALS CL Method
+        for ii = 2:size(tc_prob,2)
+            z = norminv(prc(ii)/100); % Compute Normal Z Scores
+            aep_out(:,ii) = aep_out(:,1)*(1+z*u_a);
+        end
+    otherwise
+        for ii=1:size(tc_prob,2)
+            x1 = tc_prob(:,ii); % CLs use tropical only
+            y1 = xc_resp_vector;
 
-    % Remove NaN & Inf Values
-    rIndx = isnan(x1) | isinf(x1);
-    x1(rIndx) = []; y1(rIndx) = [];
-    % Compute Log
-    x1 = log(x1);
+            % Remove NaN & Inf Values
+            rIndx = isnan(x1) | isinf(x1);
+            x1(rIndx) = []; y1(rIndx) = [];
+            % Compute Log
+            x1 = log(x1);
 
-    rIndx = isnan(x1) | isinf(x1);
-    x1(rIndx) = []; y1(rIndx) = [];
-    % Do Unique, Keep Order
-    [C, ia, ~] = unique(x1,'stable');
-    x1 = C;y1 = y1(ia,1);
-    try
-        % Interpolate Response For Specified ARI's
-        dummy = interp1(x1,y1,log(aep_list),'linear','extrap');
-        % Set Negative Interp Values To NaN
-        dummy(dummy<=0) = NaN;
-        % Store Results
-        TC_aep(:,ii) = dummy;
-    catch
-    end
+            rIndx = isnan(x1) | isinf(x1);
+            x1(rIndx) = []; y1(rIndx) = [];
+            % Do Unique, Keep Order
+            [C, ia, ~] = unique(x1,'stable');
+            x1 = C;y1 = y1(ia,1);
+            try
+                % Interpolate Response For Specified ARI's
+                dummy = interp1(x1,y1,log(aep_list),'linear','extrap');
+                % Set Negative Interp Values To NaN
+                dummy(dummy<=0) = NaN;
+                % Store Results
+                TC_aep(:,ii) = dummy;
+            catch
+            end
+        end
+        for ii=2:size(TC_aep,2)
+            if log_scale == 0
+                CL_BE_TC_diff = TC_aep(:,1) - TC_aep(:,ii); % TC BE - CL
+                aep_out(:,ii) = aep_out(:,1) - CL_BE_TC_diff; % CC BE/(TC BE + CL)
+            else
+                CL_BE_TC_diff2 = log10(TC_aep(:,ii)) - log10(TC_aep(:,1));
+                aep_out(:,ii) = 10.^(log10(aep_out(:,1)).*CL_BE_TC_diff2);
+            end
+            if size(aep_out,1)>100
+                nan_index = find(isnan(aep_out(:,ii)),1,'first');
+                aep_out(nan_index-1,ii)=nan;
+                aep_out(nan_index-2,ii)=nan;
+            end
+        end
 end
-for ii=2:size(TC_aep,2)
-    if log_scale == 0
-        CL_BE_TC_diff = TC_aep(:,1) - TC_aep(:,ii); % TC BE - CL
-        aep_out(:,ii) = aep_out(:,1) - CL_BE_TC_diff; % CC BE/(TC BE + CL)
-    else
-        CL_BE_TC_diff2 = log10(TC_aep(:,ii)) - log10(TC_aep(:,1));
-        aep_out(:,ii) = 10.^(log10(aep_out(:,1)).*CL_BE_TC_diff2);
-    end
-    if size(aep_out,1)>100
-        nan_index = find(isnan(aep_out(:,ii)),1,'first');
-        aep_out(nan_index-1,ii)=nan;
-        aep_out(nan_index-2,ii)=nan;
-    end
-end
-
-% ALS CL Method
-% for ii = 2:size(tc_prob,2)
-%     z = norminv(prc(ii)/100); % Compute Normal Z Scores
-%     aep_out(:,ii) = aep_out(:,1)*(1+z*u_a);
-% end
 end
