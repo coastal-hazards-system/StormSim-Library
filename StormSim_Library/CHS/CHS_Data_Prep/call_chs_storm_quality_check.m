@@ -300,18 +300,11 @@ else
             adcirc_node_id = SPs(SPs(:,1) == spID, 2);
             % Find Correct Row ID For Bias & Uncertainty
             bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
-        case 'CHS-SA'
-            % Load Grid Files
-            %             nodeID = dload(fullfile(pm_path, 'CHS-SA_nodeID.mat'), 'nodeID');  % Nodes
-            %
-            staID = dload(fullfile(pm_path, 'SACS_NCSFL_staID.mat'), 'staID');  % SPs
-            % Find Nearest Node
-            %             [~, ~, ~, ~, bias_indx] = find_nearest_latlon(staID(staID(:,1) == spID, 2), staID(staID(:,1) == spID, 3), nodeID(:, 3), nodeID(:, 4), []);
-            %             % Find Correct Row ID For DSWs
-            bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
         otherwise
-            % Load SP List With Coordinates
-            staID = dload(fullfile(pm_path, [chs_region '_staID.mat']), 'staID');  % SPs
+            % Get File Dir
+            dummy = dir(fullfile(pm_path,'*_staID.mat'));
+            % Load Grid Files
+            staID = dload(fullfile(pm_path, dummy.name), 'staID');  % SPs
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
     end

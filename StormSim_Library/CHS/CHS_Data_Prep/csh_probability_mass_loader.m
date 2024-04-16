@@ -29,9 +29,9 @@ pm_version = pm_version{end};
 % Load According To Region (this will be replaced with PM v2)
 if exist(pm_path,'dir')
     switch pm_version
-        case {'CHS-NA', 'NACCS'}
+        case 'NACCS' % North Atalantic Comprehensive Study (2015)
             % Make Sure TO Correct NACCS
-            pm_version = 'CHS-NA';
+%             pm_version = 'CHS-NA';
             try
                 % Listing of closest (CRL) to each save point.
                 load(fullfile(pm_path,[pm_version '_CRL_ic.mat']),'ic');% nNodes x 1 (double)
@@ -130,26 +130,11 @@ if exist(pm_path,'dir')
                     bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
                     % Define Latitude Column
                     col_indx = 3;
-                case 'CHS-SA'
-                    % Load Grid Files
-%                     nodeID = dload(fullfile(pm_path, 'CHS-SA_nodeID.mat'), 'nodeID');  % Nodes
-%                     %
-%                     staID = dload(fullfile(pm_path, 'SACS_NCSFL_staID.mat'), 'staID');  % SPs
-%                     % Find Nearest Node
-%                     [~, ~, ~, ~, bias_indx] = find_nearest_latlon(staID(staID(:,1) == Nsvpt, 2), staID(staID(:,1) == Nsvpt, 3), nodeID(:, 3), nodeID(:, 4), []);
-%                     % 
-%                     col_indx = 3;
-%                     % Rename Variable To Search CRLs
-%                     staID = nodeID;
-                   % Load Grid Files
-                    staID = dload(fullfile(pm_path, 'SACS_NCSFL_staID.mat'), 'staID');  % SPs
-                    % Find Correct Row ID For DSWs
-                    bias_indx = find(staID(:,1) == Nsvpt); % Row INdex For Bias And Uncertainty
-                    % Define Latitude Column
-                    col_indx = 2;  
                 otherwise
+                    % Get File Dir
+                    dummy = dir(fullfile(pm_path,'*_staID.mat'));
                     % Savepoint location info
-                    staID = dload([pm_path filesep,[region,'_staID.mat']]); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    staID = dload(fullfile(pm_path, dummy.name)); % staID -> [SP_ID Node_ID Lon Lat Depth]
                     % Define Row Index
                     bias_indx = find(staID(:, 1) == Nsvpt);
                     % Define Latitude Column
