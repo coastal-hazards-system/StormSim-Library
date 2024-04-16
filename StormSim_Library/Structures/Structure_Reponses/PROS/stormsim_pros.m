@@ -49,7 +49,7 @@ end
 
 %% COMBINE HAZARD CURVES
 if strcmp(storm_sampling,'CC')
-    if ~isempty(HC_out.('TC').(f_str)) & ~isempty(HC_out.('TC').(f_str))
+    if ~isempty(HC_out.('TC').(f_str)) & ~isempty(HC_out.('XC').(f_str))
         disp('         Combining project primary responses hazard curves...');
         [HC_out.('CC').(f_str)] = call_hazard_curve_combiner(config, structure, HC_out.('TC').(f_str), HC_out.('XC').(f_str), use_aep);
     end
