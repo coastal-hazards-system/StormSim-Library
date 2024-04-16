@@ -20,8 +20,10 @@ if isempty(max_radius_km)
     nearest_lat = rad2deg(latitudes);
     nearest_lon = rad2deg(longitudes);
     within_radius = [];
-    min_distance = distance_km;
-    index = [];
+    [min_distance,index] = min(distance_km);
+    % Output nearest latitude and longitude
+    nearest_lat = rad2deg(latitudes(index));
+    nearest_lon = rad2deg(longitudes(index));
 else
     within_radius = distance_km <= max_radius_km;
     [min_distance,index] = min(distance_km(within_radius));
