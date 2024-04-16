@@ -121,7 +121,9 @@ switch workflow
         if create_plots == 1
             call_pros_plots(config, structure, project_forcing, prob_mass, Resp);
         else
-            mkdir(subDir);
+            if ~exist(subDir ,'dir')
+                mkdir(subDir);
+            end
         end
     case 3 % CSR
         %% STORMSIM: MCS-CSR
