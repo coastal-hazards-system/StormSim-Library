@@ -70,10 +70,16 @@ if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' stru
     config_load = config_load.config;
     % Add Values
     if strcmp(config.chs_bias_file,config_load.chs_bias_file) % Same Bias File
-        config.chs_swl_u_a = config_load.chs_swl_u_a;
-        config.chs_swl_u_r = config_load.chs_swl_u_r;
-        config.chs_hm0_u_a = config_load.chs_hm0_u_a;
-        config.chs_hm0_u_r = config_load.chs_hm0_u_r;
+        try
+            % SSL Proportional & Abolute Uncertainty
+            config.chs_swl_u_a = config_load.chs_swl_u_a;
+            config.chs_swl_u_r = config_load.chs_swl_u_r;
+            config.chs_hm0_u_a = config_load.chs_hm0_u_a;
+            config.chs_hm0_u_r = config_load.chs_hm0_u_r;
+            % SSL Proportional And Absolute Bias
+            config.chs_swl_b_a = config_load.chs_swl_b_a;
+            config.chs_swl_b_r = config_load.chs_swl_b_r;
+        end
     else
         % Delete Files Because Bias Needs to Be Recomputed
         delete([pwd filesep project_name filesep struc_id filesep '*.mat']);
@@ -271,7 +277,7 @@ catch
     config.project_CLs = '[16 84]';
 end
 % Hardcoded Flag Until Further Dev
-config.slope_type = 0; % Idealized Slope 
+config.slope_type = 0; % Idealized Slope
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
