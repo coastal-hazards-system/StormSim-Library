@@ -73,7 +73,12 @@ if use_peaks == 1
     % Extract "Strom_Table" Field
     peaks_data = [peaks_data.Conv_Data];
     % Number Of TC's
-    nTC_storms = height(peaks_data(ad_indx==1).Table_StormData);
+    switch storm_type
+        case 'XC'
+            nTC_storms = 1:height(peaks_data(ad_indx==1).Table_StormData);
+        case 'TC'
+            nTC_storms = prob_mass.Param(:, 1);
+    end
     % Format storm Data
     [storm.('Peaks').Maxima] = chs_peaks_formater(peaks_data(ad_indx==1).Table_StormData,...
         peaks_data(ad_indx==0).Table_StormData, STWAVE_headers_location);
@@ -105,7 +110,12 @@ else
     % Extract "Strom_Table" Field
     peaks_data = [peaks_data.Conv_Data];
     % Number Of TC's
-    nTC_storms = height(peaks_data(ad_indx==1).Table_StormData);
+    switch storm_type
+        case 'XC'
+            nTC_storms = 1:height(peaks_data(ad_indx==1).Table_StormData);
+        case 'TC'
+            nTC_storms = prob_mass.Param(:, 1);
+    end
     % Initialize Storms To Remove
     storm2rm = [];
     % Find NaN Entries
@@ -180,10 +190,10 @@ end
 
 %% REMOVE INVALID STORMS & ADJUST PARAMETERS ACCORDINGLY
 if use_timeseries == 1 && use_peaks == 1
+    % Append All Bad Stomr Indexes For Consistency In Hazards
     removed_storms.Maxima = unique([storm2rm;removed_storms.Maxima;ts_storm2rm]);
     % Grab Removed Storm Ids For Maxima Dataset
     storm2rm =  removed_storms.Maxima;
-    % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
     storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
         removed_storms.Maxima),:) = [];
@@ -205,20 +215,20 @@ if use_timeseries == 1 && use_peaks == 1
         storm.('Peaks').WHP(ismember(storm.('Peaks').WHP(:,5),...
             removed_storms.WHP),:) = [];
     end
-    % Compute Logical Vector Of Bad Storms
-    storm2rm = ismember(1:nTC_storms,...
-        storm2rm);
+    % Get Bad Storm Row Index With Full Storm Suite (PM Adjustments)
+    storm2rm = ismember(nTC_storms,...
+        storm2rm); % Master_Table_rows x N_cols
 elseif use_timeseries == 1 && use_peaks == 0
-    % Compute Logical Vector Of Bad Storms
-    storm2rm = ismember(1:nTC_storms,...
-        removed_storms.Maxima);
+    % Get Bad Storm Row Index With Full Storm Suite (PM Adjustments)
+    storm2rm = ismember(nTC_storms,...
+        removed_storms.Maxima); % Master_Table_rows x N_cols
 elseif use_peaks == 1 && use_timeseries == 0
     % Grab Removed Storm Ids For Maxima Dataset
     removed_storms.Maxima = storm2rm;
-    % find(ismember(storm.Maxima(:,5), removed_storms.Maxima)==1);
     % Remove Bad storms
-    storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
-        removed_storms.Maxima),:) = [];
+    storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:, 5), storm2rm), :) = [];
+    % Get Bad Storm Row Index With Full Storm Suite (PM Adjustments)
+    storm2rm = ismember(nTC_storms, removed_storms.Maxima);
 end
 % Adjust storm Type Dependant Fields
 switch storm_type
@@ -283,21 +293,33 @@ if ~exist(chs_bias_file,'file')
 else
     switch chs_region
         case 'CHS-LA'
-            % Load Grid Files 
+            % Load Grid Files
             load(fullfile(pm_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
             load(fullfile(pm_path, 'CHS-LA_staID.mat'), 'staID');  % staID -> [SP_ID Node_ID Lon Lat Depth]
             % Get Row
             adcirc_node_id = SPs(SPs(:,1) == spID, 2);
             % Find Correct Row ID For Bias & Uncertainty
             bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
+        case 'CHS-SA'
+            % Load Grid Files
+            %             nodeID = dload(fullfile(pm_path, 'CHS-SA_nodeID.mat'), 'nodeID');  % Nodes
+            %
+            staID = dload(fullfile(pm_path, 'SACS_NCSFL_staID.mat'), 'staID');  % SPs
+            % Find Nearest Node
+            %             [~, ~, ~, ~, bias_indx] = find_nearest_latlon(staID(staID(:,1) == spID, 2), staID(staID(:,1) == spID, 3), nodeID(:, 3), nodeID(:, 4), []);
+            %             % Find Correct Row ID For DSWs
+            bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
         otherwise
-            bias_indx = spID;
+            % Load SP List With Coordinates
+            staID = dload(fullfile(pm_path, [chs_region '_staID.mat']), 'staID');  % SPs
+            % Find Correct Row ID For DSWs
+            bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
     end
     % Load Bias Correction File
     load(chs_bias_file, 'Comb');
     % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
     B_a_SWL=Comb.B_a(bias_indx); B_r_SWL=Comb.B_r(bias_indx);
-    config.chs_swl_b_a = B_a_SWL; 
+    config.chs_swl_b_a = B_a_SWL;
     config.chs_swl_b_r = B_r_SWL;
     % Overwrite Manual Value
     config.chs_swl_u_a = Comb.U_a(bias_indx); % SWL absolute uncertainty
