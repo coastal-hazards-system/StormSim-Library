@@ -100,16 +100,14 @@ if exist(pm_path,'dir')
             SRR_HI = dload([pm_path filesep '..' filesep,'SRR_TC_HI_600km.mat']);%SRR_HI = SRR_HI.SRR;
             % All storm SRR at each CRL.
             SRR_All = dload([pm_path filesep '..' filesep,'SRR_TC_All_600km.mat']);%SRR_HI = SRR_HI.SRR;
-%             % Storms relative probability at each save point.
-%             ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
-%             % NACCS Synthetic Storm Parameters
-%             Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
+            %             % Storms relative probability at each save point.
+            %             ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
+            %             % NACCS Synthetic Storm Parameters
+            %             Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
             % Storms relative probability at each save point.
             ProbMass = dload([pm_path filesep,[region,'_ITCS_DSW_600km.mat']]);
             % NACCS Synthetic Storm Parameters
             Param = dload([pm_path filesep,[region,'_ITCS_Param.mat']]);
-            % Savepoint location info
-            staID = dload([pm_path filesep,[region,'_staID.mat']]); % staID -> [SP_ID Node_ID Lon Lat Depth]
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The
                 SRR was computed at 1050 coastal reference locations (CRL) and the SRR from the closest CRL to the
@@ -130,11 +128,35 @@ if exist(pm_path,'dir')
                     adcirc_node_id = SPs(SPs(:,1) == Nsvpt, 2);
                     % Find Correct Row ID For DSWs
                     bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
+                    % Define Latitude Column
+                    col_indx = 3;
+                case 'CHS-SA'
+                    % Load Grid Files
+%                     nodeID = dload(fullfile(pm_path, 'CHS-SA_nodeID.mat'), 'nodeID');  % Nodes
+%                     %
+%                     staID = dload(fullfile(pm_path, 'SACS_NCSFL_staID.mat'), 'staID');  % SPs
+%                     % Find Nearest Node
+%                     [~, ~, ~, ~, bias_indx] = find_nearest_latlon(staID(staID(:,1) == Nsvpt, 2), staID(staID(:,1) == Nsvpt, 3), nodeID(:, 3), nodeID(:, 4), []);
+%                     % 
+%                     col_indx = 3;
+%                     % Rename Variable To Search CRLs
+%                     staID = nodeID;
+                   % Load Grid Files
+                    staID = dload(fullfile(pm_path, 'SACS_NCSFL_staID.mat'), 'staID');  % SPs
+                    % Find Correct Row ID For DSWs
+                    bias_indx = find(staID(:,1) == Nsvpt); % Row INdex For Bias And Uncertainty
+                    % Define Latitude Column
+                    col_indx = 2;  
                 otherwise
-                    bias_indx = Nsvpt;
+                    % Savepoint location info
+                    staID = dload([pm_path filesep,[region,'_staID.mat']]); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    % Define Row Index
+                    bias_indx = find(staID(:, 1) == Nsvpt);
+                    % Define Latitude Column
+                    col_indx = 2;
             end
             % Find CRL closest to savepoint
-            [nearest_lat, nearest_lon, ~, dist, ~] = find_nearest_latlon(staID(bias_indx,3),staID(bias_indx,4),CRL(:,1),CRL(:,2), []);
+            [nearest_lat, nearest_lon, ~, dist, ~] = find_nearest_latlon(staID(bias_indx, col_indx), staID(bias_indx, col_indx+1), CRL(:,1), CRL(:,2), []);
             [~, ic] = min(dist); % km
 
             % Convert LI SRR to storms/year using a 600 km diameter.
