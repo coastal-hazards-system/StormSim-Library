@@ -159,9 +159,9 @@ breaker_m10 = (1./slope)./sqrt(s_m10);    % Breaker parameter
 q_overflow = zeros(size(Rc));
 Rc_corrt = zeros(size(Rc));
 % Compute Overflow When Strcuture Is Submerged
-q_overflow(Rc<=0) = 0.54 * sqrt(g*abs(Rc(Rc<=0)).^3);% EurOtop Eq 5.20
+q_overflow(Rc<0) = 0.54 * sqrt(g*abs(Rc(Rc<0)).^3);% EurOtop Eq 5.20
 %
-Rc_corrt(Rc>0) = Rc(Rc>0);
+Rc_corrt(Rc>=0) = Rc(Rc>=0);
 
 %% Runup and overtopping loop
 % Initialize Variables
@@ -182,6 +182,7 @@ switch structure_type
         % Set Invalid Slope Values To NaNs
         R2p(slope<0.1) = NaN;
         q_wave_ot(slope<0.1) = NaN;
+        q_overflow(slope<0.1) = NaN;
         % Find Partioning Index
         indx1 = find(slope > 2);
         indx2 = find(slope < 2 & slope > 0.1);
