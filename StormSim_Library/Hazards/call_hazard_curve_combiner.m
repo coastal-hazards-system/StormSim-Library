@@ -32,6 +32,7 @@ else
     x_plot_tc = aef2aep(tc_resp(1).x_plot);
     x_tbl_tc = aef2aep(tc_resp(1).x_table);
 end
+x_tbl_tc = x_tbl_tc(round(x_tbl_tc, 6)>=5E-04);
 % Find Primary Responses Indexes
 s_indx = 1:min(length(tc_resp),length(xc_resp));
 % Remove Resposes With Missing Pairs
