@@ -180,12 +180,11 @@ switch structure_type
         OT_coeff3 = 0.090;   % EurOtop Eq 5.11
         OT_coeff4 = 1.500;   % EurOtop Eq 5.11
         % Set Invalid Slope Values To NaNs
-        R2p(slope<0.1) = NaN;
-        q_wave_ot(slope<0.1) = NaN;
-        q_overflow(slope<0.1) = NaN;
+%         R2p(slope<0.1) = NaN;
+%         q_wave_ot(slope<0.1) = NaN;
         % Find Partioning Index
-        indx1 = find(slope > 2);
-        indx2 = find(slope < 2 & slope > 0.1);
+        indx1 = find(slope >= 2); % Gentle Slopes
+        indx2 = find(slope < 2 & slope >= 0.1); % Very Steep Slopes
         % Seaward Slope > 2
         if ~isempty(indx1)
             % Estimate Run-up (R2%)
@@ -213,7 +212,7 @@ switch structure_type
             %
             q_wave_ot(indx1) = min([q_max,q_a],[],2,"omitnan");
         end
-        % 0.1 < Seaward Slope < 2
+        % 0.1 <= Seaward Slope < 2
         if ~isempty(indx2)
             % EurOtop Runup Eq 5.6
             R2p_a = min([Hm0(indx2).*runup_coeff3./(1./slope(indx2)) + 1.6 , (3.*Hm0(indx2))],[],2,"omitnan");
