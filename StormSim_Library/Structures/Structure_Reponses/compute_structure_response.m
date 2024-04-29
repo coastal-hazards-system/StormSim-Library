@@ -280,6 +280,7 @@ switch dflat
             Resp.('R2p') = cell2mat(cellfun(@(x) max(x,[],1),R2p,'un',false));
             Resp.('R2p_SWL') = cell2mat(cellfun(@(x) max(x,[],1),R2p_SWL,'un',false));
         end
+        debug_save(SWL, Hm0, Tp, q, q_overflow, q_wave_ot);
         if exist('q','var')
             Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
             Resp.('q_overflow') = cell2mat(cellfun(@(x) max(x,[],1),q_overflow,'un',false));
@@ -373,8 +374,8 @@ switch dflat
                 Resp.('q_wave_ot') = nReal_3;
             end
             % q <10^-4
-            Resp.('q')(Resp.('q')<q_lim) = NaN;
-            Resp.('q_wave_ot')(Resp.('q_wave_ot')<q_lim) = NaN;
+            Resp.('q')(Resp.('q')<q_lim) = 0;
+            Resp.('q_wave_ot')(Resp.('q_wave_ot')<q_lim) = 0;
 
         end
     case 2 % LCS
