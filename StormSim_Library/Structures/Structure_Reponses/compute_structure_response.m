@@ -210,7 +210,8 @@ switch dflat
             Resp.('R2p_SWL') = R2p_SWL{:}; % Run-up + SWL
         end
         if exist('q','var')
-%             Resp.('q_overflow') = q_overflow{:}; % Overtopping by overflow
+            Resp.('q') = q{:}; % Overtopping (Combined)
+            Resp.('q_overflow') = q_overflow{:}; % Overtopping by overflow
             Resp.('q_wave_ot') = q_wave_ot{:}; % Overtopping By Waves
         end
         if exist('p1','var')
@@ -257,7 +258,7 @@ switch dflat
         end
         if exist('q','var')
             Resp.('q') = cell2struct(q,'LCNUM');
-%             Resp.('q_overflow') = cell2struct(q_overflow,'LCNUM');
+            Resp.('q_overflow') = cell2struct(q_overflow,'LCNUM');
             Resp.('q_wave_ot') = cell2struct(q_wave_ot,'LCNUM');
         end
         if exist('p1','var')
@@ -279,13 +280,19 @@ switch dflat
             Resp.('R2p') = cell2mat(cellfun(@(x) max(x,[],1),R2p,'un',false));
             Resp.('R2p_SWL') = cell2mat(cellfun(@(x) max(x,[],1),R2p_SWL,'un',false));
         end
-        if exist('q_wave_ot','var')
-%             Resp.('q_overflow') = cell2mat(cellfun(@(x) max(x,[],1),q_overflow,'un',false));
-            Resp.('q_wave_ot') = cell2mat(cellfun(@(x) max(x,[],1),q_wave_ot,'un',false));
+        debug_save(SWL, Hm0, Tp, q, q_overflow, q_wave_ot);
+        if exist('q','var')
             Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
+            Resp.('q_overflow') = cell2mat(cellfun(@(x) max(x,[],1),q_overflow,'un',false));
+            Resp.('q_wave_ot') = cell2mat(cellfun(@(x) max(x,[],1),q_wave_ot,'un',false));
+
+            for mm = 1:length(q)
+                q{mm}(q{mm}<q_lim) = NaN;
+                q_wave_ot{mm}(q_wave_ot{mm}<q_lim) = NaN;
+            end
             if calc_q_vol == 1
                 Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
-%                 Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
+                Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
                 Resp.('Q_vol_wave_ot') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_wave_ot,'un',false));
             end
         end
@@ -348,44 +355,48 @@ switch dflat
 end
 
 %% IMPLEMENT FAILSAFES
-% switch dflat
-%     case {1,3} %
-%         if exist('q','var')
-%             % q Imaginary Numbers
-%             if any(~arrayfun(@isreal,Resp.('q')),'all')
-%                 nReal = real(Resp.('q'));
-%                 nReal_2 = real(Resp.('q_overflow'));
-%                 nReal_3 = real(Resp.('q_wave_ot'));
-%                 nImag = imag(Resp.('q'));
-%                 % Set Entries With Imaginary Component ~= 0 to NaNs
-%                 nReal(nImag~=0) = NaN;
-%                 nReal_2(nImag~=0) = NaN;
-%                 nReal_3(nImag~=0) = NaN;
-%                 % Store Back As Double
-%                 Resp.('q') = nReal;
-%                 Resp.('q_overflow') = nReal_2;
-%                 Resp.('q_wave_ot') = nReal_3;
-%             end
-%         end
-%     case 2 % LCS
-%         if exist('q','var')
-%             for kk = 1:length(Resp.('q'))
-%                 % Check For Comples Response
-%                 nReal = real(Resp.('q')(kk).LCNUM);
-%                 nReal_2 = real(Resp.('q_overflow')(kk).LCNUM);
-%                 nReal_3 = real(Resp.('q_wave_ot')(kk).LCNUM);
-%                 nImag = imag(Resp.('q')(kk).LCNUM);
-%                 % Set Entries With Imaginary Component = 0 to NaNs
-%                 nReal(nImag~=0) = NaN;
-%                 nReal_2(nImag~=0) = NaN;
-%                 nReal_3(nImag~=0) = NaN;
-%                 % Store Back As Double
-%                 Resp.('q')(kk).LCNUM = nReal;
-%                 Resp.('q_overflow')(kk).LCNUM = nReal_2;
-%                 Resp.('q_wave_ot')(kk).LCNUM = nReal_3;
-%                 % q <10^-4
-%                 Resp.('q')(kk).LCNUM(Resp.('q')(kk).LCNUM<q_lim) = NaN;
-%                 Resp.('q_wave_ot')(kk).LCNUM(Resp.('q_wave_ot')(kk).LCNUM<q_lim) = NaN;
-%             end
-%         end
-% end
+switch dflat
+    case {1,3} %
+        if exist('q','var')
+            % q Imaginary Numbers
+            if any(~arrayfun(@isreal,Resp.('q')),'all')
+                nReal = real(Resp.('q'));
+                nReal_2 = real(Resp.('q_overflow'));
+                nReal_3 = real(Resp.('q_wave_ot'));
+                nImag = imag(Resp.('q'));
+                % Set Entries With Imaginary Component ~= 0 to NaNs
+                nReal(nImag~=0) = NaN;
+                nReal_2(nImag~=0) = NaN;
+                nReal_3(nImag~=0) = NaN;
+                % Store Back As Double
+                Resp.('q') = nReal;
+                Resp.('q_overflow') = nReal_2;
+                Resp.('q_wave_ot') = nReal_3;
+            end
+            % q <10^-4
+            Resp.('q')(Resp.('q')<q_lim) = 0;
+            Resp.('q_wave_ot')(Resp.('q_wave_ot')<q_lim) = 0;
+
+        end
+    case 2 % LCS
+        if exist('q','var')
+            for kk = 1:length(Resp.('q'))
+                % Check For Comples Response
+                nReal = real(Resp.('q')(kk).LCNUM);
+                nReal_2 = real(Resp.('q_overflow')(kk).LCNUM);
+                nReal_3 = real(Resp.('q_wave_ot')(kk).LCNUM);
+                nImag = imag(Resp.('q')(kk).LCNUM);
+                % Set Entries With Imaginary Component = 0 to NaNs
+                nReal(nImag~=0) = NaN;
+                nReal_2(nImag~=0) = NaN;
+                nReal_3(nImag~=0) = NaN;
+                % Store Back As Double
+                Resp.('q')(kk).LCNUM = nReal;
+                Resp.('q_overflow')(kk).LCNUM = nReal_2;
+                Resp.('q_wave_ot')(kk).LCNUM = nReal_3;
+                % q <10^-4
+                Resp.('q')(kk).LCNUM(Resp.('q')(kk).LCNUM<q_lim) = NaN;
+                Resp.('q_wave_ot')(kk).LCNUM(Resp.('q_wave_ot')(kk).LCNUM<q_lim) = NaN;
+            end
+        end
+end
