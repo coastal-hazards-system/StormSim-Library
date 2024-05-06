@@ -153,7 +153,7 @@ for ii = 1:length(vars_2_get)
             input_data.time_values = input_data.time_values(:);
             % Call SST
             try
-                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst);
+                [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst, y_label);
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Define Figure Title
@@ -181,7 +181,7 @@ for ii = 1:length(vars_2_get)
         case 'TC'
             disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_2_get)),'): ', staID]);
             try
-                [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm);
+                [dummy] = call_stormsim_jpm(staID, prc, use_aep, U_a, U_r, input_data.data_values, TC_Prob(:,c_indx), uncert_treatment_jpm,  y_label);
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Define Figure Title
