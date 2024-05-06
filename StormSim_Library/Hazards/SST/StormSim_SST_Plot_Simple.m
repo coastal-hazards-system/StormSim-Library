@@ -57,7 +57,7 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x,MRL_output,prc,use_AEP,staID,yaxis_Label,path_out,yaxis_Limits,a,GPD_TH_crit)
+function StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x,MRL_output,prc,use_AEP,staID,yaxis_Label,path_out,yaxis_Limits,a,GPD_TH_crit,y_log)
 %% A few check points
 
 % Colors for percentiles plots
@@ -165,7 +165,7 @@ Boot_plt=[]; if size(HC_plt,1)>1,Boot_plt=HC_plt(2:end,:);end % Take percentiles
 
 % Do plot
 figure('Color',[1 1 1],'visible','off')
-axes('xscale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
+axes('xscale','log','Yscale',y_log,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
 if use_AEP
     xlim([1e-4 1]);
     XTick=[1e-4 1e-3 1e-2 1e-1 1];

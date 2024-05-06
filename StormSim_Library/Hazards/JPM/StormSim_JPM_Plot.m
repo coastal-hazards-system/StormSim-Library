@@ -79,7 +79,7 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  ***************  FOR TESTING  ************
 %}
-function [] = StormSim_JPM_Plot(JPM_output,sp_id,path_out,yaxis_label,y_ax_Lims,integrate_Method,prc,ind_aep,a,HC_plt_x)
+function [] = StormSim_JPM_Plot(JPM_output,sp_id,path_out,yaxis_label,y_ax_Lims,integrate_Method,prc,ind_aep,a,HC_plt_x,y_log,resp_id)
 
 
 %% Other parameters
@@ -106,10 +106,10 @@ if integrate_Method==3 %'JPM Standard'
     for i=1:N
         str2 = int2str(sp_id(i));
         if ~isempty(JPM_output(i).HC_plt_y)
-            figure('Color',[1 1 1],'visible','off')
-            axes('XScale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12)
+            figure('Color',[1 1 1],'visible','off');
+            axes('XScale','log','Yscale',y_log,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
             xticks(XTick); xlim(XLim);
-            set(gca,'XDir','reverse')
+            set(gca,'XDir','reverse');
             if ~isempty(y_ax_Lims)
                 ylim([min(y_ax_Lims) max(y_ax_Lims)]);
             end
@@ -121,12 +121,12 @@ if integrate_Method==3 %'JPM Standard'
             xlabel(XLab,'FontSize',12);
             ylabel({yaxis_label},'FontSize',12);
             hold off
-            fname=[path_out,'HC_vg_',str2,'.png'];
+            fname=[path_out,'HC_vg_',resp_id,'.png'];
             switch a
                 case 0
-                    exportgraphics(gcf,fname,'Resolution',150)
+                    exportgraphics(gcf,fname,'Resolution',150);
                 case 1
-                    saveas(gcf,fname,'png')
+                    saveas(gcf,fname,'png');
             end
         end
     end
@@ -140,13 +140,13 @@ else %'PCHA ATCS' or 'PCHA Standard'
             Boot_plt = JPM_output(i).HC_plt_y(:,2:end);
             
             figure('Color',[1 1 1],'visible','off')
-            axes('XScale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12)
+            axes('XScale','log','Yscale', y_log, 'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
             xticks(XTick); xlim(XLim);
-            set(gca,'XDir','reverse')
+            set(gca,'XDir','reverse');
             if ~isempty(y_ax_Lims)
                 ylim([y_ax_Lims(1) y_ax_Lims(2)]);
             end
-            hold on
+            hold on;
             
             % Process the percentiles
             pObj=struct('o',[],'n',[],'L','');
@@ -170,13 +170,13 @@ else %'PCHA ATCS' or 'PCHA Standard'
             ylabel({yaxis_label},'FontSize',12);
             legend([[t1.o],h1,[t2.o]],{t1.L,'Mean',t2.L},'Location','NorthWest','FontSize',12);
             
-            hold off
-            fname=[path_out,'HC_vg_',str2,'.png'];
+            hold off;
+            fname=[path_out,'HC_vg_',resp_id,'.png'];
             switch a
                 case 0
-                    exportgraphics(gcf,fname,'Resolution',150)
+                    exportgraphics(gcf,fname,'Resolution',150);
                 case 1
-                    saveas(gcf,fname,'png')
+                    saveas(gcf,fname,'png');
             end
         end
     end

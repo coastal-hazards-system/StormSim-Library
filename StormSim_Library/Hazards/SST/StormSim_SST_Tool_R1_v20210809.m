@@ -448,7 +448,7 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function [HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_datasets,Check_datasets,SST_output] = StormSim_SST_Tool_R1_v20210809(input_data,flag_value,tLag,lambda,Nyrs,path_out,staID,yaxis_Label,yaxis_Limits,prc,use_AEP,GPD_TH_crit,SLC,ind_Skew,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel, stat_print, app_type)
+function [HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_datasets,Check_datasets,SST_output] = StormSim_SST_Tool_R1_v20210809(input_data,flag_value,tLag,lambda,Nyrs,path_out,staID,yaxis_Label,yaxis_Limits,prc,use_AEP,GPD_TH_crit,SLC,ind_Skew,gprMdl,DataType,ExecMode,HC_tbl_rsp_y,apply_GPD_to_SS,apply_Parallel, stat_print, app_type, y_log)
 %% Other settings
 if stat_print == 1
     clc;
@@ -720,7 +720,7 @@ switch DataType
 
             % Remove NaN, Inf and nonpositive values
             data_values = data_values(:);
-            id_1 = isinf(data_values)|isnan(data_values)|data_values<=0;
+            id_1 = isinf(data_values) | isnan(data_values) | data_values<=0;
             data_values(id_1,:)=[];
             tt(id_1,:)=[];
 
@@ -824,7 +824,7 @@ switch DataType
                             SST_output(j).HC_emp = HC_emp;
 
                             % Plot results
-                            StormSim_SST_Plot(HC_plt,HC_emp,MRL_output,prc,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),use_AEP,GPD_TH_crit,a,HC_plt_x2)
+                            StormSim_SST_Plot(HC_plt,HC_emp,MRL_output,prc,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),use_AEP,GPD_TH_crit,a,HC_plt_x2,y_log)
 
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
@@ -865,7 +865,7 @@ switch DataType
                             SST_output(j).Warning=str1;
 
                             % Plot results
-                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
+                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit,y_log)
 
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
@@ -907,7 +907,7 @@ switch DataType
                             SST_output(j).Warning=str1;
 
                             % Plot results
-                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
+                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit,y_log)
 
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
@@ -958,7 +958,7 @@ switch DataType
                             SST_output(j).HC_emp=HC_emp;
 
                             % Plot results
-                            StormSim_SST_Plot(HC_plt,HC_emp,MRL_output,prc,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),use_AEP,GPD_TH_crit,a,HC_plt_x2)
+                            StormSim_SST_Plot(HC_plt,HC_emp,MRL_output,prc,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),use_AEP,GPD_TH_crit,a,HC_plt_x2,y_log)
 
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
@@ -996,7 +996,7 @@ switch DataType
                             SST_output(j).Warning=str1;
 
                             % Plot results
-                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
+                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit,y_log)
 
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
@@ -1035,7 +1035,7 @@ switch DataType
                             SST_output(j).Warning=str1;
 
                             % Plot results
-                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit)
+                            StormSim_SST_Plot_Simple(HC_emp,HC_plt,HC_plt_x2,MRL_output,prc,use_AEP,staID(i,:),yaxis_Label{i},path_out,yaxis_Limits(i,:),a,GPD_TH_crit,y_log)
 
                         case 2 %Fast
                             SST_output(j).staID = staID{i,1};
@@ -1060,7 +1060,7 @@ end
 if stat_print == 1
     disp(['*** Step 4: Saving results here: ',path_out]);
 end
-save([path_out,'StormSim_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
+save([path_out,'StormSim_' staID '_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
 
 [~,id_act]=hasPCT;if id_act==0,delete(gcp);end
 if stat_print == 1

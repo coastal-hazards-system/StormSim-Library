@@ -268,7 +268,7 @@ HISTORY OF REVISIONS:
 
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
-function [JPM_output,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_vg] = StormSim_JPM_Tool_R1_v20210831(Resp,ProbMass,vg_id,vg_ColNum,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y, stat_print)
+function [JPM_output,HC_plt_x,HC_tbl_x,HC_tbl_rsp_y,Removed_vg] = StormSim_JPM_Tool_R1_v20210831(Resp,ProbMass,vg_id,vg_ColNum,U_a,U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y, stat_print, y_log, resp_id)
 %% General settings
 if stat_print == 1
     clc;
@@ -545,7 +545,7 @@ switch sz
             if stat_print == 1
                 disp('****** Plotting hazard curves');
             end
-            StormSim_JPM_Plot(JPM_output,vg_id,path_out,yaxis_label,yaxis_limits,integrate_Method,prc,ind_aep,a,HC_plt_x)
+            StormSim_JPM_Plot(JPM_output,vg_id,path_out,yaxis_label,yaxis_limits,integrate_Method,prc,ind_aep,a,HC_plt_x,y_log,resp_id)
         end
 
         % Store output
@@ -617,7 +617,7 @@ switch sz
                 if stat_print == 1
                     disp('****** Plotting hazard curves');
                 end
-                StormSim_JPM_Plot(JPM_output,sp_id_p,path_out,yaxis_label,yaxis_limits,integrate_Method,prc,ind_aep,a,HC_plt_x)
+                StormSim_JPM_Plot(JPM_output,sp_id_p,path_out,yaxis_label,yaxis_limits,integrate_Method,prc,ind_aep,a,HC_plt_x,y_log,resp_id)
             end
 
             % Export output per partition
