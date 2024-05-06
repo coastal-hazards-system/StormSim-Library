@@ -296,7 +296,7 @@ end
 
 %% RESHAPE OUTPUTS
 R2p = R2p;
-q_wave_ot = q_wave_ot;
+q_wave_ot(q_wave_ot<10^-6) = 0;
 %
 % q Overflow
 q = q_wave_ot + q_overflow;
