@@ -169,22 +169,22 @@ fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(lc/number_of_life_cyles)));
 % Wave Height Priority
 if whp_switch == 0
     % Remove Empty Field (Tropicals)
-    if contains(storm_sampling,{'TC','TS'})
+    if contains(storm_sampling,{'TC','TS','CC'})
         project_forcing.('TC').Peaks = rmfield(project_forcing.('TC').Peaks,'WHP');
     end
     % Remove Empty Field (Extratropicals)
-    if contains(storm_sampling,{'XC','XH'})
+    if contains(storm_sampling,{'XC','XH','CC'})
         project_forcing.('XC').Peaks = rmfield(project_forcing.('XC').Peaks,'WHP');
     end
 end
 % Water Level Priority
 if wlp_switch == 0
     % Remove Empty Field (Tropicals)
-    if contains(storm_sampling,{'TC','TS'})
+    if contains(storm_sampling,{'TC','TS','CC'})
         project_forcing.('TC').Peaks = rmfield(project_forcing.('TC').Peaks,'WLP');
     end
     % Remove Empty Field (Extratropicals)
-    if contains(storm_sampling,{'XC','XH'})
+    if contains(storm_sampling,{'XC','XH','CC'})
         project_forcing.('XC').Peaks = rmfield(project_forcing.('XC').Peaks,'WLP');
     end
 end
