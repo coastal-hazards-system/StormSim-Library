@@ -153,9 +153,9 @@ SL = config.swl_slr;
 % Water density (kg/m^3)
 dw = config.water_density;
 % Seaside Damage Ultimate Limit State (ULS)
-Ssea_ULS = config.seaside_limit_S;
+Ssea_ULS = config.seaside_S_uls;
 % Leeside Damage Ultimate Limit State (ULS)
-Slee_ULS = config.leeside_limit_S;
+Slee_ULS = config.leeside_S_uls;
 % Structure Type
 structure_type = config.struc_type;
 % Coefficients are found in CEM and in Eurotop. For levees with grass, the
@@ -257,8 +257,8 @@ Szero_with_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false)
 Ssea_with_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 SLee_with_repairs =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 SLee_no_repairs =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
-LCBW_FS =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
-q =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
+% LCBW_FS =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
+% q =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 
 %% BEGIN LC LOOP
 for NlcS = 1:nLC
@@ -527,13 +527,13 @@ for NlcS = 1:nLC
             %             disp(['LC: ' num2str(NlcS) ' , Timestep: ' num2str(Ntime) ' / ' num2str(nTimes_per_LC(NlcS))]);
 
             %% toe berm limit state
-            [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc_LC{NlcS}(Ntime),armor_delta,SDn_lcbw);
+%             [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc_LC{NlcS}(Ntime),armor_delta,SDn_lcbw);
 
             %% Overtopping limit state
-            gammas = call_eurotop_ifactors(config, structure, WL{NlcS}(Ntime), Hm0{NlcS}(Ntime));
-            [~, ~, q{NlcS}(Ntime), ~, ~]=Eurotop_r2p_q_Final(Hm0{NlcS}(Ntime), Tp{NlcS}(Ntime), WL{NlcS}(Ntime), Rc{NlcS}(Ntime),...
-               berm_slope, gammas.gamma_f, gammas.gamma_beta_r2p, gammas.gamma_beta_q, gammas.gamma_star, gammas.gamma_v, gammas.gamma_b,...
-               wall_bottom_elev, berm_width, structure_type);
+%             gammas = call_eurotop_ifactors(config, structure, WL{NlcS}(Ntime), Hm0{NlcS}(Ntime));
+%             [~, ~, q{NlcS}(Ntime), ~, ~]=Eurotop_r2p_q_Final(Hm0{NlcS}(Ntime), Tp{NlcS}(Ntime), WL{NlcS}(Ntime), Rc{NlcS}(Ntime),...
+%                berm_slope, gammas.gamma_f, gammas.gamma_beta_r2p, gammas.gamma_beta_q, gammas.gamma_star, gammas.gamma_v, gammas.gamma_b,...
+%                wall_bottom_elev, berm_width, structure_type);
 
         end %structure_type == 3 % Rubblemound
     end  %Ntime_per_LC
@@ -549,10 +549,10 @@ LSmean = cell2mat(cellfun(@(x) x(end),SLee_no_repairs,'un',false));
 %% DIAGNOSTICS STRUCTURE
 diagnostics(1,:) = cellfun(@(a) table(WL{a},Hm0{a},...
     Tp{a},h{a},Nz{a},Rc{a},z1p{a},u1p{a},Szero_no_repairs{a},Ssea_no_repairs{a},Szero_with_repairs{a},...
-    Ssea_with_repairs{a}, SLee_no_repairs{a}, SLee_with_repairs{a},LCBW_FS{a},q{a},'VariableNames',...
+    Ssea_with_repairs{a}, SLee_no_repairs{a}, SLee_with_repairs{a},'VariableNames',...
     {'WL','Hm0','Tp','h','Nz','Rc','z1p','u1p',...
     'Szero_no_repairs','Ssea_no_repairs','Szero_with_repairs','Ssea_with_repairs',...
-    'SLee_no_repairs','SLee_with_repairs','LCBW_FS','q'}),...
+    'SLee_no_repairs','SLee_with_repairs'}),...
     num2cell(1:nLC),'un',false)';
 
 %% COMPUTE MEAN DAMAGE CURVE
@@ -645,6 +645,6 @@ CSR_Timeseries_DPA.LSmax = LSmax;
 CSR_Timeseries_DPA.LSPcurves = LSPcurves;
 CSR_Timeseries_DPA.SPcurves = SPcurves;
 CSR_Timeseries_DPA.diagnostics = diagnostics;
-CSR_Timeseries_DPA.q = q;
-CSR_Timeseries_DPA.LCBW_FS = LCBW_FS;
+% CSR_Timeseries_DPA.q = q;
+% CSR_Timeseries_DPA.LCBW_FS = LCBW_FS;
 end
