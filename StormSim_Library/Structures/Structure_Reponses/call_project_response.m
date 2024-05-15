@@ -41,6 +41,10 @@ switch workflow
             wName = 'PROS';
             subDir = [fullfile(subDir, 'PROS'), filesep];
         end
+        % Make Dir 
+        if ~exist(subDir ,'dir')
+            mkdir(subDir);
+        end       
         % Grab "project_forcing" Structure Fields
         switch storm_sampling
             case 'CC' % Combined Storm Sampling
