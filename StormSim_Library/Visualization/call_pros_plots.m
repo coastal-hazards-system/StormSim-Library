@@ -39,6 +39,7 @@ plot_prioty_comp = config.pros_plot_prioty_comp;
 plot_hc_xsec = config.pros_plot_hc_xsec;
 plot_forcing_hc_w_pot = config.pros_plot_forcing_hc_w_pot;
 plot_hc = config.pros_plot_hc;
+forcing_hc = config.pros_compute_forcing_HC;
 
 %% CALL PLOT ROUTINES
 for ii = 1:length(level_1) % For Each Storm Type
@@ -87,7 +88,7 @@ for ii = 1:length(level_1) % For Each Storm Type
                 plot_hazard_curves(aux_var, use_aep);
             end
             % ---------- Forcing Hazard Curves & POT's Screening Plots -----------
-            if plot_forcing_hc_w_pot == 1
+            if plot_forcing_hc_w_pot == 1  &&  forcing_hc == 1
                 % Create Project Forcing + HC Comparison Figure
                 peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, prob_mass, ts_switch, fullfile(subDir, [ wName fill_str2 '_Project_Forcing_Comparison']));
             end
