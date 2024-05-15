@@ -38,11 +38,14 @@ WHP_switch = config.create_whp;
 chs_region = config.region;
 % Save Point ID
 spID = config.sp_ID;
-% Define CHS Bias File
-chs_bias_file = config.chs_bias_file;
+% Define Storm Surge Level CHS Bias File
+chs_ssl_bias_file = fullfile(config.chs_bias_and_uncertainty_source, [chs_region '_Comb_BiasUncertainty_perVG_rta.mat']);
+%
+chs_hm0_bias_file = fullfile(config.chs_bias_and_uncertainty_source, [chs_region '_STWAVE_Hm0_BiasUncertainty_perVG_rta.mat']);
 % Define SWL Hydrograph Switch
 use_waves_swl = config.use_waves_swl;
-pm_path = config.prob_mass_source;
+% Define CHS REgional Study Grid File
+grid_path = config.chs_grid_file_source;
 
 %% DEFINE AUX VARIABLES
 % storm Type Flag To Search For
@@ -72,16 +75,16 @@ if use_peaks == 1
     has_WaterElevation = sum(contains(peaks_data(ad_indx==0).Conv_Data.headers,{'Water Elevation','WaterElevation'}));
     % Extract "Strom_Table" Field
     peaks_data = [peaks_data.Conv_Data];
-    % Number Of TC's
-    switch storm_type
-        case 'XC'
-            nTC_storms = 1:height(peaks_data(ad_indx==1).Table_StormData);
-        case 'TC'
-            nTC_storms = prob_mass.Param(:, 1);
-    end
     % Format storm Data
     [storm.('Peaks').Maxima] = chs_peaks_formater(peaks_data(ad_indx==1).Table_StormData,...
         peaks_data(ad_indx==0).Table_StormData, STWAVE_headers_location);
+        % Number Of TC's
+    switch storm_type
+        case 'XC'
+            nTC_storms = storm.('Peaks').Maxima(:, 5);%cellfun(@str2double,peaks_data(ad_indx==1).Table_StormData.("Storm ID"));
+        case 'TC'
+            nTC_storms = storm.('Peaks').Maxima(:, 5);
+    end
     % Convert From Tm to Tp (Special Case)
     if Tp_special == 1
         % Convert Tm to Tp (Lake Ontario Case)
@@ -196,7 +199,7 @@ if use_timeseries == 1 && use_peaks == 1
     storm2rm =  removed_storms.Maxima;
     % Remove Bad storms
     storm.('Peaks').Maxima(ismember(storm.('Peaks').Maxima(:,5),...
-        removed_storms.Maxima),:) = [];
+        storm2rm),:) = [];
     storm.('Timeseries')(ismember(cell2mat(storm.('Timeseries')(:,1)),...
         storm2rm),:) = [];
     % WLP
@@ -288,35 +291,35 @@ end
 % Initialize Bias Trigger
 bias_tgr = 1;
 % Load Bias Correction Data For CHS Region
-if ~exist(chs_bias_file,'file')
+if ~exist(chs_ssl_bias_file,'file')
     bias_tgr = 0;
 else
     switch chs_region
         case 'CHS-LA'
             % Load Grid Files
-            load(fullfile(pm_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
-            load(fullfile(pm_path, 'CHS-LA_staID.mat'), 'staID');  % staID -> [SP_ID Node_ID Lon Lat Depth]
+            load(fullfile(grid_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
+            load(fullfile(grid_path, 'CHS-LA_staID.mat'), 'staID');  % staID -> [SP_ID Node_ID Lon Lat Depth]
             % Get Row
             adcirc_node_id = SPs(SPs(:,1) == spID, 2);
             % Find Correct Row ID For Bias & Uncertainty
             bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
         case {'NACCS', 'CHS-NA'}
             % Get File Dir
-            dummy = dir(fullfile(pm_path,'*_nodeID*.mat'));
+            dummy = dir(fullfile(grid_path,'*_nodeID*.mat'));
             % Load Grid Files
-            staID = dload(fullfile(pm_path, dummy.name), 'nodeID');  % SPs
+            staID = dload(fullfile(grid_path, dummy.name), 'nodeID');  % SPs
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
         otherwise
             % Get File Dir
-            dummy = dir(fullfile(pm_path,'*_staID.mat'));
+            dummy = dir(fullfile(grid_path,'*_staID.mat'));
             % Load Grid Files
-            staID = dload(fullfile(pm_path, dummy.name), 'staID');  % SPs
+            staID = dload(fullfile(grid_path, dummy.name), 'staID');  % SPs
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
     end
     % Load Bias Correction File
-    load(chs_bias_file, 'Comb');
+    load(chs_ssl_bias_file, 'Comb');
     % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
     B_a_SWL=Comb.B_a(bias_indx); B_r_SWL=Comb.B_r(bias_indx);
     config.chs_swl_b_a = B_a_SWL;
@@ -324,6 +327,14 @@ else
     % Overwrite Manual Value
     config.chs_swl_u_a = Comb.U_a(bias_indx); % SWL absolute uncertainty
     config.chs_swl_u_r = Comb.U_r(bias_indx); % SWL Proportional uncertainty
+end
+% Grab Hm0 Uncertainty Parameters 
+if exist(chs_hm0_bias_file, 'file')
+    % Load Bias Correction File
+    load(chs_hm0_bias_file, 'Hm0');
+    % Overwrite Manual Value
+    config.chs_hm0_u_a = Hm0.U_a_avg; % SWL absolute uncertainty
+    config.chs_hm0_u_r = Hm0.U_r_avg; % SWL Proportional uncertainty
 end
 %
 if strcmp(storm_type, 'XC') && config.apply_xc_bias == 0
