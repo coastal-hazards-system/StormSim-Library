@@ -51,6 +51,13 @@ crest_elev = structure.crest_elevation;
 crest_width = structure.crest_width;
 % Define Structure Toe Elevation (<0 below datum zero)
 toe_elev = structure.toe_elevation; % Flip convention
+% Define Low Crested Structure Crest Elevation
+    crest_elev_lcbw = structure.crest_elevation_lcbw;
+if struc_type == 3
+    crest_elev_lcbw = structure.crest_elevation_lcbw;
+else
+    crest_elev_lcbw = 0;
+end
 % Berm Elevation (<0 Below Datum Zero)
 berm_elev = structure.berm_elevation; %
 % Berm Width
@@ -70,12 +77,19 @@ if struc_type == 3
     % Delta
     delta = structure.armor_delta;
     % Seaside Limit State
-    S = structure.seaside_limit_S;
-    S_ls = structure.leeside_limit_S;
+    S = structure.seaside_design_S;
+    S_ls = structure.leeside_design_S;
     % CEM P
     P = structure.cem_P;
+    % Define Low Crested Structure Crest Elevation
+    crest_elev_lcbw = structure.crest_elevation_lcbw;
 elseif struc_type == 2
     wall_bottom_elev = structure.wall_bottom_elevation;
+    % Define Low Crested Structure Crest Elevation
+    crest_elev_lcbw = 0;
+else
+    % Define Low Crested Structure Crest Elevation
+    crest_elev_lcbw = 0;
 end
 % Water Density kg/m^3
 rho_w = structure.water_density;
@@ -92,7 +106,7 @@ switch workflow
             Tp = {project_forcing.(storm_type).Tp}; % Tp
             h = {project_forcing.(storm_type).SWL - toe_elev};
             Rc = {crest_elev - project_forcing.(storm_type).SWL};
-            Rc_LC = {berm_elev - project_forcing.(storm_type).SWL}; % Low Crested Breakwater
+            Rc_LC = {crest_elev_lcbw - project_forcing.(storm_type).SWL}; % Low Crested Breakwater
             dflat = 1;
         else
             SWL = project_forcing.(storm_type).SWL; % SWL
@@ -100,7 +114,7 @@ switch workflow
             Tp = project_forcing.(storm_type).Tp; % Tp
             h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
             Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-            Rc_LC = cellfun(@(x) berm_elev - x, SWL, 'un', false); % Low Crested Breakwater
+            Rc_LC = cellfun(@(x) crest_elev_lcbw - x, SWL, 'un', false); % Low Crested Breakwater
             dflat = 3;
         end
     case 3 % LCS
@@ -115,7 +129,7 @@ switch workflow
         Tp = cellfun(@(x) x(:,swl_indx+2),{project_forcing.LCNUM},'un',false); % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-        Rc_LC = cellfun(@(x) berm_elev - x, SWL, 'un', false); % Low Crested Breakwater
+        Rc_LC = cellfun(@(x) crest_elev_lcbw - x, SWL, 'un', false); % Low Crested Breakwater
         dflat = 2;
 end
 
