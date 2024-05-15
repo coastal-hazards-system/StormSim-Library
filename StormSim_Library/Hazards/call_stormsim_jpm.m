@@ -24,7 +24,7 @@ U_tide_type = [];
 SLC = [];
 
 %% Plot settings
-plot_results = 1;
+plot_results = 0;
 yaxis_label = y_label_str;
 yaxis_limits = [];
 stat_print = 0;
@@ -44,5 +44,5 @@ JPM_output.staID = staID;
 close all;
 
 
-% rmdir('JPM_output','s');
+rmdir('JPM_output','s');
 end
