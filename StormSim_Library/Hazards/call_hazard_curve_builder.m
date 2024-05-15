@@ -68,6 +68,11 @@ if strcmp(storm_type, 'TC')
 end
 % Save Name
 save_name = fullfile(outPath, [config.project_name,'_', config.struc_id]);
+% Grab RB Workflow
+dummy = strsplit(outPath, filesep); dummy = dummy{end};
+dummy = strsplit(dummy, '_'); dummy = dummy{2};
+% MRL Path 
+mrl_path = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name, 'PROS', ['SST_' dummy '_MRL_Outputs']);
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -154,6 +159,14 @@ for ii = 1:length(vars_2_get)
             % Call SST
             try
                 [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst, y_label);
+                % Make Dir For MRL
+                if ~exist(mrl_path, 'dir')
+                    mkdir(mrl_path);
+                end
+                % Move MRL Outputs
+                movefile('SST_output\SST_MRL_*',mrl_path);
+                % Delete SST Folder 
+                rmdir('SST_output','s');
                 % Define Limtis For Frequency/Probability Vectors
                 s_indx = 1:length(dummy.HC_plt_x);%eval(['s_indx = dummy.HC_plt_x>' x_lim ';']);
                 % Define Figure Title
