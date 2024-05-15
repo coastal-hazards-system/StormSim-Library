@@ -1,4 +1,4 @@
-function  [Param, TC_SRR, TC_Freq, TotalFreq, smpl1, smpl2, smpl3] = csh_probability_mass_loader(pm_path, region, Nsvpt)
+function  [Param, TC_SRR, TC_Freq, TotalFreq, smpl1, smpl2, smpl3] = csh_probability_mass_loader(pm_path, grid_file, region, Nsvpt)
 %{
     %% DESCRIPTION
         This function is responsible for leading CHS TC storm probability
@@ -74,9 +74,9 @@ if exist(pm_path,'dir')
                 % Find Storms Within 200 km radius
                 dist200 = find(dist<=200);
                 % Low Intensity Storm Population
-                smpl1 = dist200(Param(dist200,5)<48);
+                smpl1 = Param(Param(dist200,5)<48, 1);
                 % High Intensity Storm Population
-                smpl3 = dist200(Param(dist200,5)>=48);
+                smpl3 = Param(Param(dist200,5)>=48, 1);
                 %
                 smpl2 =  [];% Mid Intensity
             catch
@@ -121,9 +121,9 @@ if exist(pm_path,'dir')
             switch pm_version
                 case 'CHS-LA'
                     % Load Grid Files
-                    load(fullfile(pm_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
+                    load(fullfile(grid_file, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
                     % Load Selected Nodes List
-                    load(fullfile(pm_path, 'CHS-LA_staID.mat'), 'staID');
+                    load(fullfile(grid_file, 'CHS-LA_staID.mat'), 'staID');
                     % Get Row
                     adcirc_node_id = SPs(SPs(:,1) == Nsvpt, 2);
                     % Find Correct Row ID For DSWs
@@ -132,18 +132,16 @@ if exist(pm_path,'dir')
                     col_indx = 3;
                 otherwise
                     % Get File Dir
-                    dummy = dir(fullfile(pm_path,'*_staID.mat'));
+                    dummy = dir(fullfile(grid_file,'*_staID.mat'));
                     % Savepoint location info
-                    staID = dload(fullfile(pm_path, dummy.name)); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    staID = dload(fullfile(grid_file, dummy.name)); % staID -> [SP_ID Node_ID Lon Lat Depth]
                     % Define Row Index
                     bias_indx = find(staID(:, 1) == Nsvpt);
                     % Define Latitude Column
                     col_indx = 2;
             end
             % Find CRL closest to savepoint
-            [nearest_lat, nearest_lon, ~, dist, ~] = find_nearest_latlon(staID(bias_indx, col_indx), staID(bias_indx, col_indx+1), CRL(:,1), CRL(:,2), []);
-            [~, ic] = min(dist); % km
-
+            [nearest_lat, nearest_lon, ~, dist, ic] = find_nearest_latlon(staID(bias_indx, col_indx), staID(bias_indx, col_indx+1), CRL(:,1), CRL(:,2), []);
             % Convert LI SRR to storms/year using a 600 km diameter.
             TC_SRR = SRR_LI(ic)*600;
             % Convert MI SRR to storms/year using a 600 km diameter.
@@ -163,11 +161,11 @@ if exist(pm_path,'dir')
             dist200=find(dist<=trk_dist);
 
             % Low Intensity Storm Population
-            smpl1 = dist200(Param(dist200,7)<28);
+            smpl1 = Param(Param(dist200,7)<28, 1);
             % Medium Intensity Storm Population
-            smpl2 = dist200((Param(dist200,7)>=28) & (Param(dist200,7)<48));
+            smpl2 = Param((Param(dist200,7)>=28) & (Param(dist200,7)<48), 1);
             % High Intensity Storm Population
-            smpl3 = dist200(Param(dist200,7)>=48);
+            smpl3 = Param(Param(dist200,7)>=48, 1);
             % Make DP Col Be The 5
             Param = [Param(:,1:4), Param(:,7), Param(:,5:6)];
     end
