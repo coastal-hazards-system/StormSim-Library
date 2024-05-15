@@ -1,4 +1,4 @@
-function [nearest_lat, nearest_lon, within_radius, min_distance, index] = find_nearest_latlon(target_lat, target_lon, latitudes, longitudes, max_radius_km)
+function [nearest_lat, nearest_lon, within_radius, distance_km, min_indx] = find_nearest_latlon(target_lat, target_lon, latitudes, longitudes, max_radius_km)
 % Convert latitude and longitude from degrees to radians
 target_lat = deg2rad(target_lat);
 target_lon = deg2rad(target_lon);
@@ -20,15 +20,15 @@ if isempty(max_radius_km)
     nearest_lat = rad2deg(latitudes);
     nearest_lon = rad2deg(longitudes);
     within_radius = [];
-    [min_distance,index] = min(distance_km);
+    [min_distance,min_indx] = min(distance_km);
     % Output nearest latitude and longitude
-    nearest_lat = rad2deg(latitudes(index));
-    nearest_lon = rad2deg(longitudes(index));
+    nearest_lat = rad2deg(latitudes(min_indx));
+    nearest_lon = rad2deg(longitudes(min_indx));
 else
     within_radius = distance_km <= max_radius_km;
-    [min_distance,index] = min(distance_km(within_radius));
-    % Output nearest latitude and longitude
-    nearest_lat = rad2deg(latitudes(index));
-    nearest_lon = rad2deg(longitudes(index));
+    [min_distance,min_indx] = min(distance_km(within_radius));
+%     % Output nearest latitude and longitude
+    nearest_lat = rad2deg(latitudes(min_indx));
+    nearest_lon = rad2deg(longitudes(min_indx));
 end
 end
