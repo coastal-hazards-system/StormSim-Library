@@ -463,6 +463,7 @@ if ~isempty(id2)
                 dm = sortrows([x y],1,'ascend');                
                 x=dm(:,1);y=dm(:,2);
                 
+                x=log(x);
                 % remove duplicates from x values
                 [~,ia,~]=unique(x,'stable');y=y(ia);x=x(ia);
 
@@ -477,7 +478,7 @@ if ~isempty(id2)
                 y = [y resp_perc]; %#ok<AGROW>
                 
                 % Interpolate AEF curve for plot
-                Lx=log(x);
+                Lx=x;
                 y_plt = interp1(Lx,y,log(HC_plt_x));
                 
                 % Interpolation to create hazard tables
@@ -521,6 +522,7 @@ if ~isempty(id2)
                 dm = sortrows([x y],1,'ascend');
                 x=dm(:,1);y=dm(:,2);
                 
+                x=log(x);
                 % remove duplicates from x values
                 [~,ia,~]=unique(x,'stable');y=y(ia);x=x(ia);
 
@@ -535,7 +537,7 @@ if ~isempty(id2)
                 y = [y resp_perc]; 
 
                 % Interpolate AEF curve for plot
-                Lx=log(x);
+                Lx=x;
                 y_plt = interp1(Lx,y,log(HC_plt_x));
                                 
                 % Interpolation to create hazard tables
