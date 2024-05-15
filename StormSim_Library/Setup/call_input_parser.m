@@ -55,6 +55,9 @@ for ii= 1:length(row_indx)
         config.(helper_var{jj,1}) = helper_var{jj,end};
     end
 end
+% Switches to remove
+config.apply_xc_bias = 0;
+config.use_waves_swl = 0;
 % Project Name
 project_name = config.project_name;
 % Transect Id
@@ -278,6 +281,19 @@ catch
 end
 % Hardcoded Flag Until Further Dev
 config.slope_type = 0; % Idealized Slope
+config.mcs_sampling_mode = 1; % Porbabilistic
+config.pros_use_aep = 0; % AEF
+config.apply_xc_bias = 0; % No Bias on XC modeling 
+config.use_waves_swl = 0; % Use ADCIRC SWL 
+config.structure_dir = 0; % Assume Shore Normal Waves
+config.cxhs_wDir_u_a = 0; % ASsume Shore Normal Waves
+config.tide_std = 0; % Tidal std , not implemented
+% Check For Berm 
+if config.add_berm == 0
+    config.berm_elevation = 0;
+    config.berm_slope = 0;
+    config.berm_width = 0;
+end
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % Set-up Computational Environment
