@@ -10,7 +10,7 @@ prc = strsplit(config.project_CLs(2:end-1),{' '});
 % Define Simulation Length 
 nyears = [0:config.mcs_nYears];
 % Output Save Dir
-outDir = [config.project_name, filesep, config.struc_id, filesep,...
+outDir = [config.outfolder filesep config.project_name, filesep, config.struc_id, filesep,...
     config.project_name,'_', config.struc_id];
 % Make Figures Visibles/Invisible
 if show_figs==1
