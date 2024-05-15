@@ -94,7 +94,7 @@ chs_zip = config.chs_zip;
 [~,~,fext] = fileparts(config.chs_zip);
 % Determine Storm Data Source
 chs_type_case = find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) == 1);
-% Define Probability Masses Source
+% Define Probability Masses Source (for .mat inputs)
 pm_file = config.prob_mass_source;
 % Deifne Save Point ID
 sp_ID = config.sp_ID;
@@ -113,6 +113,8 @@ case_name = config.case_name;
 pm_path = config.prob_mass_source;
 % Grab Temp Folder For Simulation
 temp_path = config.temp_path;
+% Grid File 
+grid_file = config.chs_grid_file_source;
 
 %% Check If This Is Fresh Run Or New Case
 % Define Filename Prefix Based On Data Source
@@ -324,7 +326,7 @@ if isempty(file2look) % Process SP Data
                 % Load Storm Probability Massess
                 [prob_mass.Param, prob_mass.TC_SRR,...
                     prob_mass.TC_Freq, prob_mass.TotalFreq,...
-                    prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = csh_probability_mass_loader(pm_path, region,sp_ID);
+                    prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = csh_probability_mass_loader(pm_path, grid_file, region,sp_ID);
             case 2
                 try
                     % Load CHS_Data
@@ -376,7 +378,7 @@ if isempty(file2look) % Process SP Data
 
     %% TIMESERIES SWL PEAK REPLACER
     if use_timeseries == 1 && use_peaks == 1
-        storm = chs_timeseries_peak_replacer(storm);
+        [storm, proxy] = chs_timeseries_peak_replacer(storm);
     end
 
     %% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
