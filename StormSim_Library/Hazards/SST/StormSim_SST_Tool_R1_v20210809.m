@@ -1060,7 +1060,7 @@ end
 if stat_print == 1
     disp(['*** Step 4: Saving results here: ',path_out]);
 end
-save([path_out,'StormSim_' staID '_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
+save([path_out,'StormSim_' staID{:} '_SST_output.mat'],'SST_output','HC_tbl_x','HC_plt_x','HC_tbl_rsp_y','Removed_datasets','Check_datasets','-v7.3')
 
 [~,id_act]=hasPCT;if id_act==0,delete(gcp);end
 if stat_print == 1
