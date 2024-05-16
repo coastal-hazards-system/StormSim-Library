@@ -39,9 +39,7 @@ chs_region = config.region;
 % Save Point ID
 spID = config.sp_ID;
 % Define Storm Surge Level CHS Bias File
-chs_ssl_bias_file = fullfile(config.chs_bias_and_uncertainty_source, [chs_region '_Comb_BiasUncertainty_perVG_rta.mat']);
-%
-chs_hm0_bias_file = fullfile(config.chs_bias_and_uncertainty_source, [chs_region '_STWAVE_Hm0_BiasUncertainty_perVG_rta.mat']);
+chs_ssl_bias_file = config.ssl_bias_and_uncertainty_file;
 % Define SWL Hydrograph Switch
 use_waves_swl = config.use_waves_swl;
 % Define CHS REgional Study Grid File
@@ -328,16 +326,8 @@ else
     config.chs_swl_u_a = Comb.U_a(bias_indx); % SWL absolute uncertainty
     config.chs_swl_u_r = Comb.U_r(bias_indx); % SWL Proportional uncertainty
 end
-% Grab Hm0 Uncertainty Parameters 
-if exist(chs_hm0_bias_file, 'file')
-    % Load Bias Correction File
-    load(chs_hm0_bias_file, 'Hm0');
-    % Overwrite Manual Value
-    config.chs_hm0_u_a = Hm0.U_a_avg; % SWL absolute uncertainty
-    config.chs_hm0_u_r = Hm0.U_r_avg; % SWL Proportional uncertainty
-end
 %
-if strcmp(storm_type, 'XC') && config.apply_xc_bias == 0
+if strcmp(storm_type, 'XC')
     bias_tgr = 0;
 end
 % Apply Bias Correction (If Applicable)
