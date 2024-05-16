@@ -156,7 +156,6 @@ structure_type = config.struc_type;
 % Coefficients are found in CEM and in Eurotop. For levees with grass, the
 % surface roughness influence increses for small wave heights.
 gamma_f = config.roughness_ifactor;
-
 % ---------- LOGICAL SWITCHES ----------
 % Structure Repair Assesment; 0 - Repairs Not Included In Analysis, 1 - Repairs Are Included In Analysis
 repair_switch = config.csr_apply_structure_repair;
@@ -182,6 +181,8 @@ sFields = fieldnames(structure);
 for ii = 1:length(sFields)
     eval([sFields{ii} ' = structure.(sFields{ii});']);
 end
+%
+wall_bottom_elev = toe_elevation;
 % Armor Stone Specific Gravity
 SG = 1 + armor_delta;
 % Armor Stone Density [kg/m^3]
