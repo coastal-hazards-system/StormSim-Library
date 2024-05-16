@@ -216,7 +216,7 @@ WL = cellfun(@(x) x(:,5),LC_SimOUT_hyd,'un',false);
 h = cellfun(@(x) x-toe_elevation,WL,'un',false);
 % Compute Freeboard
 Rc = cellfun(@(x,y) crest_elevation - x,WL,'un',false);
-Rc_LC = cellfun(@(x) crest_elev_lcbw - x, WL, 'un', false); % Low Crested Breakwater
+Rc_LC = cellfun(@(x) crest_elevation_lcbw - x, WL, 'un', false); % Low Crested Breakwater
 % Extract Wave Height
 Hm0 = cellfun(@(x) x(:,6),LC_SimOUT_hyd,'un',false);
 % Extract Wave Peak Period
