@@ -33,6 +33,7 @@ else
     x_tbl_tc = aef2aep(tc_resp(1).x_table);
 end
 x_tbl_tc = x_tbl_tc(round(x_tbl_tc, 6)>=5E-04);
+x_plot_tc = x_plot_tc(round(x_plot_tc, 6)>=5E-04);
 % Find Primary Responses Indexes
 s_indx = 1:min(length(tc_resp),length(xc_resp));
 % Remove Resposes With Missing Pairs
@@ -90,7 +91,11 @@ for j = s_indx
     % Increase Counter
     ctr = ctr + 1;
 end
-
+% Cut Frequency Vector 
+for kk = 1:length(cc_resp)
+    cc_resp(kk).x_table(length(x_tbl_tc)+1:end) = [];
+    cc_resp(kk).x_table_ARI(length(x_tbl_tc)+1:end) = [];
+end
 %% COMPUTE SECONDARY STRUCTURE RESPONSES (P2, P3, Pu, Nappe)
 
 if struc_type == 2 && ~ismember(workflow,[2,4])
