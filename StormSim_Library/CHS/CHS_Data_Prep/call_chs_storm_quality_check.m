@@ -39,7 +39,7 @@ chs_region = config.region;
 % Save Point ID
 spID = config.sp_ID;
 % Define Storm Surge Level CHS Bias File
-chs_ssl_bias_file = config.ssl_bias_and_uncertainty_file;
+chs_ssl_bias_file = config.chs_ssl_bias_and_uncertainty_file;
 % Define SWL Hydrograph Switch
 use_waves_swl = config.use_waves_swl;
 % Define CHS REgional Study Grid File
