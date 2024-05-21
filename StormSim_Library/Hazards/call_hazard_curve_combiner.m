@@ -32,8 +32,10 @@ else
     x_plot_tc = aef2aep(tc_resp(1).x_plot);
     x_tbl_tc = aef2aep(tc_resp(1).x_table);
 end
-x_tbl_tc = x_tbl_tc(round(x_tbl_tc, 6)>=5E-04);
-x_plot_tc = x_plot_tc(round(x_plot_tc, 6)>=5E-04);
+plt_indx = round(x_plot_tc, 6)>=5E-04;
+tbl_indx = round(x_tbl_tc, 6)>=5E-04;
+x_tbl_tc = x_tbl_tc(tbl_indx);
+x_plot_tc = x_plot_tc(plt_indx);
 % Find Primary Responses Indexes
 s_indx = 1:min(length(tc_resp),length(xc_resp));
 % Remove Resposes With Missing Pairs
@@ -68,7 +70,7 @@ for j = s_indx
         case {'Dn50','Dn50_LCBW', 'Dn50_Lee'}
             u_field = u_vector{contains(u_names, 'dn50')};
         case {'p2dyn','p2sta','p2total','p3dyn','p3sta','p3total','pu','X_low','theta_low','X_up','theta_up','Bx','X_c_surge','theta_center','Bjet','Vjet','Fjet'}
-            % Skip Until Issues Are Sorted 
+            % Skip Until Issues Are Sorted
             continue;
         otherwise
             u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
@@ -91,10 +93,12 @@ for j = s_indx
     % Increase Counter
     ctr = ctr + 1;
 end
-% Cut Frequency Vector 
+% Cut Frequency Vector
 for kk = 1:length(cc_resp)
-    cc_resp(kk).x_table(length(x_tbl_tc)+1:end) = [];
-    cc_resp(kk).x_table_ARI(length(x_tbl_tc)+1:end) = [];
+    cc_resp(kk).x_table = cc_resp(kk).x_table(tbl_indx);
+    cc_resp(kk).x_plot = cc_resp(kk).x_plot(plt_indx);
+    cc_resp(kk).x_table_ARI = cc_resp(kk).x_table_ARI(tbl_indx);
+    cc_resp(kk).x_table_ARI = cc_resp(kk).x_table_ARI(tbl_indx);
 end
 %% COMPUTE SECONDARY STRUCTURE RESPONSES (P2, P3, Pu, Nappe)
 
