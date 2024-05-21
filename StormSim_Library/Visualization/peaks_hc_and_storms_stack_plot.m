@@ -231,14 +231,26 @@ for ii = 1:length(pDatasets)
     ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Tp [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID_wave)]);
 
     % Define SWL Y Lim
-    ax_tc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
-    ax_xc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
-    % Defien Hm0 Y Lim
-    ax_tc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
-    ax_xc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
+    try
+        ax_tc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
+        ax_xc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
+    catch
+
+    end
+    % Define Hm0 Y Lim
+    try
+        ax_tc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
+        ax_xc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
+    catch
+
+    end
     % Define Tp Y Lim
-    ax_tc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
-    ax_xc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
+    try
+        ax_tc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
+        ax_xc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
+    catch
+
+    end
     % Set XTicks
     helper_str = {'ax_tc_hc_swl','ax_tc_hc_hm0', 'ax_tc_hc_tp','ax_xc_hc_swl','ax_xc_hc_hm0', 'ax_xc_hc_tp'};
     for hh = 1:length(helper_str)
