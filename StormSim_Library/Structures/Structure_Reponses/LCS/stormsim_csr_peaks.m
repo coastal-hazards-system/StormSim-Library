@@ -116,9 +116,9 @@ end
 % Flip Toe Convention
 depth = toe_elevation*-1;
 % Deterministic value of zero damage level seaside
-S_ss = seaside_init_S;
+S_ss = seaside_design_S;
 % Deterministic value of zero damage level leeside
-S_ls = leeside_init_S;
+S_ls = leeside_design_S;
 
 %% READ EMPERICAL COEFFICIENTS
 % Empirical Coefficient (Seaside) - Momentum Flux
