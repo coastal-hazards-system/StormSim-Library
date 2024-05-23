@@ -160,11 +160,11 @@ for ii = 1:length(vars_2_get)
             try
                 [dummy] = call_stormsim_sst(input_data, staID, Nyrs_XC, prc, use_aep, U_a, U_r, uncert_treatment_sst, y_label);
                 % Make Dir For MRL
-                if ~exist(mrl_path, 'dir')
-                    mkdir(mrl_path);
-                end
-                % Move MRL Outputs
-                movefile('SST_output\SST_MRL_*',mrl_path);
+%                 if ~exist(mrl_path, 'dir')
+%                     mkdir(mrl_path);
+%                 end
+%                 % Move MRL Outputs
+%                 movefile('SST_output\SST_MRL_*',mrl_path);
                 % Delete SST Folder 
                 rmdir('SST_output','s');
                 % Define Limtis For Frequency/Probability Vectors

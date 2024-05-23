@@ -1,7 +1,7 @@
 function [OUTPUT] = call_stormsim_sst(input_data,staID,Nyrs,prc,use_AEP,U_a,U_r,uncert_treatment, y_label_str)
 % JAM modified on 11/30/22 to use StormSim_SST_Tool_R1_v20220523
 %% General settings
-    ExecMode = 'Regular';
+    ExecMode = 'Fast';
     DataType = 'POT';
     GPD_TH_crit = 2; %must be zero to run parallel
     HC_tbl_rsp_y = [];
