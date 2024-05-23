@@ -52,7 +52,6 @@ crest_width = structure.crest_width;
 % Define Structure Toe Elevation (<0 below datum zero)
 toe_elev = structure.toe_elevation; % Flip convention
 % Define Low Crested Structure Crest Elevation
-    crest_elev_lcbw = structure.crest_elevation_lcbw;
 if struc_type == 3
     crest_elev_lcbw = structure.crest_elevation_lcbw;
 else
