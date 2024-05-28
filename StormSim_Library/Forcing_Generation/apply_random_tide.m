@@ -85,7 +85,7 @@ switch dType
                 % Create Random Tide Indexes
                 tide_indx = cellfun(@(x) randi([1 length(tidal_data)],size(x,1),1),stm_indx,'un',false);
                 % Process Each Life Cycle
-                for ii = 1:length(project_forcing.LCNUM)
+                for ii = 1:length({project_forcing.LCNUM})
                     % Grab Pull Indexes
                     pull_indx = stm_indx{ii};
                     % Grab Tide Indexes For Storms
