@@ -148,9 +148,7 @@ switch workflow
                 % Load Project Forcing
                 load(mcs_ref_pth,'project_forcing');
                 % Copy To Current Case
-                if ~exist([save_name '_' wName '_project_forcing.mat'], 'file')
-                    copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
-                end
+                copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
             catch
                 % Call StormSim: Monte Carlo Storm Sampler
                 if use_peaks == 1
