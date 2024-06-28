@@ -25,6 +25,8 @@ if f_adjust == 0
     if use_peaks == 1
         level_2 = fieldnames(project_forcing.(level_1{1}).('Peaks'));
         level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
+    else
+        level_2 = {'Maxima'};
     end
     % Loop Through All Peak Datasets & Storm Types
     for jj = 1:length(level_1)

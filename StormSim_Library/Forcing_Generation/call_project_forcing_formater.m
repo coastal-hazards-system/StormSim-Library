@@ -148,7 +148,9 @@ switch workflow
                 % Load Project Forcing
                 load(mcs_ref_pth,'project_forcing');
                 % Copy To Current Case
-                copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+                try
+                    copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
+                end
             catch
                 % Call StormSim: Monte Carlo Storm Sampler
                 if use_peaks == 1
@@ -188,13 +190,17 @@ switch workflow
                 level_1 = fieldnames(storm);
                 % Create Dummy Peaks Field
                 for kk = 1:length(level_1)
+                    % Compute Max Along Each Col To Create Proxy Peaks Dataset
                     dummy_data = cell2mat(cellfun(@(x) max(x,[],1),storm.(level_1{kk}).('Timeseries')(:,2), 'un', false));
+                    % Replace Timestamp With That Of Max SWL Value
+                    dummy_data(:,1) = cellfun(@(x,y) x(x(:,2)==y,1),storm.(level_1{kk}).('Timeseries')(:,2),num2cell(dummy_data(:,2)),'un',true);
+                    % Match Expected Format For Peaks Dataset [ SWL Hm0 Tp wDir Stm ID yyyymmddHHMM ]
                     storm.(level_1{kk}).('Peaks').('Maxima') = [dummy_data(:,2:5),cell2mat(storm.(level_1{kk}).('Timeseries')(:,1)),dummy_data(:,1)];
                 end
                 % Get Storm Sampling Using Peaks Files
-                [aux_var] = call_stormsim_mcs(config, storm, prob_mass);
+                [project_forcing] = call_stormsim_mcs(config, storm, prob_mass);
                 % Do you want to use timeseries
-                [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(aux_var, storm, prob_mass, storm_sampling);
+                [project_forcing.(storm_sampling).Timeseries]=call_stormsim_mcs_timeseries(project_forcing, storm, prob_mass, storm_sampling);
             end
             % Save Peaks Life Cycle Structures
             save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
