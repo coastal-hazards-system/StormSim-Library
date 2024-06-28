@@ -183,8 +183,8 @@ for j = 1:simulation_years
             % Number of Storm In Storm Year
             SimOUT_TC(n,3) = m;
             % Random Number from 0 - 1
-            IIdx = rand;
-            % Sample Storms 
+            smpl_flag = rand;
+            % Sample Storms
             switch sample_method
                 case 0 % historical
                     % Define NaN for Intensity
@@ -195,10 +195,10 @@ for j = 1:simulation_years
                     SimOUT_TC(n,6:end) = storm_peaks(storm_peaks(:,5)==SimOUT_TC(n,5),:);
                 case 1 % probabilistic
                     % Determine Random Intensity To Sample
-                    [~, IIdx] = max([IIdx<=(TC_SRR(1,1)/TC_SRR(1,end)),...
-                        IIdx>(TC_SRR(1,1)/TC_SRR(1,end)) && IIdx<(TC_SRR(1,3)/TC_SRR(1,end))...
-                        IIdx>=(TC_SRR(1,3)/TC_SRR(1,end))]);
-                    % Make Sure Resulting Intensity Has A Population
+                    [~, IIdx] = max([smpl_flag<=TC_SRR(1,1),...
+                        smpl_flag>TC_SRR(1,1) && smpl_flag<1-TC_SRR(1,3)...
+                        smpl_flag>= 1-TC_SRR(1,3)]);
+%                     % Make Sure Resulting Intensity Has A Population
                     chk = [];
                     while isempty(chk)
                         % Look Into Resulting Intensity Population
@@ -206,11 +206,11 @@ for j = 1:simulation_years
                         % Need to Switch Intensity if Not Available For Study
                         if isempty(chk)
                             % Random Number from 0 - 1
-                            IIdx = rand;
+                            smpl_flag = rand;
                             % Determine Random Intensity To Sample
-                            [~, IIdx] = min([IIdx<=(TC_SRR(1,1)/TC_SRR(1,end)),...
-                                IIdx>(TC_SRR(1,1)/TC_SRR(1,end)) && IIdx<(TC_SRR(1,3)/TC_SRR(1,end))...
-                                IIdx>=(TC_SRR(1,3)/TC_SRR(1,end))]);
+                            [~, IIdx] = max([smpl_flag<=TC_SRR(1,1),...
+                                smpl_flag>TC_SRR(1,1) && smpl_flag<1-TC_SRR(1,3)...
+                                smpl_flag>= 1-TC_SRR(1,3)]);
                             % Try New Intensity
                             chk = eval(['smpl' num2str(IIdx) ';']);
                         end
