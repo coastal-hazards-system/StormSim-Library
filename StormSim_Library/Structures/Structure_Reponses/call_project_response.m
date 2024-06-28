@@ -41,10 +41,10 @@ switch workflow
             wName = 'PROS';
             subDir = [fullfile(subDir, 'PROS'), filesep];
         end
-        % Make Dir 
+        % Make Dir
         if ~exist(subDir ,'dir')
             mkdir(subDir);
-        end       
+        end
         % Grab "project_forcing" Structure Fields
         switch storm_sampling
             case 'CC' % Combined Storm Sampling
@@ -131,14 +131,15 @@ switch workflow
         end
     case 3 % CSR
         %% STORMSIM: MCS-CSR
-        % Print Status
-        disp('Computing structure responses with peaks....');
         % Define Workflow ID
         wName = 'LCS';
         % Define Workflow Subdirectory
         subDir = [subDir filesep 'Life_Cycle_Simulation' filesep];
         % Scan Peaks Datasets
         if use_peaks == 1
+            % Print Status
+            disp('Computing structure responses with peaks....');
+            %
             level_2 = fieldnames(project_forcing.(storm_sampling).('Peaks'));
             level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
             % Loop Through All Peak Datasets & Storm Types
@@ -161,7 +162,7 @@ switch workflow
             disp('Computing structure responses using timeseries....');
             % Compute Structure Respose: q, R2%, Dn50, Dn50 LCBW, P1
             [Resp.(storm_sampling).('Timeseries'), ~] = compute_structure_response(config, structure, project_forcing.(storm_sampling).('Timeseries'), emp_coeff, storm_sampling);
-            if structure_type == 3 % Rubblemound Only
+            if structure_type == 3
                 % Call StormSim: CSR Damage Progression Analysis
                 [Resp.(storm_sampling).('Timeseries').S] = stormsim_csr_dpa(config, structure, emp_coeff, {project_forcing.(storm_sampling).('Timeseries').LCNUM});
                 % Generate Plot Structure
@@ -171,7 +172,7 @@ switch workflow
                     mkdir([subDir 'LCS_DPA']);
                 end
                 % Move SST/JPM Outputs Into Subdir
-                movefile([outDir '*Seaside*'],[subDir 'LCS_DPA']);
+                    movefile([outDir '*Seaside*'],[subDir 'LCS_DPA']);
                 movefile([outDir '*Leeside*'],[subDir 'LCS_DPA']);
             end
         end
