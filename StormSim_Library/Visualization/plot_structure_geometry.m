@@ -92,9 +92,9 @@ crest_width = structure.('crest_width');
 switch structure_type
     case 1 % Levee
         % Define Seward Slope
-        seaside_slope = structure.('seaside_slope');
+        seaside_slope = 1/structure.('seaside_slope');
         % Define Landward Slope
-        leeside_slope = structure.('leeside_slope');
+        leeside_slope = 1/structure.('leeside_slope');
         % Initialize Shape Variables
         xs = zeros(1,5);ys=xs;
         % Point 1 - Seaside Toe
@@ -149,9 +149,9 @@ switch structure_type
         xs(5) = xs(1);ys(5) = ys(1);
     case 3 % Rubblemound
         % Define Seward Slope
-        seaside_slope = structure.('seaside_slope');
+        seaside_slope = 1/structure.('seaside_slope');
         % Define Landward Slope
-        leeside_slope = structure.('leeside_slope');
+        leeside_slope = 1/structure.('leeside_slope');
         % Initialize Shape Variables
         xs = zeros(1,5);ys=xs;
         % Point 1 - Seaside Toe
