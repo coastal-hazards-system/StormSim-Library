@@ -138,7 +138,7 @@ Szerolim = 0.2;
 nLC = length(LC_SimOUT_hyd);
 % Determine Number Of Timesteps Per Life Cycle
 nTimes_per_LC = cellfun(@(x) length(x(:,1)),LC_SimOUT_hyd);
-% Define Number of Years 
+% Define Number of Years
 nYears = config.mcs_nYears;
 % Determine Forcing Data Cols
 %     matrix_width = length(LC_SimOUT_hyd{1}(1,:));
@@ -155,7 +155,7 @@ Slee_ULS = config.leeside_S_uls;
 structure_type = config.struc_type;
 % Coefficients are found in CEM and in Eurotop. For levees with grass, the
 % surface roughness influence increses for small wave heights.
-% gamma_f = config.roughness_ifactor;
+gamma_f = config.roughness_ifactor;
 % ---------- LOGICAL SWITCHES ----------
 % Structure Repair Assesment; 0 - Repairs Not Included In Analysis, 1 - Repairs Are Included In Analysis
 repair_switch = config.csr_apply_structure_repair;
@@ -192,9 +192,9 @@ V_ss = seaside_mass/dr;
 % Seaside Nominal Stone Diameter (m)
 SDn = V_ss^(1/3);
 % % (LCBW) Seaside Median Volume of Armor Stone
-% V_ss_lcbw = lcbw_mass/dr;
+V_ss_lcbw = lcbw_seaside_mass/dr;
 % % (LCBW) Seaside Nominal Stone Diameter (m)
-% SDn_lcbw = V_ss_lcbw^(1/3); 
+SDn_lcbw = V_ss_lcbw^(1/3);
 %Leeside Median Volume of Armor Stone
 LV_ss = leeside_mass/dr;
 % Leeside Nominal Stone Diameter (m)
@@ -217,7 +217,6 @@ WL = cellfun(@(x) x(:,5),LC_SimOUT_hyd,'un',false);
 h = cellfun(@(x) x-toe_elevation,WL,'un',false);
 % Compute Freeboard
 Rc = cellfun(@(x,y) crest_elevation - x,WL,'un',false);
-% Rc_LC = cellfun(@(x) crest_elevation_lcbw - x, WL, 'un', false); % Low Crested Breakwater
 % Extract Wave Height
 Hm0 = cellfun(@(x) x(:,6),LC_SimOUT_hyd,'un',false);
 % Extract Wave Peak Period
@@ -244,7 +243,7 @@ Szero_with_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false)
 Ssea_with_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 SLee_with_repairs =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 SLee_no_repairs =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
-% LCBW_FS =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
+LCBW_FS =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 % q =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 
 %% BEGIN LC LOOP
@@ -273,7 +272,7 @@ for NlcS = 1:nLC
     dS_DwR = 0.5;
     Ks_DnR = Ksi;
     dS_DnR = 0.5;
-%    StormIndex_last=LC_SimOUT_hyd{1,NlcS}(1);
+    %    StormIndex_last=LC_SimOUT_hyd{1,NlcS}(1);
     first_damaging_storm_DnR = 0; % logical indicating first storm has not been triggered yet
     first_damaging_storm_DwR = 0; % logical indicating first storm has not been triggered yet
     DwR = 0; %logical indicating damage with repairs is zero
@@ -282,250 +281,250 @@ for NlcS = 1:nLC
     for Ntime=1:nTimes_per_LC(NlcS)
         %% COMPUTE RESPONSE
 
-        if structure_type == 3 % Rubblemound
-            if DwR && first_damaging_storm_DwR % have damage and it is still the first damaging storm
-              % set coefficient Ks to Ksi (first storm damage) or Ksp (progressive damage)
-              % Note that there is one for "with_repairs" and one for "no_repairs"
-              stlen_Ks = LC_SimOUT_hyd{NlcS}(Ntime:end,3); % 0:73 or 0:96 repeated for 70ish storms except missing first Ntime values
-                      % Find Row Index Of 1st TimeStep of Storms In LC
-              stmindx = find(stlen_Ks==0);
-               % Find End Row Of present Storm
-              if isempty(stmindx)==0 % if true, then all storms but last storm
+        if DwR && first_damaging_storm_DwR % have damage and it is still the first damaging storm
+            % set coefficient Ks to Ksi (first storm damage) or Ksp (progressive damage)
+            % Note that there is one for "with_repairs" and one for "no_repairs"
+            stlen_Ks = LC_SimOUT_hyd{NlcS}(Ntime:end,3); % 0:73 or 0:96 repeated for 70ish storms except missing first Ntime values
+            % Find Row Index Of 1st TimeStep of Storms In LC
+            stmindx = find(stlen_Ks==0);
+            % Find End Row Of present Storm
+            if isempty(stmindx)==0 % if true, then all storms but last storm
                 stlen_Ks = Ntime+stmindx(1)-2; % all storms but last storm
-              else
-                stlen_Ks = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1; % last storm because no zeros
-              end
-              if Ntime<stlen_Ks(end)
-                  Ks_DwR = Ksi;
-                  dS_DwR = 0.5;
-                  first_damaging_storm_DwR = 1; % logical indicating first storm has not been triggered yet
-              else
-                  Ks_DwR = Ksp;
-                  dS_DwR = 0;
-                  first_damaging_storm_DwR = 0;
-              end
-            elseif DwR 
-               Ks_DwR = Ksp;
-               dS_DwR = 0;
-            else 
-               Ks_DwR = Ksi;
-               dS_DwR = 0.5;
-            end % DwR && 
-
-            if DnR && first_damaging_storm_DnR % have damage and it is still the first damaging storm
-              % set coefficient Ks to Ksi (first storm damage) or Ksp (progressive damage)
-              % Note that there is one for "with_repairs" and one for "no_repairs"
-              stlen_Ks = LC_SimOUT_hyd{NlcS}(Ntime:end,3); % 0:73 or 0:96 repeated for 70ish storms except missing first Ntime values
-                      % Find Row Index Of 1st TimeStep of Storms In LC
-              stmindx = find(stlen_Ks==0);
-               % Find End Row Of present Storm
-              if isempty(stmindx)==0 % if true, then all storms but last storm
-                stlen_Ks = Ntime+stmindx(1)-2; % all storms but last storm
-              else
-                stlen_Ks = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1; % last storm because no zeros
-              end
-              if Ntime<stlen_Ks(end)
-                  Ks_DnR = Ksi;
-                  dS_DnR = 0.5;
-                  first_damaging_storm_DnR = 1; % logical indicating first storm has not been triggered yet
-              else
-                  Ks_DnR = Ksp;
-                  dS_DnR = 0;
-                  first_damaging_storm_DnR = 0;
-              end
-            elseif DnR 
-               Ks_DnR = Ksp;
-               dS_DnR = 0;
             else
-               Ks_DnR = Ksi;
-               dS_DnR = 0.5;
-            end %if DnR &&
+                stlen_Ks = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1; % last storm because no zeros
+            end
+            if Ntime<stlen_Ks(end)
+                Ks_DwR = Ksi;
+                dS_DwR = 0.5;
+                first_damaging_storm_DwR = 1; % logical indicating first storm has not been triggered yet
+            else
+                Ks_DwR = Ksp;
+                dS_DwR = 0;
+                first_damaging_storm_DwR = 0;
+            end
+        elseif DwR
+            Ks_DwR = Ksp;
+            dS_DwR = 0;
+        else
+            Ks_DwR = Ksi;
+            dS_DwR = 0.5;
+        end % DwR &&
 
-            %% SEASIDE STABILITY WITH REPAIRS ANALYSIS
-            if Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
-                %% Determine Remaning Timesteps (After Breach) Of LC Storm Being Evaluated
-                if stlen(1) == 0 %exist('stlen','var')==0
-                    % Get Remaining TimeSteps In LC
-                    stlen = LC_SimOUT_hyd{NlcS}(Ntime:end,3); 
-                    % Find Row Index Of 1st TimeStep of Storms In LC
-                    stdummy = find(stlen==0); % find indexes of all initial storm values
-                    % Find End Row Of Breaching Storm
-                    if isempty(stdummy)==0
-                        stlen = Ntime+stdummy(1)-2; % last storm
-                    else
-                        stlen = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1; % all storms but last storm
-                    end
-                    % Store Row Index Where Breaching Occoured
-                    Seaside_Repair_Indexes(NlcS).LCNUM = [Seaside_Repair_Indexes(NlcS).LCNUM;Ntime-1];
-                end
+        if DnR && first_damaging_storm_DnR % have damage and it is still the first damaging storm
+            % set coefficient Ks to Ksi (first storm damage) or Ksp (progressive damage)
+            % Note that there is one for "with_repairs" and one for "no_repairs"
+            stlen_Ks = LC_SimOUT_hyd{NlcS}(Ntime:end,3); % 0:73 or 0:96 repeated for 70ish storms except missing first Ntime values
+            % Find Row Index Of 1st TimeStep of Storms In LC
+            stmindx = find(stlen_Ks==0);
+            % Find End Row Of present Storm
+            if isempty(stmindx)==0 % if true, then all storms but last storm
+                stlen_Ks = Ntime+stmindx(1)-2; % all storms but last storm
+            else
+                stlen_Ks = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1; % last storm because no zeros
+            end
+            if Ntime<stlen_Ks(end)
+                Ks_DnR = Ksi;
+                dS_DnR = 0.5;
+                first_damaging_storm_DnR = 1; % logical indicating first storm has not been triggered yet
+            else
+                Ks_DnR = Ksp;
+                dS_DnR = 0;
+                first_damaging_storm_DnR = 0;
+            end
+        elseif DnR
+            Ks_DnR = Ksp;
+            dS_DnR = 0;
+        else
+            Ks_DnR = Ksi;
+            dS_DnR = 0.5;
+        end %if DnR &&
 
-                %% Compute Damage Accumulation
-                % Compute Seaside Zero Damage S Value
-                if Hm0{NlcS}(Ntime)<0.1
-                    Szero_no_repairs{NlcS}(Ntime)=0;
+        %% SEASIDE STABILITY WITH REPAIRS ANALYSIS
+        if Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
+            %% Determine Remaning Timesteps (After Breach) Of LC Storm Being Evaluated
+            if stlen(1) == 0 %exist('stlen','var')==0
+                % Get Remaining TimeSteps In LC
+                stlen = LC_SimOUT_hyd{NlcS}(Ntime:end,3);
+                % Find Row Index Of 1st TimeStep of Storms In LC
+                stdummy = find(stlen==0); % find indexes of all initial storm values
+                % Find End Row Of Breaching Storm
+                if isempty(stdummy)==0
+                    stlen = Ntime+stdummy(1)-2; % last storm
                 else
-                    [Szero_no_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
-                        Ssea_no_repairs_last,seaside_slope,SDn,SG,...
-                        grav,cem_P,Nz{NlcS}(Ntime),Km1,Km2,Ks_DwR);
+                    stlen = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1; % all storms but last storm
                 end
+                % Store Row Index Where Breaching Occoured
+                Seaside_Repair_Indexes(NlcS).LCNUM = [Seaside_Repair_Indexes(NlcS).LCNUM;Ntime-1];
+            end
 
-                % Compute Incremental Seaside Damage
-                [Ssea_no_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope,SDn,SG,...
-                    grav,cem_P,Nz{NlcS}(Ntime),Szerolim,crest_elevation+cutoff_delta,...
-                    WL{NlcS}(Ntime),cutoff_switch,Km1,Km2,Ks_DwR,dS_DwR);
-                % Store Previous Seaside Damage Value
+            %% Compute Damage Accumulation
+            % Compute Seaside Zero Damage S Value
+            if Hm0{NlcS}(Ntime)<0.1
+                Szero_no_repairs{NlcS}(Ntime)=0;
+            else
+                [Szero_no_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
+                    Ssea_no_repairs_last,seaside_slope,SDn,SG,...
+                    grav,cem_P,Nz{NlcS}(Ntime),Km1,Km2,Ks_DwR);
+            end
 
-                if Ssea_with_repairs_last == 0 && Ssea_with_repairs{NlcS}(Ntime) > 0
-                   DwR  = 1; % have damage
-                   first_damaging_storm_DwR = 1; % logical indicating first storm has been triggered 
-                end
-                if Ssea_no_repairs_last == 0 && Ssea_no_repairs{NlcS}(Ntime) > 0
-                   DnR  = 1; % have damage
-                   first_damaging_storm_DnR = 1; % logical indicating first storm has been triggered 
-                end                
+            % Compute Incremental Seaside Damage
+            [Ssea_no_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
+                Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),crest_elevation,seaside_slope,SDn,SG,grav,...
+                cem_P,Nz{NlcS}(Ntime),Rc{NlcS}(Ntime),Szerolim,cutoff_delta,WL{NlcS}(Ntime),...
+                cutoff_switch,Km1,Km2,Ks_DnR,dS_DnR);
+            % Store Previous Seaside Damage Value
 
-                Ssea_no_repairs_last = Ssea_no_repairs{NlcS}(Ntime);
+            if Ssea_with_repairs_last == 0 && Ssea_with_repairs{NlcS}(Ntime) > 0
+                DwR  = 1; % have damage
+                first_damaging_storm_DwR = 1; % logical indicating first storm has been triggered
+            end
+            if Ssea_no_repairs_last == 0 && Ssea_no_repairs{NlcS}(Ntime) > 0
+                DnR  = 1; % have damage
+                first_damaging_storm_DnR = 1; % logical indicating first storm has been triggered
+            end
 
-                %% Seaside Damage With Repairs Assignment (NaN=Breaching -> Repair Period)
-                % Seaside Damage Trigger
-                Szero_with_repairs{NlcS}(Ntime) = NaN(1,1);
-                % Seaside Damage
-                Ssea_with_repairs{NlcS}(Ntime) = NaN(1,1);
+            Ssea_no_repairs_last = Ssea_no_repairs{NlcS}(Ntime);
 
-                %% Exit Breaching Analysis When Storm Ends
-                if Ntime==stlen(end)
-                    % Reset Seaside Damages
-                    Ssea_with_repairs_last = 0;
-                    stlen = 0;%clearvars('stlen');
-                end
-            else %Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
-                %% SEASIDE STABILITY WITHOUT REPAIRS ANALYSIS
-                %% Compute Damage Accumulation
-                % Compute Seaside Zero Damage S Value
-                if Hm0{NlcS}(Ntime)<0.1
-                    % Szero for With Repairs Analysis
-                    Szero_with_repairs{NlcS}(Ntime)=0;
-                    % Szero for No Repairs Analysis
-                    Szero_no_repairs{NlcS}(Ntime)=0;
+            %% Seaside Damage With Repairs Assignment (NaN=Breaching -> Repair Period)
+            % Seaside Damage Trigger
+            Szero_with_repairs{NlcS}(Ntime) = NaN(1,1);
+            % Seaside Damage
+            Ssea_with_repairs{NlcS}(Ntime) = NaN(1,1);
+
+            %% Exit Breaching Analysis When Storm Ends
+            if Ntime==stlen(end)
+                % Reset Seaside Damages
+                Ssea_with_repairs_last = 0;
+                stlen = 0;%clearvars('stlen');
+            end
+        else %Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
+            %% SEASIDE STABILITY WITHOUT REPAIRS ANALYSIS
+            %% Compute Damage Accumulation
+            % Compute Seaside Zero Damage S Value
+            if Hm0{NlcS}(Ntime)<0.1
+                % Szero for With Repairs Analysis
+                Szero_with_repairs{NlcS}(Ntime)=0;
+                % Szero for No Repairs Analysis
+                Szero_no_repairs{NlcS}(Ntime)=0;
+            else
+                % Szero for With Repairs Analysis
+                [Szero_with_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
+                    Ssea_with_repairs_last,seaside_slope,SDn,SG,...
+                    grav,cem_P,Nz{NlcS}(Ntime),Km1,Km2,Ks_DwR);
+                % Szero for No Repairs Analysis
+                [Szero_no_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
+                    Ssea_no_repairs_last,seaside_slope,SDn,SG,grav,...
+                    cem_P,Nz{NlcS}(Ntime),Km1,Km2,Ks_DnR);
+            end
+
+            % Seaside Damage With Repairs
+            [Ssea_with_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
+                Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),crest_elevation,seaside_slope,SDn,SG,grav,...
+                cem_P,Nz{NlcS}(Ntime),Rc{NlcS}(Ntime),Szerolim,cutoff_delta,WL{NlcS}(Ntime),...
+                cutoff_switch,Km1,Km2,Ks_DnR,dS_DnR);
+
+            % Seaside Damage Without Repairs
+            [Ssea_no_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
+                Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),crest_elevation,seaside_slope,SDn,SG,grav,...
+                cem_P,Nz{NlcS}(Ntime),Rc{NlcS}(Ntime),Szerolim,cutoff_delta,WL{NlcS}(Ntime),...
+                cutoff_switch,Km1,Km2,Ks_DnR,dS_DnR);
+
+
+
+
+            if Ssea_with_repairs_last == 0 && Ssea_with_repairs{NlcS}(Ntime) > 0
+                DwR  = 1; % have damage
+                first_damaging_storm_DwR = 1; % logical indicating first storm has been triggered
+            end
+            if Ssea_no_repairs_last == 0 && Ssea_no_repairs{NlcS}(Ntime) > 0
+                DnR  = 1; % have damage
+                first_damaging_storm_DnR = 1; % logical indicating first storm has been triggered
+            end
+
+            %% Store Damage Calculations For Next Iteration
+            % Seaside Damage With Repairs
+            Ssea_with_repairs_last = Ssea_with_repairs{NlcS}(Ntime);
+            % Seaside Damage Without Repairs
+            Ssea_no_repairs_last = Ssea_no_repairs{NlcS}(Ntime);
+        end %Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
+        %% LEESIDE STABILITY WITH REPAIRS ANALYSIS
+        if SLee_with_repairs_last>Slee_ULS && repair_switch == 1
+            %% Determine Remaning Timesteps (After Breach) Of LC Storm Being Evaluated
+            if Leestlen(1) == 0 %exist('Leestlen','var')==0
+                % Get Remaining TimeSteps In LC
+                Leestlen = LC_SimOUT_hyd{NlcS}(Ntime:end,3);
+                % Find Row Index Of 1st TimeStep of Storms In LC
+                Leestdummy = find(Leestlen==0);
+                % Find End Row Of Breaching Storm
+                if isempty(Leestdummy)==0
+                    Leestlen = Ntime+Leestdummy(1)-2; % -2 ensures we keep the breaching timestep responses
                 else
-                    % Szero for With Repairs Analysis
-                    [Szero_with_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
-                        Ssea_with_repairs_last,seaside_slope,SDn,SG,...
-                        grav,cem_P,Nz{NlcS}(Ntime),Km1,Km2,Ks_DwR);
-                    % Szero for No Repairs Analysis
-                    [Szero_no_repairs{NlcS}(Ntime)] = ZeroSeaDamFunc(Hm0{NlcS}(Ntime),h{NlcS}(Ntime),Tm{NlcS}(Ntime),...
-                        Ssea_no_repairs_last,seaside_slope,SDn,SG,grav,...
-                        cem_P,Nz{NlcS}(Ntime),Km1,Km2,Ks_DnR);
+                    Leestlen = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1;
                 end
+                % Store Row Index Where Breaching Occoured
+                Leeside_Repair_Indexes(NlcS).LCNUM = [Leeside_Repair_Indexes(NlcS).LCNUM;Ntime-1];
+            end
 
-                % Seaside Damage With Repairs
-                [Ssea_with_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_with_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_with_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope,SDn,SG,...
-                    grav,cem_P,Nz{NlcS}(Ntime),Szerolim,crest_elevation+cutoff_delta,...
-                    WL{NlcS}(Ntime),cutoff_switch,Km1,Km2,Ks_DwR,dS_DwR);
-                % Seaside Damage Without Repairs
-                [Ssea_no_repairs{NlcS}(Ntime)] = SeaDamFunc(Szero_no_repairs{NlcS}(Ntime),h{NlcS}(Ntime),Ssea_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tm{NlcS}(Ntime),seaside_slope,SDn,SG,grav,...
-                    cem_P,Nz{NlcS}(Ntime),Szerolim,crest_elevation+cutoff_delta,WL{NlcS}(Ntime),...
-                    cutoff_switch,Km1,Km2,Ks_DnR,dS_DnR);
+            %% Compute Damage Accumulation
+            % Compute Wave Runup
+            if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
+                z1p{NlcS}(Ntime)=0;
+            end
+            % Compute Incremental Leeside Damage
+            [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_no_repairs_last,...
+                Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
+                leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,gamma_f);
 
-                if Ssea_with_repairs_last == 0 && Ssea_with_repairs{NlcS}(Ntime) > 0
-                   DwR  = 1; % have damage
-                   first_damaging_storm_DwR = 1; % logical indicating first storm has been triggered 
-                end
-                if Ssea_no_repairs_last == 0 && Ssea_no_repairs{NlcS}(Ntime) > 0
-                   DnR  = 1; % have damage
-                   first_damaging_storm_DnR = 1; % logical indicating first storm has been triggered 
-                end
+            % Store Previous Leeside Damage Value (Incremental)
+            SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
+            u1p_last = u1p{NlcS}(Ntime);
 
-                %% Store Damage Calculations For Next Iteration
-                % Seaside Damage With Repairs
-                Ssea_with_repairs_last = Ssea_with_repairs{NlcS}(Ntime);
-                % Seaside Damage Without Repairs
-                Ssea_no_repairs_last = Ssea_no_repairs{NlcS}(Ntime);
-            end %Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
+            %% Leeside Damage Assignment (NaN=Breaching -> Repair Period)
+            % Leeside Damage
+            SLee_with_repairs{NlcS}(Ntime) = NaN(1,1);
 
-            %% LEESIDE STABILITY WITH REPAIRS ANALYSIS
-            if SLee_with_repairs_last>Slee_ULS && repair_switch == 1
-                %% Determine Remaning Timesteps (After Breach) Of LC Storm Being Evaluated
-                if Leestlen(1) == 0 %exist('Leestlen','var')==0
-                    % Get Remaining TimeSteps In LC
-                    Leestlen = LC_SimOUT_hyd{NlcS}(Ntime:end,3);
-                    % Find Row Index Of 1st TimeStep of Storms In LC
-                    Leestdummy = find(Leestlen==0);
-                    % Find End Row Of Breaching Storm
-                    if isempty(Leestdummy)==0
-                        Leestlen = Ntime+Leestdummy(1)-2; % -2 ensures we keep the breaching timestep responses
-                    else
-                        Leestlen = Ntime:Ntime+length(LC_SimOUT_hyd{NlcS}(Ntime:end,3))-1;
-                    end
-                    % Store Row Index Where Breaching Occoured
-                    Leeside_Repair_Indexes(NlcS).LCNUM = [Leeside_Repair_Indexes(NlcS).LCNUM;Ntime-1];
-                end
+            %% Exit Breaching Analysis When Storm Ends
+            if Ntime==Leestlen(end)
+                % Reset Leeside Damages
+                SLee_with_repairs_last = 0;
+                Leestlen(1) = 0; %clearvars('Leestlen');
+            end
 
-                %% Compute Damage Accumulation
-                % Compute Wave Runup
-                if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
-                    z1p{NlcS}(Ntime)=0;
-                end
-                % Compute Incremental Leeside Damage
-                [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
-                    leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2);
+        else %SLee_with_repairs_last>Slee_ULS && repair_switch == 1
+            %% LEESIDE STABILITY WITHOUT REPAIRS ANALYSIS
+            %% Compute Damage Accumulation
+            % Compute Wave Runup
+            if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
+                z1p{NlcS}(Ntime)=0;
+            end
+            % Leeside Damage With Repairs
+            [SLee_with_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_with_repairs_last,...
+                Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
+                leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,gamma_f);
+            % Leeside Damage Without Repairs
+            [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_no_repairs_last,...
+                Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
+                leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,gamma_f);
 
-                % Store Previous Leeside Damage Value (Incremental)
-                SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
-                u1p_last = u1p{NlcS}(Ntime);
+            %% Store Damage Calculations For Next Iteration
+            % Leeside Damage With Repairs
+            SLee_with_repairs_last = SLee_with_repairs{NlcS}(Ntime);
+            % Leeside Damage Without Repairs
+            SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
+        end %SLee_with_repairs_last>Slee_ULS && repair_switch == 1
+        %             disp(['LC: ' num2str(NlcS) ' , Timestep: ' num2str(Ntime) ' / ' num2str(nTimes_per_LC(NlcS))]);
 
-                %% Leeside Damage Assignment (NaN=Breaching -> Repair Period)
-                % Leeside Damage
-                SLee_with_repairs{NlcS}(Ntime) = NaN(1,1);
+        %% toe berm limit state
+        [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc{NlcS}(Ntime),armor_delta,SDn_lcbw);
+        %% Overtopping limit state
+        %             gammas = call_eurotop_ifactors(config, structure, WL{NlcS}(Ntime), Hm0{NlcS}(Ntime));
+        %             [~, ~, q{NlcS}(Ntime), ~, ~]=Eurotop_r2p_q_Final(Hm0{NlcS}(Ntime), Tp{NlcS}(Ntime), WL{NlcS}(Ntime), Rc{NlcS}(Ntime),...
+        %                berm_slope, gammas.gamma_f, gammas.gamma_beta_r2p, gammas.gamma_beta_q, gammas.gamma_star, gammas.gamma_v, gammas.gamma_b,...
+        %                wall_bottom_elev, berm_width, structure_type);
 
-                %% Exit Breaching Analysis When Storm Ends
-                if Ntime==Leestlen(end)
-                    % Reset Leeside Damages
-                    SLee_with_repairs_last = 0;
-                    Leestlen(1) = 0; %clearvars('Leestlen');
-                end
-
-            else %SLee_with_repairs_last>Slee_ULS && repair_switch == 1
-                %% LEESIDE STABILITY WITHOUT REPAIRS ANALYSIS
-                %% Compute Damage Accumulation
-                % Compute Wave Runup
-                if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
-                    z1p{NlcS}(Ntime)=0;
-                end
-                % Leeside Damage With Repairs
-                [SLee_with_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_with_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
-                    leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2);
-                % Leeside Damage Without Repairs
-                [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = LeeDamFunc_v2(u1p{NlcS}(Ntime),z1p{NlcS}(Ntime),SLee_no_repairs_last,...
-                    Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
-                    leeside_slope,Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2);
-
-                %% Store Damage Calculations For Next Iteration
-                % Leeside Damage With Repairs
-                SLee_with_repairs_last = SLee_with_repairs{NlcS}(Ntime);
-                % Leeside Damage Without Repairs
-                SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
-            end %SLee_with_repairs_last>Slee_ULS && repair_switch == 1
-            %             disp(['LC: ' num2str(NlcS) ' , Timestep: ' num2str(Ntime) ' / ' num2str(nTimes_per_LC(NlcS))]);
-
-            %% toe berm limit state
-%             [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc_LC{NlcS}(Ntime),armor_delta,SDn_lcbw);
-
-            %% Overtopping limit state
-%             gammas = call_eurotop_ifactors(config, structure, WL{NlcS}(Ntime), Hm0{NlcS}(Ntime));
-%             [~, ~, q{NlcS}(Ntime), ~, ~]=Eurotop_r2p_q_Final(Hm0{NlcS}(Ntime), Tp{NlcS}(Ntime), WL{NlcS}(Ntime), Rc{NlcS}(Ntime),...
-%                berm_slope, gammas.gamma_f, gammas.gamma_beta_r2p, gammas.gamma_beta_q, gammas.gamma_star, gammas.gamma_v, gammas.gamma_b,...
-%                wall_bottom_elev, berm_width, structure_type);
-
-        end %structure_type == 3 % Rubblemound
-    end  %Ntime_per_LC
+    end %Ntime_per_LC  %structure_type == 3 % Rubblemound
     fprintf(1,'\b\b\b\b%3.0f%%',(100*(NlcS/nLC)));
-end %nlcS
+end  % NLS
 disp([newline '      Computing Post Damage Statistics....']);
 %% STORE LAST COMPUTED DAMAGE FOR EACH LC
 % This will turn into a mean sigular value once percentiles are computed
@@ -536,15 +535,15 @@ LSmean = cell2mat(cellfun(@(x) x(end),SLee_no_repairs,'un',false));
 %% DIAGNOSTICS STRUCTURE
 diagnostics(1,:) = cellfun(@(a) table(WL{a},Hm0{a},...
     Tp{a},h{a},Nz{a},Rc{a},z1p{a},u1p{a},Szero_no_repairs{a},Ssea_no_repairs{a},Szero_with_repairs{a},...
-    Ssea_with_repairs{a}, SLee_no_repairs{a}, SLee_with_repairs{a}, 'VariableNames',...
+    Ssea_with_repairs{a}, SLee_no_repairs{a}, SLee_with_repairs{a}, LCBW_FS{a}', 'VariableNames',...
     {'WL','Hm0','Tp','h','Nz','Rc','z1p','u1p',...
     'Szero_no_repairs','Ssea_no_repairs','Szero_with_repairs','Ssea_with_repairs',...
-    'SLee_no_repairs','SLee_with_repairs'}),...
+    'SLee_no_repairs','SLee_with_repairs','LCBW_FS'}),...
     num2cell(1:nLC),'un',false)';
 
 %% COMPUTE MEAN DAMAGE CURVE
-[LSmax,LSPcurves] = compute_lcs_yearly_curve(LC_SimOUT_hyd, SLee_no_repairs, nYears);
-[Smax,SPcurves] = compute_lcs_yearly_curve(LC_SimOUT_hyd, Ssea_no_repairs, nYears);
+[LSmax,LSPcurves,~] = compute_lcs_yearly_curve(LC_SimOUT_hyd, SLee_no_repairs, nYears, 0);
+[Smax,SPcurves,~] = compute_lcs_yearly_curve(LC_SimOUT_hyd, Ssea_no_repairs, nYears, 0);
 
 % Fill values for year 0
 years = [0:length(Smax)]';
@@ -633,4 +632,3 @@ CSR_Timeseries_DPA.LSmax = LSmax;
 CSR_Timeseries_DPA.LSPcurves = LSPcurves;
 CSR_Timeseries_DPA.SPcurves = SPcurves;
 CSR_Timeseries_DPA.diagnostics = diagnostics;
-end
