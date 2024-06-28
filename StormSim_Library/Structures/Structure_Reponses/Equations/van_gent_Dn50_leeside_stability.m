@@ -27,7 +27,7 @@
 %
 %
 %============================================================
-function [Dn50_Lee] = van_gent_Dn50_leeside_stability(S_ls, Hsig, Tm10, Tm, Rc, crest_width, Sslp, Lslp, duration, delta, K_ls1, K_ls2)
+function [Dn50_Lee] = van_gent_Dn50_leeside_stability(S_ls, Hsig, Tm10, Tm, Rc, crest_width, Sslp, Lslp, duration, delta, K_ls1, K_ls2, gamma_f)
 
 %% VECTORIZE INPUTS
 data_dims = size(Hsig);
@@ -36,6 +36,7 @@ Tm10 = Tm10(:);
 Tm = Tm(:);
 Rc = Rc(:);
 Nz = duration./Tm;
+gamma_f = gamma_f(:);
 
 %% DEFINE CONSTANTS
 % Gravitational acceleration (m/s^2)
@@ -58,6 +59,13 @@ Dn50_Lee = a_ls .* aux1 .* aux2;
 % Remove Invalid Entries
 Dn50_Lee(z1p<abs(Rc)) = NaN;
 Dn50_Lee(u1p<=0) = NaN;
+% Equation Validity Range 
+% Dn50_Lee(Nz>=4000) = NaN;
+% Dn50_Lee(Rc./Hsig<0.3 | Rc./Hsig>6) = NaN; 
+% Dn50_Lee(crest_width./Hsig<1.3 | crest_width./Hsig>1.6) = NaN; 
+% Dn50_Lee(Hsig./(delta.*Dn50_Lee)<5.5 | Hsig./(delta.*Dn50_Lee)<8.5) = NaN; Stability Number
+% Dn50_Lee((z1p-Rc)./(gamma_f.*Hsig)<0 | (z1p-Rc)./(gamma_f.*Hsig)>1.4) = NaN; Relative Run-up
+
 % Reshape
 Dn50_Lee = reshape(Dn50_Lee, data_dims);
 end
