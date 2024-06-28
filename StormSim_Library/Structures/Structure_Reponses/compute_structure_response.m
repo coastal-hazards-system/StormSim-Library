@@ -42,7 +42,13 @@ switch struc_type
         calc_p2_p3 = 0;
         calc_Nappe = 0;
 end
-
+% Remove Responses Based On Workflow
+if workflow == 3
+    % Set Stone Size To Zero
+    calc_dn50_ss = 0;
+    calc_dn50_ls = 0;
+    calc_dn50_lcbw = 0;
+end
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Crest Elevation
@@ -51,12 +57,6 @@ crest_elev = structure.crest_elevation;
 crest_width = structure.crest_width;
 % Define Structure Toe Elevation (<0 below datum zero)
 toe_elev = structure.toe_elevation; % Flip convention
-% Define Low Crested Structure Crest Elevation
-if struc_type == 3
-    crest_elev_lcbw = structure.crest_elevation_lcbw;
-else
-    crest_elev_lcbw = 0;
-end
 % Berm Elevation (<0 Below Datum Zero)
 berm_elev = structure.berm_elevation; %
 % Berm Width
@@ -72,23 +72,17 @@ end
 % Leeside Slope
 slope_lee = structure.leeside_slope;
 % Rubblemound Fields
-if struc_type == 3
-    % Delta
-    delta = structure.armor_delta;
-    % Seaside Limit State
-    S = structure.seaside_design_S;
-    S_ls = structure.leeside_design_S;
-    % CEM P
-    P = structure.cem_P;
-    % Define Low Crested Structure Crest Elevation
-    crest_elev_lcbw = structure.crest_elevation_lcbw;
-elseif struc_type == 2
-    wall_bottom_elev = structure.wall_bottom_elevation;
-    % Define Low Crested Structure Crest Elevation
-    crest_elev_lcbw = 0;
-else
-    % Define Low Crested Structure Crest Elevation
-    crest_elev_lcbw = 0;
+switch struc_type
+    case 3
+        % Delta
+        delta = structure.armor_delta;
+        % Seaside Limit State
+        S = structure.seaside_design_S;
+        S_ls = structure.leeside_design_S;
+        % CEM P
+        P = structure.cem_P;
+    case  2
+        wall_bottom_elev = structure.wall_bottom_elevation;
 end
 % Water Density kg/m^3
 rho_w = structure.water_density;
@@ -105,7 +99,6 @@ switch workflow
             Tp = {project_forcing.(storm_type).Tp}; % Tp
             h = {project_forcing.(storm_type).SWL - toe_elev};
             Rc = {crest_elev - project_forcing.(storm_type).SWL};
-            Rc_LC = {crest_elev_lcbw - project_forcing.(storm_type).SWL}; % Low Crested Breakwater
             dflat = 1;
         else
             SWL = project_forcing.(storm_type).SWL; % SWL
@@ -113,7 +106,6 @@ switch workflow
             Tp = project_forcing.(storm_type).Tp; % Tp
             h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
             Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-            Rc_LC = cellfun(@(x) crest_elev_lcbw - x, SWL, 'un', false); % Low Crested Breakwater
             dflat = 3;
         end
     case 3 % LCS
@@ -128,7 +120,6 @@ switch workflow
         Tp = cellfun(@(x) x(:,swl_indx+2),{project_forcing.LCNUM},'un',false); % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-        Rc_LC = cellfun(@(x) crest_elev_lcbw - x, SWL, 'un', false); % Low Crested Breakwater
         dflat = 2;
 end
 
@@ -185,12 +176,18 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
             % Compute Zeroth Moment Spectral Wave Period
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false); % This should be removed
             % Compute Stone SIze Using S Limit State
-            if struc_type == 3
+            if struc_type == 3 || struc_type == 4
+
                 % Dn50 Seaside (Melby - Momentum Flux)
                 if calc_dn50_ss == 1
                     [Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
                         duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
                         Hm0, Tm, h, Rc,'un',false);
+                end
+                % Leeside
+                if calc_dn50_ls == 1
+                    [Dn50_Lee] = cellfun(@(a,b,c,d,e) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2, e.gamma_f),...
+                        Hm0, Tm10, Tm, Rc,gammas,'un',false);
                 end
                 % Dn50 Seaside Low Crested Breakwater
                 if calc_dn50_lcbw == 1
@@ -200,12 +197,7 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
                     However, for Midbay, we have both normal structure and low crested because toe berm is at MLLW. 
                     So we have both normal and LC (toe berm) stability computed in same sim.
                     %}
-                    [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc_LC,'un',false);
-                end
-                % Leeside
-                if calc_dn50_ls == 1
-                    [Dn50_Lee] = cellfun(@(a,b,c,d) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2),...
-                        Hm0, Tm10, Tm, Rc,'un',false);
+                    [Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc,'un',false);
                 end
             end
     end
@@ -223,7 +215,7 @@ switch dflat
             Resp.('R2p_SWL') = R2p_SWL{:}; % Run-up + SWL
         end
         if exist('q','var')
-%             Resp.('q_overflow') = q_overflow{:}; % Overtopping by overflow
+            %             Resp.('q_overflow') = q_overflow{:}; % Overtopping by overflow
             Resp.('q_wave_ot') = q_wave_ot{:}; % Overtopping By Waves
         end
         if exist('p1','var')
@@ -270,7 +262,7 @@ switch dflat
         end
         if exist('q','var')
             Resp.('q') = cell2struct(q,'LCNUM');
-%             Resp.('q_overflow') = cell2struct(q_overflow,'LCNUM');
+            %             Resp.('q_overflow') = cell2struct(q_overflow,'LCNUM');
             Resp.('q_wave_ot') = cell2struct(q_wave_ot,'LCNUM');
         end
         if exist('p1','var')
@@ -293,12 +285,12 @@ switch dflat
             Resp.('R2p_SWL') = cell2mat(cellfun(@(x) max(x,[],1),R2p_SWL,'un',false));
         end
         if exist('q_wave_ot','var')
-%             Resp.('q_overflow') = cell2mat(cellfun(@(x) max(x,[],1),q_overflow,'un',false));
+            %             Resp.('q_overflow') = cell2mat(cellfun(@(x) max(x,[],1),q_overflow,'un',false));
             Resp.('q_wave_ot') = cell2mat(cellfun(@(x) max(x,[],1),q_wave_ot,'un',false));
             Resp.('q') = cell2mat(cellfun(@(x) max(x,[],1),q,'un',false));
             if calc_q_vol == 1
                 Resp.('Q_vol') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q,'un',false));
-%                 Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
+                %                 Resp.('Q_vol_overflow') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_overflow,'un',false));
                 Resp.('Q_vol_wave_ot') = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),q_wave_ot,'un',false));
             end
         end
