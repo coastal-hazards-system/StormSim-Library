@@ -1,4 +1,4 @@
-                                                                                                                                                                                                   %{
+%{
 LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
     Engineer Research and Development Center Coastal and Hydraulics Laboratory
@@ -110,9 +110,10 @@ RELEVANT PUBLICATIONS:
 %}
 
 function[S] = SeaDamFunc(Szero,depth,SLast,...
-    Hsig,Tm,Sslp,SDn,SG,grav,P,Nz,Szerolim,cutoff,WL,cutoff_switch,km1,km2,Ks,dS)
-%% DEFINE DAMAGE PROGRESSION INCREMENT AND EMPIRICAL FACTOR
+    Hsig,Tm,crest_elevation,Sslp,SDn,SG,grav,P,Nz,Rc,Szerolim,cutoff,WL,cutoff_switch,km1,km2,Ks,dS)
 
+%% DEFINE DAMAGE PROGRESSION INCREMENT AND EMPIRICAL FACTOR
+Eq_range = Rc/SDn>=1 & Rc/SDn<=Inf;
 
 %% DAMAGE (S) COMPUTATION
 if ((Hsig~=0) && (depth>0) && (Szero > Szerolim))
@@ -127,40 +128,44 @@ if ((Hsig~=0) && (depth>0) && (Szero > Szerolim))
     sm = Hsig/Lm;
     % Determine Critical Wave Steepness Continous
     smc = Sslp^-3;
-    
+
     %% MOMENTUM FLUX COMPUTATIONS
     A0 = 0.639*(Hsig/h)^2.026;
     A1 = 0.180*(Hsig/h)^-0.391;
     Mf = A0*(h/grav/Tm^2)^-A1;
-    
+
     %% DETERMINE am RELATIONSHIP TO USE BASED ON WAVE STEEPNESS
     if sm>=smc
-      am = 1/(km1*P^0.18*sqrt(Sslp)); %plunging
+        am = 1/(km1*P^0.18*sqrt(Sslp)); %plunging
     else
-      am = 1/(5.0*P^0.18*Sslp^(0.5-P)*sm^(-P/3)); %surging
+        am = 1/(km2*P^0.18*Sslp^(0.5-P)*sm^(-P/3)); %surging
     end
-    
+
     % Hockey Stick Equation
     % am = (km1*P^0.18*sqrt(Sslp)*(0.9*exp(2.4*sm)+7*exp(-250*sm)))^-1;
-    
+
     %% COMPUTE Nm & Nze
     Nm = sqrt(Mf/(SG-1)) * h/SDn;
     Nze = (SLast/Ks/(am*Nm)^5)^2;
-    
+
     %% CUTOFF ANALYSIS FOR STRUCTURE SUBMERGENCE
-    if cutoff_switch == 0
-            % Compute Damage Accumulation
-            S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
-    else
-        if WL<=cutoff % (WL vs Crest Height + Cutoff Elevation Delta)
+    if Eq_range
+        % Verify Validity Range
+        if cutoff_switch == 0
             % Compute Damage Accumulation
             S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
         else
-            % If No New Damage Carry Previous Damage Level
-            S=SLast;
+            if  WL<=crest_elevation+cutoff % Boolean Checks For Equation Validity Range
+                % Compute Damage Accumulation
+                S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
+            else
+                % If No New Damage Carry Previous Damage Level
+                S=SLast;
+            end
         end
-    end     
-
+    else
+        S=SLast;
+    end
 else
     % If No New Damage Carry Previous Damage Level
     S= SLast;
