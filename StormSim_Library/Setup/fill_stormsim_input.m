@@ -2,7 +2,7 @@ function fout = fill_stormsim_input(ifile, outpath, fields_2_change, values_2_ch
 % Get Sotrage Folder
 [fpath, ~, ~] = fileparts(outpath);
 % Create Output Dir If Needed
-if ~exist(fpath, 'dir')
+if ~exist(fpath, 'dir') && ~isempty(fpath)
     mkdir(fpath);
 end
 % Copy Template
