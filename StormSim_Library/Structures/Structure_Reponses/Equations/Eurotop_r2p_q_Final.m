@@ -215,7 +215,7 @@ switch structure_type
         % 0.1 <= Seaward Slope < 2
         if ~isempty(indx2)
             % EurOtop Runup Eq 5.6
-            R2p_a = min([Hm0(indx2).*runup_coeff3./(1./slope(indx2)) + 1.6 , (3.*Hm0(indx2))],[],2,"omitnan");
+            R2p_a = min([Hm0(indx2).*runup_coeff3./(slope(indx2)) + 1.6 , (3.*Hm0(indx2))],[],2,"omitnan");
             R2p(indx2) = max([zeros(size(SWL(indx2))),max([R2p_a,(1.8.*Hm0(indx2))],[],2,"omitnan")],[],2,"omitnan");
             % EurOtop Overtopping eq 5.18- assumes only smooth slopes
             a_a = (0.09 - 0.01.*(2-(slope(indx2))).^2.1);
