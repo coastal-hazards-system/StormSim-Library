@@ -3,6 +3,8 @@ function gammas = call_eurotop_ifactors(config, structure, SWL, Hm0)
 strucType = config.struc_type;
 % Surface roughness coefficient
 gamma_f = config.roughness_ifactor;
+% Get Berm Logical Flag
+add_berm = config.add_berm;
 
 %% GRAB DETAILS FROM "structure"
 % Crest Elevation
@@ -34,5 +36,9 @@ gammas.gamma_f = surface_roughness_influence_factor(gamma_f, Hm0);
 % Oblique wave coefficients - Not implemented in StormSim as of 9/03/20
 [gammas.gamma_beta_r2p, gammas.gamma_beta_q] = oblique_waves_influence_factor(size(Hm0));
 % Berm Influence Factor (Not used)
-[gammas.gamma_b] = berm_influence_factor(berm_width, berm_elev, Hm0, SWL, berm_slope);
+if add_berm == 1
+    [gammas.gamma_b] = berm_influence_factor(berm_width, berm_elev, Hm0, SWL, berm_slope);
+else
+    gammas.gamma_b = ones(size(Hm0));
+end
 end
