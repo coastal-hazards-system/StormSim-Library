@@ -57,7 +57,7 @@ storm_sampling = config.storm_sampling;
 project_name = config.project_name;
 % Transect Id
 struc_id = config.struc_id;
-% Define Case  Name 
+% Define Case  Name
 case_name = config.case_name;
 % Define Save Name
 save_name = [config.outfolder filesep project_name filesep struc_id filesep case_name filesep project_name...
@@ -100,7 +100,7 @@ for ii = 1:length(vars_2_grab)
     switch eval(['class(config.' vars_2_grab{ii} ')'])
         case 'double'
             eval(['structure.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} ';']); % Mean
-%             eval(['structure.std.(''' vars_2_grab{ii} ''') = ''NA'';']); % Standard Deviation
+            %             eval(['structure.std.(''' vars_2_grab{ii} ''') = ''NA'';']); % Standard Deviation
         otherwise
             eval(['structure.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} '.mean;']); % Mean
             eval(['structure.std.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} '.std;']); % Standard Deviation
@@ -111,8 +111,8 @@ end
 
 % Show/Close Figure According To User
 if show_plot == 1
-% Create Figure
-fig = plot_structure_geometry(config, structure);
+    % Create Figure
+    fig = plot_structure_geometry(config, structure);
 end
 end
 
