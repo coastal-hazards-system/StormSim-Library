@@ -65,7 +65,7 @@ y_label = ['Elevation [',project_datum,', m]'];
 % Initialize Figure Handle
 fig = figure('Name','Structure_Cross-section','Visible','off','Units','Normalized');
 % Resize Figure
-fig.Position = [0.5,0.35,0.40,0.45];
+fig.Position = [0.5,0.35,0.40,0.70];
 % Initialize Figure Axes
 ax = gca;
 % Enable Hold Properties Option
@@ -90,7 +90,7 @@ crest_elevation = structure.('crest_elevation');
 % Define Crest Width
 crest_width = structure.('crest_width');
 switch structure_type
-    case 1 % Levee
+    case {1,3} % Levee
         % Define Seward Slope
         seaside_slope = 1/structure.('seaside_slope');
         % Define Landward Slope
@@ -100,38 +100,18 @@ switch structure_type
         % Point 1 - Seaside Toe
         ys(1) = toe;xs(1) = 0;
         % Point 2 - Toe to Seaside Crest Path
-        b = (-1/seaside_slope)*xs(1)+ys(1);% Y Intercept of line
-        ys(2) = crest_elevation;xs(2) = (ys(2) - b)*seaside_slope;
+        b = (-1.*seaside_slope)*xs(1)+ys(1);% Y Intercept of line
+        ys(2) = crest_elevation;xs(2) = (ys(2) - b).*(1./seaside_slope);
         % Point 3 - Crest Width
         ys(3) = ys(2);xs(3) = xs(2) + crest_width;
         % Point 4 - Leeside Toe
-        b = (1/leeside_slope)*xs(3)+ys(3);
-        ys(4) = ys(1);xs(4) = (ys(4) - b)*-leeside_slope;
+        b = (leeside_slope)*xs(3)+ys(3);
+        ys(4) = ys(1);xs(4) = (ys(4) - b)*-(1/leeside_slope);
         % Point 5
         xs(5) = xs(1);ys(5) = ys(1);
         % Horizontal Shift (Make Structure Centralized)
         xs = xs + 1;
     case 2 % Floodwalls
-        %%%%% Create Berm
-        % Define Berm Slope
-        berm_slope = structure.('berm_slope');
-        % Define Berm Elevation
-        berm_elev = structure.('berm_elevation');
-        % Define Berm Width
-        berm_width = structure.('berm_width');
-        % Initialize Shape Variables
-        xs_berm = zeros(1,4);ys_berm=xs_berm;
-        % Wall Toe
-        xs_berm(1) = 0;ys_berm(1) = toe;
-        % Point 2 - Toe to Seaside Crest Path
-        b = (-1/berm_slope)*xs_berm(1)+ys_berm(1);
-        % Y Intercept of line
-        ys_berm(2) = berm_elev;xs_berm(2) = (ys_berm(2) - b)*berm_slope;
-        % Point 3 - Crest Width
-        ys_berm(3) = ys_berm(2);xs_berm(3) = xs_berm(2) + berm_width;
-        % Wall Width (Width Is Visual Only)
-        xs_berm(4) = xs_berm(3) + 0.25+0.5;ys_berm(4) = ys_berm(3);
-        xs_berm(5) = xs_berm(4);ys_berm(5) = ys_berm(1);
         %%% Create Floodwall
         % Define Wall Bottom Elevation
         wall_bottom = structure.('wall_bottom_elevation');
@@ -147,52 +127,25 @@ switch structure_type
         xs(4) = xs(3);ys(4) = ys(1);
         % Close Polyshape
         xs(5) = xs(1);ys(5) = ys(1);
-    case 3 % Rubblemound
-        % Define Seward Slope
-        seaside_slope = 1/structure.('seaside_slope');
-        % Define Landward Slope
-        leeside_slope = 1/structure.('leeside_slope');
-        % Initialize Shape Variables
-        xs = zeros(1,5);ys=xs;
-        % Point 1 - Seaside Toe
-        ys(1) = toe;xs(1) = 0;
-        % Point 2 - Toe to Seaside Crest Path
-        b = (-1/seaside_slope)*xs(1)+ys(1);% Y Intercept of line
-        ys(2) = crest_elevation;xs(2) = (ys(2) - b)*seaside_slope;
-        % Point 3 - Crest Width
-        ys(3) = ys(2);xs(3) = xs(2) + crest_width;
-        % Point 4 - Leeside Toe
-        b = (1/leeside_slope)*xs(3)+ys(3);
-        ys(4) = ys(1);xs(4) = (ys(4) - b)*-leeside_slope;
-        % Point 5
-        xs(5) = xs(1);ys(5) = ys(1);
 end
 
 %% FORMAT AXIS LIMITS AND PLOT GEOMETRIES
 % Define Axis Limits
 if structure_type~=2
     % Horizontal Shift (Make Structure Centralized)
-    xs = xs + 4;
+    xs = xs + 1;
     % Define Limits
     ax.XLim = [0 max(xs)+1];
 else
-    xs_berm = xs_berm + 1;
     xs = xs + 1;
-    ax.XLim = [0 max([xs;xs_berm],[],'all')];
-    % Create Berm Geo
-    berm_geo = polyshape(xs_berm,ys_berm);
-    % Plot Structure
-    plot(ax,berm_geo,'FaceColor',[0.65,0.65,0.65],'FaceAlpha',1);
+    ax.XLim = [0 xs];
 end
+axis equal;
 ax.YLim = [toe-0.5 max(ys)+0.5];
 % Create Structure Polyshape
 struc_geo = polyshape(xs,ys);
-% Create "Sand" Polyshape
-sand_geo = polyshape([ax.XLim(1) ax.XLim(1) ax.XLim(2)+4 ax.XLim(2)+4],[toe-6 toe toe toe-6]);
 % Plot Structure
 plot(ax,struc_geo,'FaceColor',[0.65,0.65,0.65],'FaceAlpha',1);
-% Plot Sand
-plot(ax,sand_geo,'FaceColor',[0.9 0.72 0.31],'FaceAlpha',1);
 
 %% EXPORT FIGURE
 saveas(fig, fullfile(outfolder, project_name, structure_id, case_name, [project_name '_' structure_id '_' case_name '_structure_cross_section.png']));
