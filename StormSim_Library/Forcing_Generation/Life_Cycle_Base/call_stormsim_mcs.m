@@ -81,10 +81,16 @@ simulation_years = config.mcs_nYears;
 wlp_switch = config.create_wlp;
 % Create Wave Height Priority Switch
 whp_switch = config.create_whp;
-% Define Number Of Extratropical Storms In Data
-XC_Nstm = config.Nstm_XC;
-% Define Number of Years IN Extratropical Data
-XC_Nyrs = config.Nyrs_XC;
+switch storm_sampling
+    case 'TC'
+        XC_Nstm = [];
+        XC_Nyrs = [];
+    otherwise
+        % Define Number Of Extratropical Storms In Data
+        XC_Nstm = config.Nstm_XC;
+        % Define Number of Years IN Extratropical Data
+        XC_Nyrs = config.Nyrs_XC;
+end
 % Define MCS Sample Method
 sample_method = config.mcs_sampling_mode;
 
