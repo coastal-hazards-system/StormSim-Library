@@ -20,12 +20,11 @@ for ii = 1:length(stypes)
                 tsData = storm.(stypes{ii}).('Timeseries'){rowID, 2};
                 % Find Nearest Data Point To Peaks Timestamp
                 [~, tsIndx] = max(tsData(:,jj));
-                % Replace Timeseries Timestep If Within 1 hr
                 % Replace Timestep With Value In Peaks File
                 tsData(tsIndx,jj) = dPeaks(kk, jj-1);
                 % Assign Back Adjusted Dataset
                 storm.(stypes{ii}).('Timeseries')(rowID,2) = {tsData};
-                                            %
+                % Proxy Data is For Debbuging Purposes
                 proxy_data.(stypes{ii})(kk, jj-1) = tsData(tsIndx,jj);
             end
         end

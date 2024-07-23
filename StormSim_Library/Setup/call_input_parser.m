@@ -16,7 +16,6 @@ function [config, structure] = call_input_parser(input_filename)
     Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
 
-
 %% GRAB AND DEFINE INPUTS
 % Define Symbol Column Header (Serves As Anchor Points For Searches)
 str_ref = 'Model Variable Symbol';
@@ -63,11 +62,10 @@ struc_id = config.struc_id;
 case_name = config.case_name;
 % Make Temp Path Empty
 config.temp_path = '';
-% Overwrite Bias & Uncertainty WIth Loadeed
-if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file')
+% Overwrite Bias & Uncertainty With Loaded Data
+if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file') 
     % Load Config
-    config_load = load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
-    config_load = config_load.config;
+    config_load = dload([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
     % Add Values
     if strcmp(config.chs_bias_file,config_load.chs_bias_file) % Same Bias File
         try
@@ -234,14 +232,16 @@ switch find(cell2mat(cellfun(@(x) contains(fext,x),{'.zip','.mat'},'un',false)) 
         end
 end
 
-%% Check If This Is Fresh Run Or New Case
+%% CHECK IF STORMSIM PROCESSED SAVEPOINT DATA EXIST FOR CURRENT proj_name, struc_id, case_name
 % Look For File
-dummy = dir(file2look);
+dummy = dir(file2look); % Search For Expected StormSim Naming Convention On Project Folder 
 % Remove Raw Files Mat
-dummy = dummy(~contains({dummy.name},{'raw_files'}));
+dummy = dummy(~contains({dummy.name},{'raw_files'})); % Only Interested Processed Dataset
+% If File Is Found Prompt User And Grab Needed Metadata
 if ~isempty(dummy) % New Case Run
     % Build File Path
     file2look = fullfile(dummy.folder,dummy.name);
+    % Prompt 
     disp(['Project forcing detected. Creating new case for ' project_name ': ' struc_id '....'])
     % Load Storm File
     load(file2look,'storm');
@@ -252,40 +252,42 @@ if ~isempty(dummy) % New Case Run
         config.Nstm_XC = storm.('XC').('Nstm_XC');
     end
 else
-    file2look = [];
+    file2look = []; % This is used to determine if welcome message should be printed
 end
 
-%% FAILSAFES
+%% FAILSAFES 
 % WLP, WHP Require Peaks & Timeseries Files
 if sum([config.use_peaks,config.use_timeseries])~=2
     % Set WLP, WHP To Off
     config.create_wlp = 0;
     config.create_whp = 0;
 end
-
 % Uncertainty Engine Field Initialization
 config.u_engine = 0;
 % Forcing Adjustments Field Initialization
 config.f_adjust = 0;
-%
+% Make Sure Confidence Limits Are In The Expected Format 
 try
+    % Split Sring
     dummy = strsplit(config.project_CLs,{' ','[',']'});
     dummy = dummy(2:end-1);
+    % Sort CLs 
     dummy = sort(cellfun(@str2double, dummy), "ascend");
+    % Store Back On Config
     config.project_CLs = ['[',strtrim(sprintf('%d ', dummy)),']'];
-catch
+catch % In Case Of Unexpected Format , Default To
     config.project_CLs = '[16 84]';
 end
-% Hardcoded Flag Until Further Dev
+% Deprecated Or Hidden Features 
 config.slope_type = 0; % Idealized Slope
 config.mcs_sampling_mode = 1; % Porbabilistic
 config.pros_use_aep = 0; % AEF
 config.use_waves_swl = 0; % Use ADCIRC SWL 
 config.structure_dir = 0; % Assume Shore Normal Waves
-config.chs_wDir_u_a = 0; % ASsume Shore Normal Waves
+config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented
 % Check For Berm 
-if config.add_berm == 0
+if config.add_berm == 0 % If No Berm Ensure Fields Are Set To 0
     config.berm_elevation = 0;
     config.berm_slope = 0;
     config.berm_width = 0;

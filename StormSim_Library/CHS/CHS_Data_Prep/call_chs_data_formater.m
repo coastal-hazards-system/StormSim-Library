@@ -113,17 +113,18 @@ case_name = config.case_name;
 pm_path = config.prob_mass_source;
 % Grab Temp Folder For Simulation
 temp_path = config.temp_path;
-% Grid File 
+% Grid File
 grid_file = config.chs_grid_file_source;
 
-%% Check If This Is Fresh Run Or New Case
+%% CHECK IF PROCESSED SAVEPOINT DATA EXIST FOR TRANSECT (struc_id)
+% --------- Search and Load For Expected StormSim Simulation Files In  ------------
 % Define Filename Prefix Based On Data Source
 if ~isempty(sp_ID)
     file2look = [name_prefix '_SP*']; % CHS/CSTORM Related Data
 else
     file2look = [name_prefix '*']; % External Model
 end
-% Scan Project Directory For Checkpoints
+% Scan Project Transect Directory For Processing Checkpoints
 h5_list = dir(file2look);
 % Grab "storm" Filename
 storm_data_filename = h5_list(~contains({h5_list.name},{'raw_files'}));
@@ -137,7 +138,7 @@ if ~isempty(storm_data_filename) % New Case Run
     % Load Storm File
     load(file2look, 'storm', 'prob_mass');
     load(file2look_2, 'CHS_Data');
-    % Verify Contents And Requested Config (chk needs to be 1 after all checks)
+    % --------- Verify If "storm" Contents Meet "config" Request ----------
     % Check Storm Sampling
     storm_level_1 = fieldnames(storm);
     % Check Timeseries & Peaks
@@ -162,6 +163,7 @@ if ~isempty(storm_data_filename) % New Case Run
             storm_level_3 = fieldnames(storm.(storm_level_1{1}).('Peaks'));
             % Verify WLP
             if create_wlp == 1
+                % Check If WLP Peaks Dataset Exist In storm
                 chk4 = contains('WLP',storm_level_3);
                 % If WLP dDoes Not Exist
                 if ~chk4
@@ -171,6 +173,7 @@ if ~isempty(storm_data_filename) % New Case Run
             end
             % Verify WHP
             if create_whp == 1
+                % Check If WHP Peaks Dataset Exist In storm
                 chk5 = contains('WHP',storm_level_3);
                 % If WHP dDoes Not Exist
                 if ~chk5
@@ -199,6 +202,7 @@ if ~isempty(storm_data_filename) % New Case Run
         % Set file2look To Empty
         file2look = [];
     end
+    % --------- Verify If "CHS_Data" Contents Meet "config" Request ----------
     % Verify Minimum File Requirement For CHS_Data
     if exist('CHS_Data','var')
         [min_file_req, ~, ~] = minimum_file_requirement_check(chs_files_2_convert_paths, chs_files_2_convert,....
@@ -208,11 +212,12 @@ if ~isempty(storm_data_filename) % New Case Run
             file2look = [];
         end
     end
-    if isempty(file2look)
-        % Display MEssage To User
+    % --------- Verify If Loaded Data Passed All Test ----------------
+    if isempty(file2look) % Loaded data failed compliance, need to do cold start
+        % Display Message To User
         disp(['Project forcing does not have neccesary dependencies. Restarting import process....']);
-    else
-        % Clean-up Fields If Needed
+    else % All Test Passed, Parse needed data.
+        % --------------- Clean-up Fields If Needed -------------------
         % Storm Type
         switch storm_sampling
             case 'TC'
@@ -248,13 +253,14 @@ if ~isempty(storm_data_filename) % New Case Run
             end
         end
     end
-else
-    file2look = [];
+else % StormSim Processing Checkpoint Files Not Found
+    % Set Processing Flag to Empty.
+    file2look = [];% Empty -> Triggers h5 conversion and QA/QC Process
 end
 
-%% CONVERT AND PROCESS CHS_Data
+%% VERIFY IF "file2look" IS EMPTY (STORMSIM COLDSTART)
 % Execute Pre-Processing If Needed
-if isempty(file2look) % Process SP Data
+if isempty(file2look) % Empty file2look means StormSim needs to create and process storm datasets.
     % Determine Minimum File Requirement For config
     [min_file_req, chs_files_2_convert,...
         chs_files_2_convert_paths] = minimum_file_requirement_check(chs_files_2_convert_paths, chs_files_2_convert,....
@@ -389,12 +395,14 @@ if isempty(file2look) % Process SP Data
         % Export Project Forcing
         save([name_prefix '.mat'], 'storm', 'prob_mass');
     end
-
+    % Append Storm Data Dependent Fields To Configuration File
     save(fullfile(config.outfolder, project_name, struc_id, case_name,[ project_name '_' struc_id '_' config.case_name '_config_file.mat']),...
         'config', '-append');
-else
+
+else % StormSim Processing Checkpoint Met Requirements. Use Loaded Data
+    %% STORMSIM COLDSTART HOTSTART
     if contains(storm_sampling, {'XC', 'CC'})
-        % Add Fields To Storm
+        % Add Fields To StormSim Config To Ensure Following Steps Work
         config.Nyrs_XC = storm.('XC').Nyrs_XC;
         config.Nstm_XC = storm.('XC').Nstm_XC;
     end

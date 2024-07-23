@@ -36,7 +36,6 @@ workflow = config.workflow;
 % Get Structure Type
 struc_type = config.struc_type;
 
-
 %% VOID SWITCHES WHEN NEEDED
 % Safeguard For Unssuported Responses For Each Structure Type
 switch struc_type
@@ -88,22 +87,18 @@ if run_flag == 1
                 '***                          Version 1.0.0                           ***' newline...
                 '***                        FOR  TESTING  ONLY                        ***' newline...
                 '************************************************************************'];
-        otherwise
-
     end
-
     % Display Welcome Banner
     disp(welcome_message);
 
-    %% LOAD ENRINMENT ACCORDING TO WORKFLOW
+    %% LOAD ENVRONMENT ACCORDING TO WORKFLOW
     % Determine Environment To Load
     switch workflow
         case {2,4}
             config.pros_compute_forcing_HC = 1;
     end
-    % StormSim Workflow
     % Check For TC Probabilities Dependencies
-    chk2 = exist(PM_path);
+    chk2 = exist(PM_path,'dir') | exist(PM_path,'file');
     % Verify Results
     if chk2 ~= 0
         disp('CHS tropical cylcones probability masses found...');
@@ -114,19 +109,12 @@ if run_flag == 1
         % Update Config
         config.storm_sampling = 'XC';
     end
-    % Check For norm_444.mat
-    %     chk3 = exist(['MCSim_Inputs' filesep 'norm_444.mat'],'file')==2;
-    % Verify Results
-    %     if chk3
-    %         disp('  Discretized normal curve found...');
-    %     else
-    %         disp('  Discretized normal curve not found...');
-    %     end
-
 end
-    % Create Strucutre Variable
+
+%% INITIALIZE GEOMETRY
+    % Create Structure Variable
     [structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot
-    % Save Out Configuration File
+    % Save Out Configuration & Structure File
     save(fullfile(outDir, [project_name '_' struc_id '_' case_name '_config_file.mat']),...
         'config','structure');
 end

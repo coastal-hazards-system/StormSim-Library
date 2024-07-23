@@ -49,19 +49,6 @@ function [structure] = create_structure_geometry(config, show_plot)
 %}
 % Structure Type
 struc_type = config.struc_type;
-% Workflow To Call
-workflow = config.workflow;
-% Storm Sampling Scheme
-storm_sampling = config.storm_sampling;
-% Project Name
-project_name = config.project_name;
-% Transect Id
-struc_id = config.struc_id;
-% Define Case  Name
-case_name = config.case_name;
-% Define Save Name
-save_name = [config.outfolder filesep project_name filesep struc_id filesep case_name filesep project_name...
-    '_' struc_id '_' case_name '_config_file.mat'];
 
 %% DEFINE VARIBALES TO GRAB FROM CONFIG PER STRUCTURE TYPE & WORKFLOW
 % Evaluate Case Per Structure Type
@@ -96,23 +83,19 @@ end
 disp(['Creating ',s_type,' geometry....']);
 % Loop Through All Variables
 for ii = 1:length(vars_2_grab)
-    % Extract Data
-    switch eval(['class(config.' vars_2_grab{ii} ')'])
-        case 'double'
-            eval(['structure.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} ';']); % Mean
-            %             eval(['structure.std.(''' vars_2_grab{ii} ''') = ''NA'';']); % Standard Deviation
-        otherwise
-            eval(['structure.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} '.mean;']); % Mean
-            eval(['structure.std.(''' vars_2_grab{ii} ''') = config.' vars_2_grab{ii} '.std;']); % Standard Deviation
-    end
+    % Extract Data And Store On Structure Variable
+    structure.(vars_2_grab{ii}) = config.(vars_2_grab{ii});
 end
 
 %% CREATE CROSS_SECTION PLOT
-
 % Show/Close Figure According To User
 if show_plot == 1
     % Create Figure
     fig = plot_structure_geometry(config, structure);
+    fig.Visible = 'On';
+else
+    fig = plot_structure_geometry(config, structure);
+    close(fig);
 end
 end
 
