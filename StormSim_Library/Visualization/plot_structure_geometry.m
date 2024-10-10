@@ -53,7 +53,7 @@ outfolder = config.outfolder;
 % Figure Title
 fig_title = {['StormSim Project: ',project_name,' | Transect ID: ',structure_id,''];'Structure Cross-section'};
 % Title Font
-font_title = 20;
+font_title = 16;
 % Axis Title
 font_axes = font_title - 3;
 % X Axes Label
@@ -65,7 +65,7 @@ y_label = ['Elevation [',project_datum,', m]'];
 % Initialize Figure Handle
 fig = figure('Name','Structure_Cross-section','Visible','off','Units','Normalized');
 % Resize Figure
-fig.Position = [0.5,0.35,0.40,0.70];
+fig.Position = [0.5,0.1,0.40,0.70];
 % Initialize Figure Axes
 ax = gca;
 % Enable Hold Properties Option
@@ -140,7 +140,7 @@ else
     xs = xs + 1;
     ax.XLim = [0 xs];
 end
-axis equal;
+% axis equal;
 ax.YLim = [toe-0.5 max(ys)+0.5];
 % Create Structure Polyshape
 struc_geo = polyshape(xs,ys);
