@@ -633,4 +633,6 @@ CSR_Timeseries_DPA.LSPcurves = LSPcurves;
 CSR_Timeseries_DPA.SPcurves = SPcurves;
 % Low Crested Breakwater Stability Number
 CSR_Timeseries_DPA.LCBW_FS = LCBW_FS;
+% Add Diagnostics Variable 
+CSR_Timeseries_DPA.diagnostics = diagnostics;
 
