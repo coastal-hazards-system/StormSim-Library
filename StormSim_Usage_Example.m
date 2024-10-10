@@ -3,8 +3,8 @@ addpath(genpath('StormSim_Library'));
 % diary 'Log.txt';
 %% USER INPUTS
 %{
-MCS/CSR Requires:
-    MCSim_Inputs -> TC Storm Probability Masses 
+CHS Grid File 
+CHS Bias And Uncertainty 
 %}
 % Define StormSim Input File Name
 stormsim_input_file = 'StormSim_Inputs.xlsx'; % Include relative path if not in parent directory
@@ -88,15 +88,15 @@ t2 = toc(t2);
 %{
  Description:
    Once input storm data has been formated the next step is to generate the
-   project forcing. There are three options to choose here: 1 - Response
-   Base (RB1 & RB3, StormSim: PROS), 2 - MCS (LCS, StormSim: MCS) , 3 - MCS/CSR
-   (LCS, StormSim: MCS/CSR. The key difference being a response base
-   approach or doing a life cycle simulation (LCS) using
-   peaks and timeseries. Option 3 computes structure response (S, R2p, q) after
-   performing MCS storm sampling. Forcing generation options can be changed
-   in input file by changing row with "workflow" as Model Variable
-   Symbol.
-
+   project forcing. In this step the input storm data will be transformed (reshaped)
+   according to the user specfiied workflow. StormSim provides users with 2 Response Base
+   methods: StormSim: PROS (Design) & StormSim:LCS (Performance). Additionally, there is a
+   Frequency Base method (StormSim: PROS-FB) that leverages StormSim: PROS to compute storm
+   forcing (SWL, Hm0, Tp) hazard curves and computes structure responses as
+   f(hazards). Workflow ID specification on config file are:
+        1 -> StormSim: Probabilistic Response Of Structures (PROS)
+        3-> StorSim: Life Cycle Simulation (LCS) & Coastal Structure Reliability (LCS-CSR)
+        4-> StormSim: PROS-Frequency Base (PROS-FB)
 Inputs:
    Vars:
     1. config
@@ -115,7 +115,7 @@ Outputs:
     suffix " _project_forcing"
   
   Vars:
-    1. project_forcing: Contains project forcing data. | 1 x 1 | structure, with nFields 
+    1. project_forcing: Contains reshaped storm data. | 1 x 1 | structure, with nFields 
 
     First Level:
     Size (# of LC's, 1) -> (Rows,Col)
@@ -150,7 +150,7 @@ t3 = tic;
 [project_forcing] = call_project_forcing_formater(config, storm, prob_mass);
 t3 = toc(t3);
 
-%% STEP 4: APPLY UNCERTAINTY TO PROJECT STRUCTURE AND FORCING PER WORKFLOW
+%% STEP 4: APPLY UNCERTAINTY TO PROJECT FORCING
 t4 = tic;
 [project_forcing, config] = call_uncertainty_engine(config, project_forcing);
 t4 = toc(t4);
