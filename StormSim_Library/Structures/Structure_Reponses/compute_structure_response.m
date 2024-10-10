@@ -12,15 +12,15 @@ compute_HC = config.pros_compute_forcing_HC;
 % Define Requested Workflow
 workflow = config.workflow;
 % Grab Structure Response Switches
-calc_dn50_ss = config.pros_dn50_seaside;
-calc_dn50_ls = config.pros_dn50_leeside;
-calc_dn50_lcbw = config.pros_dn50_lcbw;
-calc_r2p = config.pros_r2p;
-calc_q = config.pros_q;
-calc_q_vol = config.pros_q_vol;
-calc_p1 = config.pros_p1;
-calc_p2_p3 = config.pros_p2_p3;
-calc_Nappe = config.pros_nappe;
+calc_dn50_ss = config.compute_dn50_seaside;
+calc_dn50_ls = config.compute_dn50_leeside;
+calc_dn50_lcbw = config.compute_dn50_lcbw;
+calc_r2p = config.compute_r2p;
+calc_q = config.compute_q;
+calc_q_vol = config.compute_q_vol;
+calc_p1 = config.compute_p1;
+calc_p2_p3 = config.compute_p2_p3;
+calc_Nappe = config.compute_nappe;
 % No Structural Response Computed
 no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_q_vol,calc_p1,calc_p2_p3,calc_Nappe]);
 % Remove Responses Based On Structure Type
