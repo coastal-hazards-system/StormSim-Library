@@ -158,10 +158,11 @@ breaker_m10 = (1./slope)./sqrt(s_m10);    % Breaker parameter
 % Initialize Variables
 q_overflow = zeros(size(Rc));
 Rc_corrt = zeros(size(Rc));
-% Compute Overflow When Strcuture Is Submerged
+% Compute Overflow When Strucuture Is Submerged
 q_overflow(Rc<0) = 0.54 * sqrt(g*abs(Rc(Rc<0)).^3);% EurOtop Eq 5.20
 %
 Rc_corrt(Rc>=0) = Rc(Rc>=0);
+% Make sanity check of what's being computed wwith the effective slope
 
 %% Runup and overtopping loop
 % Initialize Variables
@@ -182,9 +183,12 @@ switch structure_type
         % Set Invalid Slope Values To NaNs
 %         R2p(slope<0.1) = NaN;
 %         q_wave_ot(slope<0.1) = NaN;
-        % Find Partioning Index
-        indx1 = find(slope >= 2); % Gentle Slopes
-        indx2 = find(slope < 2 & slope >= 0.1); % Very Steep Slopes
+        % Find Partioning Index (cot(a))
+        indx1 = find(slope >= 2 & slope <= 9.99); % Gentle Slopes
+        % 1:10 is outside the range of validity for the Eurotop Equations 
+        % Removed >= 0.1 because we don't want to compute q_wave or R2
+        indx2 = find(slope < 2 & slope > 0.1); % Very Steep Slopes % Abigail's change 
+        % Eurotop reference for these changes.
         % Seaward Slope > 2
         if ~isempty(indx1)
             % Estimate Run-up (R2%)
