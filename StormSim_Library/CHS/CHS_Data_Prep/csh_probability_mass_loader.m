@@ -91,23 +91,23 @@ if exist(pm_path,'dir')
             end
         otherwise %{'CHS-NA','CHS-SA','CHS-GoM','CHS-PR','CHS-TX','CHS-LA'}
             % CRL location info
-            CRL = dload([pm_path filesep '..' filesep,'CHS_Atl_CRLs_v1.6.mat']);
+            CRL = load([pm_path filesep '..' filesep,'CHS_Atl_CRLs_v1.6.mat']);CRL=CRL.CRL;
             % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
-            SRR_LI = dload([pm_path filesep '..' filesep,'SRR_TC_LI_600km.mat']);%SRR_LI = SRR_LI.SRR;
+            SRR_LI = load([pm_path filesep '..' filesep,'SRR_TC_LI_600km.mat']);SRR_LI = SRR_LI.SRR;
             % High intensity (MI) storm SRR at each CRL.
-            SRR_MI = dload([pm_path filesep '..' filesep,'SRR_TC_MI_600km.mat']);%SRR_MI = SRR_MI.SRR;
+            SRR_MI = load([pm_path filesep '..' filesep,'SRR_TC_MI_600km.mat']);SRR_MI = SRR_MI.SRR;
             % High intensity (HI) storm SRR at each CRL.
-            SRR_HI = dload([pm_path filesep '..' filesep,'SRR_TC_HI_600km.mat']);%SRR_HI = SRR_HI.SRR;
+            SRR_HI = load([pm_path filesep '..' filesep,'SRR_TC_HI_600km.mat']);SRR_HI = SRR_HI.SRR;
             % All storm SRR at each CRL.
-            SRR_All = dload([pm_path filesep '..' filesep,'SRR_TC_All_600km.mat']);%SRR_HI = SRR_HI.SRR;
+            SRR_All = load([pm_path filesep '..' filesep,'SRR_TC_All_600km.mat']);SRR_All = SRR_All.SRR;
             %             % Storms relative probability at each save point.
-            %             ProbMass = dload([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
+            %             ProbMass = load([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
             %             % NACCS Synthetic Storm Parameters
-            %             Param = dload([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
+            %             Param = load([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
             % Storms relative probability at each save point.
-            ProbMass = dload([pm_path filesep,[region,'_ITCS_DSW_600km.mat']]);
+            ProbMass = load([pm_path filesep,[region,'_ITCS_DSW_600km.mat']]);ProbMass = ProbMass.ProbMass;
             % NACCS Synthetic Storm Parameters
-            Param = dload([pm_path filesep,[region,'_ITCS_Param.mat']]);
+            Param = load([pm_path filesep,[region,'_ITCS_Param.mat']]);Param = Param.Param;
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The
                 SRR was computed at 1050 coastal reference locations (CRL) and the SRR from the closest CRL to the
@@ -134,7 +134,7 @@ if exist(pm_path,'dir')
                     % Get File Dir
                     dummy = dir(fullfile(grid_file,'*_staID.mat'));
                     % Savepoint location info
-                    staID = dload(fullfile(grid_file, dummy.name)); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    staID = load(fullfile(grid_file, dummy.name)); % staID -> [SP_ID Node_ID Lon Lat Depth]
                     % Define Row Index
                     bias_indx = find(staID(:, 1) == Nsvpt);
                     % Define Latitude Column

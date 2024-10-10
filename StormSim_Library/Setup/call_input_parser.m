@@ -65,9 +65,9 @@ config.temp_path = '';
 % Overwrite Bias & Uncertainty With Loaded Data
 if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file') 
     % Load Config
-    config_load = dload([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat'],'config');
+    config_load = load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat']);config_load = config_load.config;
     % Add Values
-    if strcmp(config.chs_bias_file,config_load.chs_bias_file) % Same Bias File
+    if strcmp(config.chs_ssl_bias_and_uncertainty_file,config_load.chs_ssl_bias_and_uncertainty_file) % Same Bias File
         try
             % SSL Proportional & Abolute Uncertainty
             config.chs_swl_u_a = config_load.chs_swl_u_a;

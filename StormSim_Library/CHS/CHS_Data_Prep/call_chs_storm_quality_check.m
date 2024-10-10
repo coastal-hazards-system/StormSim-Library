@@ -305,14 +305,14 @@ else
             % Get File Dir
             dummy = dir(fullfile(grid_path,'*_nodeID*.mat'));
             % Load Grid Files
-            staID = dload(fullfile(grid_path, dummy.name), 'nodeID');  % SPs
+            staID = load(fullfile(grid_path, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
         otherwise
             % Get File Dir
             dummy = dir(fullfile(grid_path,'*_staID.mat'));
             % Load Grid Files
-            staID = dload(fullfile(grid_path, dummy.name), 'staID');  % SPs
+            staID = load(fullfile(grid_path, dummy.name), 'staID');staID = staID.staID;  % SPs
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
     end
