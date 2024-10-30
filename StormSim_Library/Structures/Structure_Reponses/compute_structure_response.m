@@ -221,16 +221,15 @@ switch dflat
         if exist('p1','var')
             Resp.('p1') = p1{:}; % Goda Wall Pressure
         end
-        if exist('Dn50','var')
-            if calc_dn50_ss == 1
-                Resp.('Dn50') = Dn50{:}; % Median Stone Size
-            end
-            if calc_dn50_lcbw == 1
-                Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
-            end
-            if calc_dn50_ls == 1
-                Resp.('Dn50_Lee') = Dn50_Lee{:}; % Median Stone Size - Van Gent Leeside Stability
-            end
+        % Armor Stone Sizes
+        if calc_dn50_ss == 1
+            Resp.('Dn50') = Dn50{:}; % Median Stone Size
+        end
+        if calc_dn50_lcbw == 1
+            Resp.('Dn50_LCBW') = Dn50_LCBW{:}; % Median Stone Size - Low Crested Break Water
+        end
+        if calc_dn50_ls == 1
+            Resp.('Dn50_Lee') = Dn50_Lee{:}; % Median Stone Size - Van Gent Leeside Stability
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
