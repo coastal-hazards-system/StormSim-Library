@@ -1,4 +1,4 @@
-function [HC_resp_diff, DSW_i, ITCS_HC, unmapped_storms] = itcs_hazard_remap(ITCS_Resp, ATCS_HC, ATCS_AEF, do_int)
+function [HC_resp_diff, DSW_node, ITCS_HC, unmapped_storms] = itcs_hazard_remap(ITCS_Resp, ATCS_HC, ATCS_AEF, do_int)
 % Define Number Of Storms And Nodes
 [Nnode, Nstrm] = size(ITCS_Resp);
 
@@ -8,8 +8,10 @@ function [HC_resp_diff, DSW_i, ITCS_HC, unmapped_storms] = itcs_hazard_remap(ITC
 % Preallocate for speed
 Resp_index = NaN(Nnode,Nstrm);
 % Find Ranking Order Per Storm
-for j = 1:Nstrm
-    Resp_index(Nnode,j) = find(Resp_indx0(Nnode,:)==j);
+for ii = 1:Nnode
+    for j = 1:Nstrm
+        Resp_index(ii,j) = find(Resp_indx0(ii,:)==j);
+    end
 end
 % Change -99999 to NaN (after sorting)
 Resp_sort(Resp_sort==-99999)=NaN;
@@ -17,18 +19,17 @@ ITCS_Resp(ITCS_Resp==-99999)=NaN;
 
 %% COMPUTE DSW PER NODE
 %Preallocate for speed
-DSW0 = NaN(Nnode,Nstrm);
-% Get ATCS HC Response
-x = ATCS_HC(:,~isnan(ATCS_HC)); %remove NaNs
-% Get AEF's
-v = ATCS_AEF(~isnan(ATCS_HC)); %remove NaNs
-% Grab ITCS Peak Responses
-xq = Resp_sort(:,~isnan(Resp_sort(:,:))); %remove NaNs
-
+DSW0 = NaN(Nnode,Nstrm);DSW_node = NaN(Nnode,Nstrm);
 % Compute Discrete Storm Weights (DSWs) per node
 for i = 1:Nnode % In case We Need This Left As A Loop
+    % Get ATCS HC Response
+    x = ATCS_HC(i,~isnan(ATCS_HC(i,:))); %remove NaNs
+    % Get AEF's
+    v = ATCS_AEF(~isnan(ATCS_HC(i,:))); %remove NaNs
+    % Grab ITCS Peak Responses
+    xq = Resp_sort(i,~isnan(Resp_sort(i,:))); %remove NaNs
     % Remove Repeated Values
-    [~,ind] = unique(x(i, :),'last'); %remove repeated values
+    [~,ind] = unique(x,'last'); %remove repeated values
     try
         % Try interp
         out = exp(interp1(x(ind),log(v(ind)),xq)); % Find AEF Associated With Storm Event
@@ -37,16 +38,16 @@ for i = 1:Nnode % In case We Need This Left As A Loop
     catch
         DSW0(i,:)=NaN;
     end
+    % Reorder DSWs according to initial order
+    DSW_node(i,:) = DSW0(i,Resp_index(i, :));
 end%for i
-% Reorder DSWs according to initial order
-DSW_node = DSW0(:,Resp_index);
 
 %% JPM INTEGRATION (MAPPING ITCS PEAK RESPONSES TO ATCS HAZARD CURVE)
 if do_int == 1
     % Compute Hazard Curves with DSW_node
     % Preallocate for speed
     ITCS_HC = NaN(Nnode,length(ATCS_AEF));
-            x_out = NaN(Nnode,length(DSW_node));
+    x_out = NaN(Nnode,length(DSW_node));
 
     %JPM Integration
     for i = 1:Nnode
@@ -56,11 +57,11 @@ if do_int == 1
         DSW_i=DSW_node(i,:);
         try
             index_n = find(~isnan(Resp_i)&Resp_i>0&~isnan(DSW_i)); %indices for storms that have made location wet
-            unmapped_storms = find(isnan(Resp_i)|Resp_i<0|isnan(DSW_i));
+            unmapped_storms(i, 1) = {find(isnan(Resp_i)|Resp_i<0|isnan(DSW_i))};
             [~,I]=sort(Resp_i(index_n),'descend');%sort response for non-dry storms
             y = Resp_i(index_n(I)); %HC_Resp: Response; thresholds for defining hazard curve
             x_aef = cumsum(DSW_i(index_n(I))); %HC_Prob: exceedance of therehold rates
-%             x_out(index_n(I)) = x_aef; 
+            %             x_out(index_n(I)) = x_aef;
             Lx_aef = log(x_aef); % Convert To Linear Scale
             y(abs(Lx_aef)==Inf)=[]; Lx_aef(abs(Lx_aef)==Inf)=[]; %remove "Inf" after "log"
             [~,ia_x,] = unique(Lx_aef); [~,ia_y] = unique(y);
