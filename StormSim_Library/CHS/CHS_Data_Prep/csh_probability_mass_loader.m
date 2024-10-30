@@ -91,7 +91,7 @@ if exist(pm_path,'dir')
             end
         otherwise %{'CHS-NA','CHS-SA','CHS-GoM','CHS-PR','CHS-TX','CHS-LA'}
             % CRL location info
-            CRL = load([pm_path filesep '..' filesep,'CHS_Atl_CRLs_v1.6.mat']);CRL=CRL.CRL;
+            load([pm_path filesep '..' filesep,'CHS_Atl_CRLs_v1.6.mat'],'CRL');
             % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
             SRR_LI = load([pm_path filesep '..' filesep,'SRR_TC_LI_600km.mat']);SRR_LI = SRR_LI.SRR;
             % High intensity (MI) storm SRR at each CRL.
@@ -105,9 +105,9 @@ if exist(pm_path,'dir')
             %             % NACCS Synthetic Storm Parameters
             %             Param = load([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
             % Storms relative probability at each save point.
-            ProbMass = load([pm_path filesep,[region,'_ITCS_DSW_600km.mat']]);ProbMass = ProbMass.ProbMass;
+            ProbMass = load([pm_path filesep,[region,'_ITCS_DSW_600km.mat']]);ProbMass = ProbMass.DSW_ITCS;
             % NACCS Synthetic Storm Parameters
-            Param = load([pm_path filesep,[region,'_ITCS_Param.mat']]);Param = Param.Param;
+            Param = load([pm_path filesep,[region,'_ITCS_Param.mat']]);Param = Param.Param_ITCS;
             %{
                 Load storm recurrence rate (SRR) associated with project save point. The
                 SRR was computed at 1050 coastal reference locations (CRL) and the SRR from the closest CRL to the
@@ -134,7 +134,7 @@ if exist(pm_path,'dir')
                     % Get File Dir
                     dummy = dir(fullfile(grid_file,'*_staID.mat'));
                     % Savepoint location info
-                    staID = load(fullfile(grid_file, dummy.name)); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    load(fullfile(grid_file, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
                     % Define Row Index
                     bias_indx = find(staID(:, 1) == Nsvpt);
                     % Define Latitude Column
@@ -158,6 +158,8 @@ if exist(pm_path,'dir')
             % Find storms within 200 km of savepoint
             trk_dist=200;
             trk_lat=Param(:,4); trk_lon=Param(:,5);
+            [~, ~, ~, dist, ~] = find_nearest_latlon(staID(bias_indx, col_indx), staID(bias_indx, col_indx+1),...
+                trk_lat, trk_lon, []);
             dist200=find(dist<=trk_dist);
 
             % Low Intensity Storm Population
