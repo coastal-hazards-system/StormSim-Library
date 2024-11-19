@@ -155,7 +155,7 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
             if length(slope) == 1
                 slope_aux = cellfun(@(y) repmat(slope, size(y)), SWL, 'un', false);
             else
-                slope_aux = slope;
+                slope_aux = {slope};
             end
             % Compute runup & Overtopping
             if calc_r2p == 1 || calc_q == 1 || calc_q_vol == 1
@@ -216,6 +216,7 @@ switch dflat
         end
         if exist('q','var')
             %             Resp.('q_overflow') = q_overflow{:}; % Overtopping by overflow
+            Resp.('q') = q{:};
             Resp.('q_wave_ot') = q_wave_ot{:}; % Overtopping By Waves
         end
         if exist('p1','var')
