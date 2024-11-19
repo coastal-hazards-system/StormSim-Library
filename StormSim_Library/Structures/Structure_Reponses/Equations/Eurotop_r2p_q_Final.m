@@ -301,11 +301,11 @@ end
 %% RESHAPE OUTPUTS
 R2p = R2p;
 q_wave_ot(q_wave_ot<10^-6) = 0;
-%
+q_wave_ot(isnan(q_wave_ot)) = 0;
 % q Overflow
 q = q_wave_ot + q_overflow;
 % Define NaN Index
-rIndx = Hm0<=0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);
+rIndx = Hm0<0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);
 % Do not calculate structure response if no storm forcing
 q(rIndx) = NaN;
 q_wave_ot(rIndx) = NaN;
