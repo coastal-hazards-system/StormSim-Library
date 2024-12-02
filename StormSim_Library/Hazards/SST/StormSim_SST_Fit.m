@@ -391,7 +391,7 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
 
 
         %% Sample Plot for bootstrap process
-        figure('Color',[1 1 1],'visible','off')
+        fig=figure('Color',[1 1 1],'visible','off');
         axes('xscale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
         if use_AEP
             xlim([1e-4 1]);
@@ -438,7 +438,7 @@ if (length(ecdf_y)>=20 && Nyrs>=20) || apply_GPD_to_SS %apply GPD
         hold off
         fname = [path_out,'SST_HC_bootCheck_',staID{1},'_TH_',MRL_output.Selection.Criterion{i},'.png'];
         saveas(gcf,fname,'png')
-
+        close(fig);
 
         %% Compute mean and percentiles
         Boot_mean_plt = mean(Resp_boot_plt,1,'omitnan');

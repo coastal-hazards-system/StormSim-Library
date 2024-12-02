@@ -70,7 +70,7 @@ if ~strcmp(HC_plt(1).MRL_Crit,'None') %plot these only when the GPD fit occurred
     crit = MRL_output.Selection.Criterion;
     if strcmp(MRL_output.Status,'')
         
-        figure('units','inches','Position',[1 1 6 6],'Color',[1 1 1],'visible','off');
+        fig=figure('units','inches','Position',[1 1 6 6],'Color',[1 1 1],'visible','off');
         axes('XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
         
         subplot(5,1,1)
@@ -158,6 +158,7 @@ if ~strcmp(HC_plt(1).MRL_Crit,'None') %plot these only when the GPD fit occurred
             case 1
                 saveas(gcf,fname,'png')
         end
+        close(fig);
     end
     
     %% Plot GPD parameters from bootstrap per threshold
@@ -166,7 +167,7 @@ if ~strcmp(HC_plt(1).MRL_Crit,'None') %plot these only when the GPD fit occurred
     if isempty(TH),sz=1;else,sz=length(TH);end
     pObj(sz).p=[];
     
-    figure('Color','w','visible','off')
+    fig=figure('Color','w','visible','off');
     for j=1:sz
         switch crit{j}
             case 'CritWMSE'
@@ -201,7 +202,8 @@ if ~strcmp(HC_plt(1).MRL_Crit,'None') %plot these only when the GPD fit occurred
         case 1
             saveas(gcf,fname,'png')
     end
-    
+    close(fig);
+
     %% Plot Hazard Curve
     j=1:length(TH);
     for k=j %TH loop
@@ -216,7 +218,7 @@ if ~strcmp(HC_plt(1).MRL_Crit,'None') %plot these only when the GPD fit occurred
         end
         
         % Do plot
-        figure('Color',[1 1 1],'visible','off')
+        fig=figure('Color',[1 1 1],'visible','off');
         axes('xscale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
         if use_AEP
             xlim([1e-4 1]);
@@ -284,6 +286,7 @@ if ~strcmp(HC_plt(1).MRL_Crit,'None') %plot these only when the GPD fit occurred
             case 1
                 saveas(gcf,fname,'png')
         end
+        close(fig);
     end
 else
     
@@ -299,7 +302,7 @@ else
     end
     
     % Do plot
-    figure('Color',[1 1 1],'visible','off')
+    fig=figure('Color',[1 1 1],'visible','off');
     axes('xscale','log','XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
     if use_AEP
         xlim([1e-4 1]);
@@ -363,5 +366,6 @@ else
         case 1
             saveas(gcf,fname,'png')
     end
+    close(fig);
 end
 end

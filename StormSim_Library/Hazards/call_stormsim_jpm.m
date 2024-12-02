@@ -41,7 +41,7 @@ JPM_output.staID = staID;
 [JPM_output.HC_data,JPM_output.HC_plt_x,JPM_output.HC_tbl_x,JPM_output.HC_tbl_rsp_y,~ ] = StormSim_JPM_Tool_R1_v20210831(Resp(:),ProbMass(:),vg_id,vg_ColNum,U_a,...
     U_r,U_tide,U_tide_app,U_tide_type,uncert_treatment,prc,integrate_Method,...
     path_out,yaxis_label,yaxis_limits,SLC,plot_results,ind_aep,apply_Parallel,HC_tbl_rsp_y, stat_print, y_log, staID);
-close all;
+% close all;
 
 
 rmdir('JPM_output','s');
