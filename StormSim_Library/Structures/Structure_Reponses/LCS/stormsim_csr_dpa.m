@@ -464,7 +464,7 @@ for NlcS = 1:nLC
 
             %% Compute Damage Accumulation
             % Compute Wave Runup
-            if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
+            if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0 || Rc{NlcS}(Ntime)<0
                 z1p{NlcS}(Ntime)=0;
             end
             % Compute Incremental Leeside Damage
@@ -491,7 +491,7 @@ for NlcS = 1:nLC
             %% LEESIDE STABILITY WITHOUT REPAIRS ANALYSIS
             %% Compute Damage Accumulation
             % Compute Wave Runup
-            if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0
+            if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0 || Rc{NlcS}(Ntime)<0
                 z1p{NlcS}(Ntime)=0;
             end
             % Leeside Damage With Repairs
