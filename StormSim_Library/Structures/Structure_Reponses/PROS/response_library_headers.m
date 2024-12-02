@@ -134,5 +134,23 @@ switch staID
         unit_label = 'm^3 per m';
         y_label = ['Q_{overtop} [ ' unit_label ']'];
         var_name = 'Q_{vol_{overtop}}';
+    case 'DamDepthElev'
+        U_a=0;
+        U_r = swl_u_a;
+        y_scale_log = 0;
+        uncert_treatment_jpm = 'relative';
+        uncert_treatment_sst = 'relative';
+        unit_label = 'm';
+        y_label = ['Damaging Depth Elevation [ ' unit_label ']'];
+        var_name = 'damaging_depth_elev';
+    case 'DamDepth'
+        U_a=0;
+        U_r = swl_u_a;
+        y_scale_log = 0;
+        uncert_treatment_jpm = 'relative';
+        uncert_treatment_sst = 'relative';
+        unit_label = 'm';
+        y_label = ['Damaging Depth [ ' unit_label ']'];
+        var_name = 'damaging_depth';
 end
 end
