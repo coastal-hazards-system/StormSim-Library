@@ -18,11 +18,16 @@ calc_dn50_lcbw = config.compute_dn50_lcbw;
 calc_r2p = config.compute_r2p;
 calc_q = config.compute_q;
 calc_q_vol = config.compute_q_vol;
+calc_dd = config.compute_damaging_depth;
+calc_dd_ks = config.compute_damaging_depth_Ks;
+calc_dd_slope = config.compute_damaging_depth_slope;
 calc_p1 = config.compute_p1;
 calc_p2_p3 = config.compute_p2_p3;
 calc_Nappe = config.compute_nappe;
+% Get Save Point Depth
+SPdepth = config.chs_sp_depth;
 % No Structural Response Computed
-no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_q_vol,calc_p1,calc_p2_p3,calc_Nappe]);
+no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_q_vol,calc_p1,calc_p2_p3,calc_Nappe,calc_dd]);
 % Remove Responses Based On Structure Type
 switch struc_type
     case 1 % Levee (R2p & OT)
@@ -201,6 +206,10 @@ if ~ismember(workflow,[2,4]) && no_resp~=0
                 end
             end
     end
+    % Damaging Depth Response
+    if calc_dd == 1
+        [DamDepthElev, DamDepth]= cellfun(@(x, y, z) damaging_depth(x, y, z, SPdepth, g, calc_dd_ks, calc_dd_slope), SWL, Hm0, Tp, 'un', false);
+    end
 else % StormSim:EVA was called, no structure responses
     Resp = [];
 end
@@ -231,6 +240,13 @@ switch dflat
         end
         if calc_dn50_ls == 1
             Resp.('Dn50_Lee') = Dn50_Lee{:}; % Median Stone Size - Van Gent Leeside Stability
+        end
+        % Damaging Depths
+        if exist('DamDepth','var')
+            Resp.('DamDepth') = DamDepth{:};
+        end
+        if exist('DamDepthElev','var')
+            Resp.('DamDepthElev') = DamDepthElev{:};
         end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
@@ -279,6 +295,13 @@ switch dflat
                 Resp.('Dn50_Lee') = cell2struct(Dn50_Lee,'LCNUM');% Median Stone Size - Van Gent Leeside Stability
             end
         end
+        % Damaging Depths
+        if exist('DamDepth','var')
+            Resp.('DamDepth') = cell2struct(DamDepth,'LCNUM');
+        end
+        if exist('DamDepthElev','var')
+            Resp.('DamDepthElev') = cell2struct(DamDepthElev,'LCNUM');
+        end
     case 3 % Find Max Responses For Timeseries (RB3)
         if exist('R2p','var') && struc_type~=2
             Resp.('R2p') = cell2mat(cellfun(@(x) max(x,[],1),R2p,'un',false));
@@ -306,7 +329,13 @@ switch dflat
         if exist('Dn50_Lee','var')
             Resp.('Dn50_Lee') = cell2mat(cellfun(@(x) max(x,[],1),Dn50_Lee,'un',false));
         end
-
+        % Damaging Depths
+        if exist('DamDepth','var')
+            Resp.('DamDepth') = cell2mat(cellfun(@(x) max(x,[],1),DamDepth,'un',false));
+        end
+        if exist('DamDepthElev','var')
+            Resp.('DamDepthElev') = cell2mat(cellfun(@(x) max(x,[],1),DamDepthElev,'un',false));
+        end
         % Replace Forcing Fields With No Rep For HC Calcs
         if workflow == 1
             if any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'})) && contains(storm_type,{'XC'})

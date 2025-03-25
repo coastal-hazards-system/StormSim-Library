@@ -63,7 +63,7 @@ for j = s_indx
             u_field = u_vector{contains(u_names, 'r2p')};
         case 'Tp'
             u_field = sqrt(1+u_vector{contains(u_names, 'chs_hm0_u_r')})-1;
-        case {'q_overflow', 'Q_vol_overflow'}
+        case {'q_overflow', 'Q_vol_overflow', 'DamDepthElev', 'DamDepth'}
             u_field = u_vector{contains(u_names, 'chs_swl_u_r')};
         case {'Q_vol_wave_ot','Q_vol','q_wave_ot'}
             u_field = u_vector{contains(u_names, 'q')};

@@ -85,7 +85,7 @@ if strcmp(MRL_output.Status,'')
         mrl_th = MRL_output.Selection.Threshold(1); %will be NaN
     end
     
-    figure('units','inches','Position',[1 1 6 6],'Color',[1 1 1],'visible','off');
+    fig=figure('units','inches','Position',[1 1 6 6],'Color',[1 1 1],'visible','off');
     axes('XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
     
     subplot(5,1,1)
@@ -157,6 +157,7 @@ if strcmp(MRL_output.Status,'')
         case 1
             saveas(gcf,fname,'png')
     end
+    close(fig);
 end
 
 %% Plot hazard curve
@@ -164,7 +165,7 @@ Boot_mean_plt = HC_plt(1,:); % Take probs and mean values
 Boot_plt=[]; if size(HC_plt,1)>1,Boot_plt=HC_plt(2:end,:);end % Take percentiles
 
 % Do plot
-figure('Color',[1 1 1],'visible','off')
+fig=figure('Color',[1 1 1],'visible','off');
 axes('xscale','log','Yscale',y_log,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
 if use_AEP
     xlim([1e-4 1]);
@@ -227,4 +228,5 @@ switch a
     case 1
         saveas(gcf,fname,'png')
 end
+close(fig);
 end

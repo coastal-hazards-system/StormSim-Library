@@ -106,7 +106,7 @@ if integrate_Method==3 %'JPM Standard'
     for i=1:N
         str2 = int2str(sp_id(i));
         if ~isempty(JPM_output(i).HC_plt_y)
-            figure('Color',[1 1 1],'visible','off');
+            fig=figure('Color',[1 1 1],'visible','off');
             axes('XScale','log','Yscale',y_log,'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
             xticks(XTick); xlim(XLim);
             set(gca,'XDir','reverse');
@@ -128,6 +128,7 @@ if integrate_Method==3 %'JPM Standard'
                 case 1
                     saveas(gcf,fname,'png');
             end
+            close(fig);
         end
     end
 else %'PCHA ATCS' or 'PCHA Standard'
@@ -139,7 +140,7 @@ else %'PCHA ATCS' or 'PCHA Standard'
             y = JPM_output(i).HC_plt_y(:,1);
             Boot_plt = JPM_output(i).HC_plt_y(:,2:end);
             
-            figure('Color',[1 1 1],'visible','off')
+            fig = figure('Color',[1 1 1],'visible','off')
             axes('XScale','log','Yscale', y_log, 'XGrid','on','XMinorTick','on','YGrid','on','YMinorTick','on','FontSize',12);
             xticks(XTick); xlim(XLim);
             set(gca,'XDir','reverse');
@@ -178,6 +179,7 @@ else %'PCHA ATCS' or 'PCHA Standard'
                 case 1
                     saveas(gcf,fname,'png');
             end
+            close(fig);
         end
     end
 end
