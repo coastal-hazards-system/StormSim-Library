@@ -1,35 +1,23 @@
-function [Smax,SPcurves,yBox,dbug] = compute_lcs_yearly_curve(data,resp_vec,nYears, dbug_type)
+function [Smax,SPcurves,yBox] = compute_lcs_yearly_curve(data, resp_vec, nYears)
 
 
 % Define Years To Look For
 years = [1:nYears];yBox = num2cell(zeros(size(years))');
-dbug = num2cell(nan(length(years),length(data)));
-% Define Col Indexes For Peaks & Timeseries
-switch size(data{1},2)
-    case 10 % Timeseries
-        % Storm Hydrograph Time Step Counter Col Index
-        indx1 = 3;
-        % Storm Year Col Index
-        indx2 = 10;
-        % Storm Hydrograph Length Col Index
-        indx3 = 2;
-    case 8 % Peaks
-        % Storm Year Col Index
-        indx2 = 1;
-        % Storm Hydrograph Length Col Index
-        indx3 = 2;
-end
 %
 for jj = 1:length(years)
     for ii = 1:length(data)
         % Extract Storm Data From Life Cycle
         lc_data = data{ii};
         % Get Storm Hydrograph Delimiters
-        stm_beg = find(lc_data(:,indx1)==0);
+        if size(data{1},2) == 10
+            stm_beg = find(lc_data(:, 10)==0);
+            dlen = diff(find([lc_data(:, 10);0]==0));
+        else
+            stm_beg = [1:length(lc_data(:, 1))]';
+            dlen = ones(size(stm_beg));
+        end
         % Extract Strom Year Col
-        dyear = lc_data(stm_beg,indx2);
-        % Extract Data Length Col
-        dlen = lc_data(stm_beg,indx3);
+        dyear = lc_data(stm_beg, 3);
         % Get Indexes Of Stomrs Ocurring on Years(jj)
         wanted_years = find(dyear==years(jj));
         wanted_stm_beg = stm_beg(wanted_years);
@@ -39,11 +27,6 @@ for jj = 1:length(years)
         if isempty(wanted_stm_beg)==0
             % Grab All Storm Data Associated To Specific Year
             yData = resp_vec{ii}(wanted_stm_beg(1):wanted_stm_beg(end)+dlen(end)-1);
-            if dbug_type == 1
-                dbug{jj,ii} = [repmat(ii,length([wanted_stm_beg(1):wanted_stm_beg(end)+dlen(end)-1]),1), lc_data(wanted_stm_beg(1):wanted_stm_beg(end)+dlen(end)-1,:)];
-            else
-                dbug{jj,ii} = yData;%wanted_stm_beg(1):wanted_stm_beg(end)+dlen(end)-1;
-            end
             % Check If We Have Multiple Storms 
             if length(dlen)>1
                 % Find Individual Storm Max Response 
