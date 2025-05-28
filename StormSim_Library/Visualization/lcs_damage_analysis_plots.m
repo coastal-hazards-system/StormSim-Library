@@ -4,8 +4,10 @@ function lcs_damage_analysis_plots(project_forcing, Resp, dmg_type, storm_type, 
 switch dmg_type
     case 'leeside'
         dmg_vars = {'S_leeside_no_repairs','SLee_no_repairs', 'LSmax'};
+        x_label = 'S Leeside';
     case 'seaside'
         dmg_vars = {'S_seaside_no_repairs','Ssea_no_repairs', 'Smax'};
+        x_label = 'S Seaside';
 end
 % Get StormSim: LCS Forcing Data (project_forcing)
 stm_data = project_forcing.(storm_type).Timeseries;
@@ -116,7 +118,7 @@ ax3 = subplot(1,3,3);
 set(ax3, 'FontSize',13, 'FontWeight', 'bold','XGrid','on','XMinorGrid','on','YGrid','on','YMinorGrid','on','Box','on');
 % Populate Bin Plot
 ax3 = lcs_bin_plot(ax3, stm_data, cellfun(@(x) struct('LCNUM',x),resp.(dmg_vars{1})','un',true),...
-    nYears, 'S Leeside', S_bin_edges, 'percent', 0,...
+    nYears, x_label, S_bin_edges, 'percent', 0,...
     S_bin_x_ticks, S_bin_x_ticks_labels, S_bin_cb_ticks, S_bin_cb_lim, cmap_to_use, 1);
 % Remove Hold Properties
 hold(ax1, 'off');

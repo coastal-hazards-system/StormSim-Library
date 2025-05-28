@@ -4,28 +4,24 @@ stypes = fieldnames(storm);
 % For Each Storm Type
 for ii = 1:length(stypes)
     % Grab Peaks Dataset
-    dPeaks = storm.(stypes{ii}).('Peaks').('Maxima'); % [SWL Hm0 Tp wDir stmID timeStamp]
-    proxy_data.(stypes{ii}) = zeros(size(dPeaks));
-    proxy_data.(stypes{ii})(:,5:6) = dPeaks(:,5:6);
-    for jj = 2:4 % For Each Column SWL, Hm0, Tp, wDir
-        % For Each Storm ID
-        for kk = 1:length(dPeaks(:,1))
+    dPeaks = storm.(stypes{ii}).('Peaks').('Default'); % [SWL Hm0 Tp wDir stmID timeStamp]
+    proxy_data.(stypes{ii}) = zeros(length(dPeaks), 6);
+    proxy_data.(stypes{ii})(:,5:6) = cell2mat(cellfun(@(x) x(5:6), dPeaks(:, 2), 'un', false));
+    % For Each Storm ID
+    for kk = 1:length(dPeaks(:,1))
+        for jj = 1:4 % For Each Column SWL, Hm0, Tp, wDir
             % Find Storm ID Entry Row
-            rowID = cell2mat(storm.(stypes{ii}).('Timeseries')(:,1)) == dPeaks(kk,5);
+            rowID = cell2mat(storm.(stypes{ii}).('Timeseries').('Default')(:,1)) == storm.(stypes{ii}).('Peaks').('Default'){kk,1};
             % SKip Storm If Not Found
-            if sum(rowID) == 0
+            if ~any(rowID)
                 continue; % Skip
             else
-                % Extract Storm ID Hydrograph
-                tsData = storm.(stypes{ii}).('Timeseries'){rowID, 2};
-                % Find Nearest Data Point To Peaks Timestamp
-                [~, tsIndx] = max(tsData(:,jj));
+                % Find Max On Hydrograph
+                [~, tsIndx] = max(storm.(stypes{ii}).('Timeseries').('Default'){rowID, 2}(:, jj));
                 % Replace Timestep With Value In Peaks File
-                tsData(tsIndx,jj) = dPeaks(kk, jj-1);
-                % Assign Back Adjusted Dataset
-                storm.(stypes{ii}).('Timeseries')(rowID,2) = {tsData};
+                storm.(stypes{ii}).('Timeseries').('Default'){rowID, 2}(tsIndx, jj) = dPeaks{kk, 2}(1, jj);
                 % Proxy Data is For Debbuging Purposes
-                proxy_data.(stypes{ii})(kk, jj-1) = tsData(tsIndx,jj);
+                proxy_data.(stypes{ii})(kk, jj) = storm.(stypes{ii}).('Timeseries').('Default'){rowID, 2}(tsIndx, jj);
             end
         end
     end

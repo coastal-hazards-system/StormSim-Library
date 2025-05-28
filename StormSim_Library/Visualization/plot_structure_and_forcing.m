@@ -52,8 +52,13 @@ if ~isempty(SWL)
         fig.Position = [0 0 1 1];
         ax = gca;hold(ax,'on');box on;
         ax.Color = [0.8 0.8 0.8];
-        ext_left = ax.Children(2).Shape.Vertices(2,1);
-        ext_right = ax.Children(2).Shape.Vertices(3,1);
+        try
+            ext_left = ax.Children(2).Shape.Vertices(2,1);
+            ext_right = ax.Children(2).Shape.Vertices(3,1);
+        catch
+            ext_left = ax.Children(1).Shape.Vertices(2,1);
+            ext_right = ax.Children(1).Shape.Vertices(3,1);
+        end
         ylabel(['Elevation [',project_datum,', m]']);
         xlabel('X [m]');
         % Add Save Point Depth
@@ -96,8 +101,13 @@ if ~isempty(Hm0)
         fig.Position = [0 0 1 1];
         ax = gca;hold(ax,'on');box on;
         ax.Color = [0.8 0.8 0.8];
-        ext_left = ax.Children(2).Shape.Vertices(2,1);
-        ext_right = ax.Children(2).Shape.Vertices(3,1);
+        try
+            ext_left = ax.Children(2).Shape.Vertices(2,1);
+            ext_right = ax.Children(2).Shape.Vertices(3,1);
+        catch
+            ext_left = ax.Children(1).Shape.Vertices(2,1);
+            ext_right = ax.Children(1).Shape.Vertices(3,1);
+        end
         ylabel(['Elevation [',project_datum,', m]']);
         xlabel('X [m]');
         % Add Save Point Depth

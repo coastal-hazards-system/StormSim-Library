@@ -1,75 +1,11 @@
-function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, prob_mass, ts_switch, outpath)
+function peaks_hc_and_storms_stack_plot(config, Resp, project_forcing, pDatasets, outpath)
 %% PULL DATA
 % Define Plot Field
 plt_fld = 'y_plot';
 plt_fld_x = 'x_plot';
-nrows = 2;
-ncols = 4;
-%
-workflow = config.workflow;
 % Scan Peak Datasets
-storm_types = sort(fieldnames(Resp));
-storm_types = storm_types(contains(storm_types,{'XC','TC'}));
-% HC Data
-if ts_switch == 0
-    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{1}).('Peaks').('Maxima').var},'un',false)'),2)==1);
-else
-    resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{1}).('Timeseries').var},'un',false)'),2)==1);
-end
-
-% Remove Other HCs
-for ii = 1:length(storm_types)
-    % Timeseries/Peaks
-    if ts_switch == 0 % Peaks
-        % Find Peak Datasets Fieldnames
-        pDatasets = fieldnames(Resp.(storm_types{ii}).Peaks);
-        % Loop Through Fieldnames
-        for jj = 1:length(pDatasets)
-            % HC Data
-            resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Peaks').(pDatasets{jj}).var},'un',false)'),2)==1);
-            %
-            if isempty(resp_indx)
-                continue;
-            end
-            % Grab HC Data
-            hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Peaks').(pDatasets{jj})(resp_indx);
-            % Grab Forcing Data (Scatter)
-            if workflow == 1 % StormSim: PROS
-                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL_no_rep');
-                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0_no_rep');
-            else % StormSim: EVA
-                sData.(storm_types{ii}).(pDatasets{jj}).SWL = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('SWL');
-                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = project_forcing.(storm_types{ii}).('Peaks').(pDatasets{jj}).('Hm0');
-            end
-        end
-    else % Timeseries
-        % Define Dummy Fieldname
-        pDatasets = {'Maxima'};
-        % Loop Through Fieldnames
-        for jj = 1:length(pDatasets)
-            %
-            resp_indx = find(sum(cell2mat(cellfun(@(x) strcmp(x,{'SWL','Hm0','Tp'}),{Resp.(storm_types{ii}).('Timeseries').var},'un',false)'),2)==1);
-            %
-            if isempty(resp_indx)
-                continue;
-            end
-            % Grab HC Data
-            hcData.(storm_types{ii}).(pDatasets{jj}) = Resp.(storm_types{ii}).('Timeseries')(resp_indx);
-            % Grab Forcing Data (Scatter)
-            if workflow == 1 % StormSim: PROS
-                sData.(storm_types{ii}).(pDatasets{jj}).SWL = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('SWL_no_rep'),'un',false));
-                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('Hm0_no_rep'),'un',false));
-            else
-                sData.(storm_types{ii}).(pDatasets{jj}).SWL = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('SWL'),'un',false));
-                sData.(storm_types{ii}).(pDatasets{jj}).Hm0 = cell2mat(cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Timeseries').('Hm0'),'un',false));
-            end
-        end
-    end
-end
-
-if isempty(hcData)
-    return;
-end
+storm_types = fieldnames(Resp);
+storm_types = storm_types(contains(storm_types, {'TC','XC'}));
 
 %% GRAB INFROMATION FROM "config"
 % CHS Region
@@ -83,7 +19,13 @@ datum = config.project_datum;
 % Are HC In AEP or AEF
 use_aep = config.pros_use_aep;
 % Grab CLs
-CLs = hcData.(storm_types{1}).('Maxima')(1).CL;
+CLs = Resp.(storm_types{1})(1).CL;
+%
+if use_aep
+    x_lim = [10^-3, 1];
+else
+    x_lim = [10^-4, 1];
+end
 
 %% DEFINE FONTS
 % Title Font
@@ -102,250 +44,121 @@ if ~exist(outpath,'dir')
 else
     delete([outpath filesep '*.png']);
 end
-%% DEFINE XTICKS
-if use_aep == 1
-    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
-    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
-    x_lim = [10^-3, 1];
-else
-    xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
-    xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
-    x_lim = [10^-4 1];
-end
-
 
 %% DETERMINE ABSOLUTE MIN/MAX
 y_limit = [];
-for jj = 1:length(pDatasets)
+for ii = 1:length(storm_types)
+    % HC Data
+    resp_indx = cellfun(@(x) find(strcmp(x, {Resp.(storm_types{ii}).var})), {'SWL'; 'Hm0'; 'Tp'}, 'un', true);
+    % Grab HC Data
+    hcData.(storm_types{ii}) = Resp.(storm_types{ii})(resp_indx);
+    % Loop For Each Storm Type
     for kk = 1:length(resp_indx)
-        % Get Min/Max
-        if isfield(hcData,'XC')
-            % Compute Logical Vector
-            s_lim_indx = hcData.('XC').(pDatasets{jj})(kk).(plt_fld_x)>=x_lim(1);
-            % Min
-            dmin = min(hcData.('XC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
-            % Get Max
-            dmax = max(hcData.('XC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
-        else
-            dmin = [];
-            dmax = [];
+        % Compute Logical Vector
+        s_lim_indx = hcData.(storm_types{ii})(kk).(plt_fld_x)>=x_lim(1);
+        % Min
+        dmin(kk, ii) = min(hcData.(storm_types{ii})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+        % Max
+        dmax(kk, ii) = max(hcData.(storm_types{ii})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
+        %
+        if ii == length(storm_types)
+            % Store Absolute Min For Dataset/Response
+            y_limit(kk).min = min(dmin(kk, :));
+            % Store Absolute Max For Dataset/Response
+            y_limit(kk).max = max(dmax(kk, :));
+            %
+            y_limit(kk).var = hcData.(storm_types{ii})(kk).var;
         end
-        if isfield(hcData,'TC')
-            s_lim_indx = hcData.('TC').(pDatasets{jj})(kk).(plt_fld_x)>=x_lim(1);
-            % Min
-            dmin2 = min(hcData.('TC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
-            % Get Max
-            dmax2 = max(hcData.('TC').(pDatasets{jj})(kk).(plt_fld)(s_lim_indx, :),[],'all','omitnan');
-        else
-            dmin2 = [];
-            dmax2 = [];
-        end
-        % Get Min
-        dmin = min([dmin,dmin2]);
-        % Get Max
-        dmax = max([dmax,dmax2]);
-        % Store Absolute Min For Dataset/Response
-        y_limit.(pDatasets{jj})(kk).min = dmin;
-        % Store Absolute Max For Dataset/Response
-        y_limit.(pDatasets{jj})(kk).max = dmax;
     end
+    % Grab Forcing Data (Scatter)
+    sData.(storm_types{ii}).SWL =cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('SWL_no_rep'),'un',true);
+    sData.(storm_types{ii}).Hm0 = cellfun(@(x) max(x),project_forcing.(storm_types{ii}).('Hm0_no_rep'),'un',true);
 end
-
-
 
 %% PLOT EACH RESPONSE FOR EACH DATASET
-% For Each Peaks Dataset (Maxima, WLP, WHP)
-for ii = 1:length(pDatasets)
-    % Initialize Figure Handle
-    Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
-    % Create textbox
-    annotation(Figure0,'textbox',...
-        [0.5 0.967812729409427 0.056835935922572 0.0343818572767479],...
-        'String',pDatasets(ii),...
-        'FontWeight','bold',...
-        'FontSize',title_fnt,...
-        'FitBoxToText','on',...
-        'EdgeColor','none');
-    % Grab Storm Type Dependant Fields
-    % Extratropical
-    if isfield(sData,'XC')
-        % Number of XC's
-        xc_nstm = num2str(length(sData.('XC').(pDatasets{ii}).SWL));
-        % Grab AEP/AEF Vector
-        xc_x = hcData.('XC').(pDatasets{ii})(1).(plt_fld_x); % SST
-    else
-        xc_nstm = '0';
-    end
-    % Tropical
-    if isfield(sData,'TC')
-        % Number of TC's
-        tc_nstm = num2str(length(sData.('TC').(pDatasets{ii}).SWL));
-        % Grab AEP/AEF Vector
-        tc_x = hcData.('TC').(pDatasets{ii})(1).(plt_fld_x); % JPM
-    else
-        tc_nstm = '0';
-    end
+% Initialize Figure Handle
+Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
+% Create textbox
+annotation(Figure0,'textbox',...
+    [0.5 0.967812729409427 0.056835935922572 0.0343818572767479],...
+    'String',pDatasets,...
+    'FontWeight','bold',...
+    'FontSize',title_fnt,...
+    'FitBoxToText','on',...
+    'EdgeColor','none');
 
-
-    % ---- FORMAT TC STORM DATA AXES----%
-    % Define Axes Handle
-    ax_tc = subplot(nrows, ncols, ncols+1);
-    ax_tc = ax_ini(ax_tc, ax_tick_fnt, ax_label_fnt, title_fnt, ['SWL [m, ' datum ']'], 'H_{m_{0}} [m]', ['TC Storms | ' tc_nstm]);
-
-    % ------- FORMAT TC HC DATA AXES -------
-    % Add X Label
-    if use_aep == 1
-        hc_label = 'Annual Exceedance Probability, AEP';
-        hc_label2 = 'AEP';
-    else
-        hc_label = 'Annual Exceedance Frequency, AEF [1/yr]';
-                hc_label2 = 'AEF [1/yr]';
-    end
-    % Initialize TCs Axes Handle
-    ax_tc_hc_swl = subplot(nrows, ncols,ncols+2);
-    ax_tc_hc_swl = ax_ini(ax_tc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['TC  | SWL | ' region ' | SP' num2str(sp_ID)]);
-
-    ax_tc_hc_hm0 = subplot(nrows, ncols,ncols+3);
-    ax_tc_hc_hm0 = ax_ini(ax_tc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Hm0 [m]', ['TC  | Hm0 | ' region ' | SP' num2str(sp_ID_wave)]);
-
-    ax_tc_hc_tp = subplot(nrows, ncols,ncols+4);
-    ax_tc_hc_tp = ax_ini(ax_tc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Tp [s]', ['TC  | Tp | ' region ' | SP' num2str(sp_ID_wave)]);
-
-
-    % ---- FORMAT XC STORM DATA AXES----%
-    % Define Axes Handle
-    ax_xc = subplot(nrows, ncols,1);
-    ax_xc = ax_ini(ax_xc, ax_tick_fnt, ax_label_fnt, title_fnt, ['SWL [m, ' datum ']'], 'Hm0 [m]', ['XC Storms | ' xc_nstm]);
-
-
-    % ------- FORMAT XC HC DATA AXES -------
-
-    % Initialize XCs Axes Handle
-    ax_xc_hc_swl = subplot(nrows, ncols,2);
-    ax_xc_hc_swl = ax_ini(ax_xc_hc_swl, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label, ['SWL [m, ' datum ']'], ['XC  | SWL | ' region ' | SP' num2str(sp_ID)]);
-
-    ax_xc_hc_hm0 = subplot(nrows, ncols,3);
-    ax_xc_hc_hm0 = ax_ini(ax_xc_hc_hm0, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Hm0 [m]', ['XC  | Hm0 | ' region ' | SP' num2str(sp_ID_wave)]);
-
-    ax_xc_hc_tp = subplot(nrows, ncols,4);
-    ax_xc_hc_tp = ax_ini(ax_xc_hc_tp, ax_tick_fnt, ax_label_fnt, title_fnt, hc_label2, 'Tp [s]', ['XC  | Tp | ' region ' | SP' num2str(sp_ID_wave)]);
-
-    % Define SWL Y Lim
-    try
-        ax_tc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
-        ax_xc_hc_swl.YLim = [y_limit.(pDatasets{ii})(1).min y_limit.(pDatasets{ii})(1).max];
-    catch
-
-    end
-    % Define Hm0 Y Lim
-    try
-        ax_tc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
-        ax_xc_hc_hm0.YLim = [y_limit.(pDatasets{ii})(2).min y_limit.(pDatasets{ii})(2).max];
-    catch
-
-    end
-    % Define Tp Y Lim
-    try
-        ax_tc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
-        ax_xc_hc_tp.YLim = [y_limit.(pDatasets{ii})(3).min y_limit.(pDatasets{ii})(3).max];
-    catch
-
-    end
-    % Set XTicks
-    helper_str = {'ax_tc_hc_swl','ax_tc_hc_hm0', 'ax_tc_hc_tp','ax_xc_hc_swl','ax_xc_hc_hm0', 'ax_xc_hc_tp'};
-    for hh = 1:length(helper_str)
-        eval([helper_str{hh} '.XTick = xticks_data;']);
-        eval([helper_str{hh} '.XTickLabel = xticks_data_lbl;']);
-        eval([helper_str{hh} '.XLim = x_lim;']);
-        eval([helper_str{hh} '.XScale = ''log'';']);
-        eval([helper_str{hh} '.YScale = ''linear'';']);
-        eval([helper_str{hh} '.XDir = ''reverse'';']);
-    end
-
-
-    % Add Legend
-    legend2 = legend(ax_xc_hc_swl);
-    % Get Legend Title Handle
-%     htitle = get(legend2,'Title');
-    % Define Legend Location
-    set(legend2,'Location','southeast','FontSize',ax_tick_fnt,...
-        'Orientation','horizontal','NumColumns',3,...
-        'FontSize', 16);
-    % Define Legened Title
-%     set(htitle,'String','Confidence Levels','FontSize',16);
-
-    %----- PLOT DATA -------
-    if contains('XC',storm_types)
-        % Plot Each Storm
-        p_xc = plot(ax_xc,sData.('XC').(pDatasets{ii}).SWL, sData.('XC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
-        % Plot Each HC
-        for i = 1:length(CLs)
-            % Define Curve Name
-            if CLs(i) == 50
-                DataName = 'Best Estimate';
-            else
-                DataName = [num2str(CLs(i)) '%'];
-            end
-            % PLot CL into XC Axes
-            for pp = 1:length({hcData.('XC').(pDatasets{ii}).var})
-                fill_str = lower(hcData.('XC').(pDatasets{ii})(pp).var);
-                eval(['p = plot(ax_xc_hc_' fill_str ',xc_x,hcData.(''XC'').(pDatasets{ii})(pp).(plt_fld)(:,i),colorstr{i},''LineWidth'',2,''DisplayName'',DataName);']);
-                % Create Data Tip Vector
-                row = dataTipTextRow('RowID', 1:length(xc_x));
-                % Append New Data Tip
-                p.DataTipTemplate.DataTipRows(end+1) = row;
-            end
-            %             p1 = plot(ax_xc_hc_swl,xc_x,hcData.('XC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            %             p2 = plot(ax_xc_hc_hm0,xc_x,hcData.('XC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            %             p5 = plot(ax_xc_hc_tp,xc_x,hcData.('XC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            %             % Update Data Tip
-            %             % Create Data Tip Vector
-            %             row = dataTipTextRow('RowID', 1:length(xc_x));
-            %             % Append New Data Tip
-            %             p1.DataTipTemplate.DataTipRows(end+1) = row;
-            %             p2.DataTipTemplate.DataTipRows(end+1) = row;
-            %             p5.DataTipTemplate.DataTipRows(end+1) = row;
+%% PLOT XC DATA
+if contains('XC',storm_types)
+    % Number of XC's
+    xc_nstm = num2str(length(sData.('XC').SWL));
+    % Grab AEP/AEF Vector
+    xc_x = hcData.('XC')(1).(plt_fld_x);
+    %
+    ax_xc_objs = axes_formater(Figure0, use_aep, 'XC', xc_nstm, 0); % XC
+    % Plot Each Storm
+    p_xc = plot(ax_xc_objs(1), sData.('XC').SWL, sData.('XC').Hm0, 'bo', 'MarkerSize',2);
+    % Plot Each HC
+    for i = 1:length(CLs)
+        % Define Curve Name
+        if CLs(i) == 50
+            DataName = 'Best Estimate';
+        else
+            DataName = [num2str(CLs(i)) '%'];
+        end
+        % PLot CL into XC Axes
+        for pp = 1:length({hcData.('XC').var})
+            p = plot(ax_xc_objs(pp+1), xc_x, hcData.('XC')(pp).(plt_fld)(:,i),...
+                colorstr{i}, 'LineWidth', 2, 'DisplayName', DataName);
+            % Create Data Tip Vector
+            row = dataTipTextRow('RowID', 1:length(xc_x));
+            % Append New Data Tip
+            p.DataTipTemplate.DataTipRows(end+1) = row;
         end
     end
-
-    if contains('TC', storm_types)
-        % Plot Each Storm
-        p_tc = plot(ax_tc,sData.('TC').(pDatasets{ii}).SWL,sData.('TC').(pDatasets{ii}).Hm0,'bo','MarkerSize',2);
-%         p_tc = scatter(ax_tc, sData.('TC').(pDatasets{ii}).SWL, sData.('TC').(pDatasets{ii}).Hm0, 5, prob_mass.Param(:,5), 'filled');
-
-        % Plot Each HC
-        for i = 1:length(CLs)
-            % Define Curve Name
-            if CLs(i) == 50
-                DataName = 'Best Estimate';
-            else
-                DataName = [num2str(CLs(i)) '%'];
-            end
-            % PLot CL into TC Axes
-            for pp = 1:length({hcData.('TC').(pDatasets{ii}).var})
-                fill_str = lower(hcData.('TC').(pDatasets{ii})(pp).var);
-                eval(['p = plot(ax_tc_hc_' fill_str ',tc_x,hcData.(''TC'').(pDatasets{ii})(pp).(plt_fld)(:,i),colorstr{i},''LineWidth'',2,''DisplayName'',DataName);']);
-                % % Create Data Tip Vector
-                % row = dataTipTextRow('RowID', 1:length(xc_x));
-                % % Append New Data Tip
-                % p.DataTipTemplate.DataTipRows(end+1) = row;
-            end
-            %             p3 = plot(ax_tc_hc_swl,tc_x,hcData.('TC').(pDatasets{ii})(1).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            %             p4 = plot(ax_tc_hc_hm0,tc_x,hcData.('TC').(pDatasets{ii})(2).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            %             p6 = plot(ax_tc_hc_tp,tc_x,hcData.('TC').(pDatasets{ii})(3).(plt_fld)(:,i),colorstr{i},'LineWidth',2,'DisplayName',DataName);
-            %             % Update Data Tip
-            %             % Create Data Tip Vector
-            %             row2 = dataTipTextRow('RowID', 1:length(tc_x));
-            %             % Append New Data Tip
-            %             p3.DataTipTemplate.DataTipRows(end+1) = row2;
-            %             p4.DataTipTemplate.DataTipRows(end+1) = row2;
-            %             p6.DataTipTemplate.DataTipRows(end+1) = row2;
-        end
-    end
-    % Save Figure
-    saveas(Figure0,[outpath filesep 'StormSim_' pDatasets{ii} '_Project_Forcing_and_Hazard_Curve_Comparison'],'png');
-    close all;
 end
+
+% Add Legend
+legend2 = legend(ax_xc_objs(2));
+% Define Legend Location
+set(legend2,'Location','southeast','FontSize',ax_tick_fnt,...
+    'Orientation','horizontal','NumColumns',3,...
+    'FontSize', 16);
+
+%% PLOT TC DATA
+if contains('TC',storm_types)
+    % Number of TC's
+    tc_nstm = num2str(length(sData.('TC').SWL));
+    % Grab AEP/AEF Vector
+    tc_x = hcData.('TC')(1).(plt_fld_x); % JPM
+    %
+    ax_tc_objs = axes_formater(Figure0, use_aep, 'TC', tc_nstm, 4); % XC
+    % Plot Each Storm
+    p_tc = plot(ax_tc_objs(1), sData.('TC').SWL, sData.('TC').Hm0, 'bo', 'MarkerSize',2);
+    % Plot Each HC
+    for i = 1:length(CLs)
+        % Define Curve Name
+        if CLs(i) == 50
+            DataName = 'Best Estimate';
+        else
+            DataName = [num2str(CLs(i)) '%'];
+        end
+        % PLot CL into XC Axes
+        for pp = 1:length({hcData.('TC').var})
+            p = plot(ax_tc_objs(pp+1), tc_x, hcData.('TC')(pp).(plt_fld)(:,i),...
+                colorstr{i}, 'LineWidth', 2, 'DisplayName', DataName);
+            % Create Data Tip Vector
+            row = dataTipTextRow('RowID', 1:length(tc_x));
+            % Append New Data Tip
+            p.DataTipTemplate.DataTipRows(end+1) = row;
+        end
+    end
+end
+
+%% Save Figure
+saveas(Figure0, [outpath filesep 'StormSim_' pDatasets '_Project_Forcing_and_Hazard_Curve_Comparison'],'png');
+close all;
+
+%% AUX FUNCTIONS
 % --------- CLEAN-UP LOCAL FUNCTION ---------
     function ax_tc = ax_ini(ax_tc, ax_tick_fnt, ax_label_fnt, title_fnt, x_label, y_label, t_label)
         % Define Axes Properties
@@ -359,6 +172,50 @@ end
         xlabel(ax_tc, x_label,'FontSize',ax_label_fnt,'FontWeight','bold');
         % Add Titles
         title(ax_tc,t_label,'FontSize',title_fnt,'FontWeight','bold');
+    end
+
+    function ax_objs = axes_formater(fig, use_aep, st_type, nstm, col_indx)
+        ax_f = @(a, b, c, d) ax_ini(d, ax_tick_fnt, ax_label_fnt, title_fnt, a, b, c);
+        nrows = 2;
+        ncols = 4;
+        if use_aep == 1
+            xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3]);
+            xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}'});
+            x_lim = [10^-3, 1];
+            hc_label = 'Annual Exceedance Probability, AEP';
+            hc_label2 = 'AEP';
+        else
+            xticks_data = fliplr([10^0, 10^-1, 10^-2, 10^-3, 10^-4]);
+            xticks_data_lbl = fliplr({'10^0', '10^{-1}', '10^{-2}', '10^{-3}', '10^{-4}'});
+            x_lim = [10^-4 1];
+            hc_label = 'Annual Exceedance Frequency, AEF [1/yr]';
+            hc_label2 = 'AEF [1/yr]';
+        end
+        y_labels = ["H_{m_{0}} [m]", string(['SWL [m, ' datum ']']), "Hm0 [m]", "Tp [s]"];
+        x_labels = [string(['SWL [m, ' datum ']']), hc_label, hc_label2, hc_label2];
+        title_labels = [string([st_type ' Storms | ' nstm]),...
+            string([st_type ' | SWL | ' region ' | SP' num2str(sp_ID)]),...
+            string([st_type ' | Hm0 | ' region ' | SP' num2str(sp_ID_wave)]),...
+            string([st_type ' | Tp | ' region ' | SP' num2str(sp_ID_wave)])];
+        var_list = {'None','SWL','Hm0','Tp'};
+        for jj = 1:4
+            %
+            ax = subplot(nrows, ncols, col_indx+jj);
+            ax_objs(jj,1) = ax_f(x_labels(jj), y_labels(jj), title_labels(jj), ax);
+            %
+            if contains(var_list{jj}, {y_limit.var})
+                ax_objs(jj,1).YLim = [y_limit(contains({y_limit.var}, var_list{jj})).min y_limit(contains({y_limit.var}, var_list{jj})).max];
+            end
+            %
+            if jj>1
+                ax_objs(jj,1).XTick = xticks_data;
+                ax_objs(jj,1).XTickLabel = xticks_data_lbl;
+                ax_objs(jj,1).XLim = x_lim;
+                ax_objs(jj,1).XScale = 'log';
+                ax_objs(jj,1).YScale = 'linear';
+                ax_objs(jj,1).XDir = 'reverse';
+            end
+        end
     end
 end
 

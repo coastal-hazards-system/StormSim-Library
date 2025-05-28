@@ -1,4 +1,4 @@
-function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_headers_location)
+function [Storm, storm2rm] = chs_peaks_formater_mod(swl_peaks_table, hm0_peaks_table, STWAVE_headers_location, storm_duration, Tp_special)
 %{
     %% DESCRIPTION
     This function parses converted CHS data structure to generate a
@@ -18,24 +18,15 @@ function Storm = chs_peaks_formater(swl_peaks_table,hm0_peaks_table,STWAVE_heade
     Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
 
-%% GRAB INPUT FROM "config"
-%{
-        This section meant to provide an easy way to make changes to config
-        variable calls without having to alter core code.
-%}
-% Get Storm Data Table
-if swl_peaks_table.("Storm ID"){1}
-    % Sort According to Storm ID
-    [~, I] = sort(cellfun(@str2num, swl_peaks_table.("Storm ID")), 'ascend');
-    % Sort Dataset
-    swl_peaks_table = swl_peaks_table(I, :);
-else
-    swl_peaks_table = sortrows(swl_peaks_table,'Storm ID','ascend');
-end
+%% INITIALIZE VARIABLES
 % Initialize Storm Matrix
 Storm = zeros(height(swl_peaks_table),6);
+
+%% STORM SURGE (ADCIRC) 
+% Get Storm Data Table
+swl_peaks_table = sortrows(swl_peaks_table,'Storm ID','ascend');
 % Extract Storm ID From ADCIRC Table
-Storm(:,5) = str2double(swl_peaks_table.("Storm ID"));
+stm_id = num2cell(str2double(swl_peaks_table.("Storm ID")));
 % Extract Water Level From ADyCIRC Table
 Storm(:,1) = swl_peaks_table.("Water Elevation");
 % Assign NaN's If Needed
@@ -43,20 +34,18 @@ Storm(Storm(:,1)<-90,1) = NaN(1,1);
 
 %% WAVES (STWAVE, SWAN, WAM)
 % Sort Data Table
-if hm0_peaks_table.("Storm ID"){1}
-    % Sort According to Storm ID
-    [~, I] = sort(cellfun(@str2num, hm0_peaks_table.("Storm ID")), 'ascend');
-    % Sort Dataset
-    hm0_peaks_table = hm0_peaks_table(I, :);
-else
-    hm0_peaks_table = sortrows(hm0_peaks_table,'Storm ID','ascend');
-end
+hm0_peaks_table = sortrows(hm0_peaks_table,'Storm ID','ascend');
 %%%%%% Hm0 %%%%%%%
 % Extract Hm0 Peak Values From Data Table
 Storm(:,2) = hm0_peaks_table.(STWAVE_headers_location.Hm0);
 %%%%%% Tp %%%%%%
 % Extract Peak Period From STWAVE Tabley
 Storm(:,3) = hm0_peaks_table.(STWAVE_headers_location.Tp);
+% Convert From Tm to Tp (Special Case)
+if Tp_special == 1
+    % Convert Tm to Tp (Lake Ontario Case)
+    Storm(:,3) = Storm(:,3)*1.2;  % Remove This For Release, Need to inform user
+end
 %%%%%% Wave Direction %%%%%%
 % Extract Wave Direction From STWAVE Table
 Storm(:,4) = hm0_peaks_table.(STWAVE_headers_location.wDir);
@@ -66,6 +55,13 @@ Storm(sum(Storm(:,2:4)==0,2)>=1,2:4) = NaN(1,1);
 % Check For 'NaN'
 nan_rows = cell2mat(cellfun(@(x) strcmp(x,'NaN'), swl_peaks_table.("yyyymmddHHMM"), 'UniformOutput', false));
 % Assign NaN
-Storm(nan_rows,6) = NaN;
-Storm(~nan_rows,6) = datenum(swl_peaks_table.("yyyymmddHHMM")(~nan_rows),"yyyymmddHHMM");
+Storm(nan_rows,5) = NaN;
+Storm(~nan_rows,5) = datenum(swl_peaks_table.("yyyymmddHHMM")(~nan_rows),"yyyymmddHHMM");
+% Storm Duration
+Storm(:, 6) = storm_duration;
+% Find NaN's In "Default" Dataset
+storm2rm = cell2mat(stm_id(unique([find(isnan(Storm(:,1)));find(isnan(Storm(:,2)));...
+    find(isnan(Storm(:,3)));find(isnan(Storm(:,4)))])));
+% Append Data
+Storm = [stm_id, num2cell(Storm, 2)];
 end

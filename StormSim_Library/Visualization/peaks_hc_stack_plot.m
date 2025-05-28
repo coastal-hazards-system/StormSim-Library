@@ -1,8 +1,5 @@
 function peaks_hc_stack_plot(Resp, storm_type, use_aep, orientation, outpath)
 
-%% PULL DATA
-Resp = Resp.(storm_type).('Peaks');
-
 %% DEFINE FONTS
 % Title Font
 title_fnt = 26;
@@ -29,14 +26,14 @@ pDatasets = fieldnames(Resp);
 % Check For EMpty Entries
 pDatasets = pDatasets(~cell2mat(cellfun(@(x) isempty(Resp.(x)), pDatasets, 'UniformOutput', false)));
 % Compute Logical Vector
-s_lim_indx = Resp.(pDatasets{1})(1).x_plot>=x_lim(1);
+s_lim_indx = Resp.(pDatasets{1}).(storm_type)(1).x_plot>=x_lim(1);
 
 for ii = 1:length(pDatasets)
     for jj = 1:length(Resp.(pDatasets{ii}))
         % Get Min
-        dmin = min(Resp.(pDatasets{ii})(jj).y_plot(s_lim_indx, :),[],'all','omitnan');
+        dmin = min(Resp.(pDatasets{ii}).(storm_type)(jj).y_plot(s_lim_indx, :),[],'all','omitnan');
         % Get Max
-        dmax = max(Resp.(pDatasets{ii})(jj).y_plot(s_lim_indx, :),[],'all','omitnan');
+        dmax = max(Resp.(pDatasets{ii}).(storm_type)(jj).y_plot(s_lim_indx, :),[],'all','omitnan');
         % Store Absolute Min For Dataset/Response
         y_min_list(jj,ii) = dmin;
         % Store Absolute Max For Dataset/Response
@@ -71,15 +68,15 @@ end
 
 %% PLOT EACH RESPONSE FOR EACH DATASET
 % Find response Lengths
-[plen, ilen] = max(cell2mat(cellfun(@(x) length({Resp.(x).var}), pDatasets, 'un', false)));
-resp_list = cellfun(@(x) {Resp.(x).var}, pDatasets, 'un', false);
+[plen, ilen] = max(cell2mat(cellfun(@(x) length({Resp.(x).(storm_type).var}), pDatasets, 'un', false)));
+resp_list = cellfun(@(x) {Resp.(x).(storm_type).var}, pDatasets, 'un', false);
 resp_list = resp_list{ilen};
 % For Each Variable In PLOT
 for k = 1:plen
     % Initialize Figure Handle
     Figure0 = figure('Units','normalized','Position',[0 0 1 1],'Visible','off');
     for ll = 1:length(pDatasets)
-        plt = Resp.(pDatasets{ll});
+        plt = Resp.(pDatasets{ll}).(storm_type);
         if any(strcmp(resp_list{k}, {plt.var}))
             % Grab Variable Index
             pvar_indx = strcmp({plt.var}, resp_list{k});

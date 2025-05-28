@@ -1,5 +1,5 @@
-function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0_timeseries, storms2rm,...
-    has_WaterElevation, STWAVE_headers_location, Tp_special)
+function [storm_data, ts_storm2rm] = chs_timeseries_formater_mod(swl_timeseries, hm0_timeseries, storms2rm,...
+    STWAVE_headers_location, Tp_special)
 %{
     %% DESCRIPTION
     This function parses converted CHS data structure to generate a
@@ -30,16 +30,16 @@ function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0
 %}
 
 %% DEFINE INPUTS
-stmID = cellfun(@str2double,swl_timeseries.('Storm ID'));
+stmID = cellfun(@str2double,swl_timeseries.('Storm ID'), 'un', false);
 % Initialize Storage Matrix
-storm_data = cell(length(stmID(:,1)),2);
-% Remove Storms
-storm_data(1:length(storms2rm),:) = [];
-% initialize Counter
-ctr = 1;
+storm_data = [stmID ,cell(length(stmID(:,1)),1)];
+%
 ts_storm2rm = storms2rm;
 % Display Completion Progress Initial Print
 fprintf(1,'   Completion Progress: %3d%%\n',0);
+% Ensure Data Is Sorted Per Storm ID
+swl_timeseries = sortrows(swl_timeseries,'Storm ID','ascend');
+hm0_timeseries = sortrows(hm0_timeseries,'Storm ID','ascend');
 
 %% ADCIRC-STWAVE TIMESERIES MATCHING PROCESS
 % Loop Through All Storms
@@ -47,37 +47,31 @@ for stm = 1:length(stmID)
     % Print Status
     fprintf(1,'\b\b\b\b%3.0f%%',(100*(stm/length(stmID))));
     % Skip Bad Storm
-    if ismember(stmID(stm),storms2rm)
+    if ismember(stmID{stm},storms2rm) || length(swl_timeseries.("Water Elevation"){stm,1}) == 1
+        % Assign NaN
+        storm_data(stm, 2) = {nan(1,1)};
+        % Store Bad Storm ID
+        ts_storm2rm = [ts_storm2rm;stmID{stm}];
+        % Move To Next Storm
         continue;
     end
 
     %% EXTRACT STORM DATA
-    % Find Table Row To Extract
-    wlIndx = str2double(hm0_timeseries.("Storm ID"))==stmID(stm);
-    % Find Table Row To Extract
-    wIndx = str2double(swl_timeseries.("Storm ID"))==stmID(stm);
     % ADCIRC
-    WL = swl_timeseries.("Water Elevation"){wlIndx,1};
-    WL_datestr = num2str(swl_timeseries.("yyyymmddHHMM"){wlIndx,1});
+    WL = swl_timeseries.("Water Elevation"){stm,1};
+    WL_datestr = num2str(swl_timeseries.("yyyymmddHHMM"){stm,1});
     WL = [datenum(WL_datestr,'yyyymmddHHMM'), WL];
     % STWAVE
-    waves = [hm0_timeseries.(STWAVE_headers_location.Hm0){wIndx,1},...
-        hm0_timeseries.(STWAVE_headers_location.Tp){wIndx,1},...
-        hm0_timeseries.(STWAVE_headers_location.wDir){wIndx,1}];
-    % Append Water Elevation If Requested
-    if has_WaterElevation
-        try
-            waves = [hm0_timeseries.('Water Elevation'){wIndx,1},waves];
-        catch
-            waves = [hm0_timeseries.('WaterElevation'){wIndx,1},waves];
-        end
-    end
-    waves_datestr = num2str(hm0_timeseries.("yyyymmddHHMM"){wIndx,1});
+    waves = [hm0_timeseries.(STWAVE_headers_location.Hm0){stm,1},...
+        hm0_timeseries.(STWAVE_headers_location.Tp){stm,1},...
+        hm0_timeseries.(STWAVE_headers_location.wDir){stm,1}];
+    waves_datestr = num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1});
     waves = [datenum(waves_datestr,'yyyymmddHHMM'), waves];
-
+    % Lake Ontrario Special Case
     if Tp_special == 1
         waves(:,3) = waves(:,3).*1.2;
     end
+
     %% EXTRACT ADCRIC DATA THAT RESIDES INSIDE STWAVE TEMPORAL RANGE
     % Get Beggining Of Time Window
     tmin = min(waves(:,1));
@@ -95,78 +89,65 @@ for stm = 1:length(stmID)
     waves(sum(waves<-90,2)>=1,:)=[];
     % Append To Index Variable
     if isempty(WL) || isempty(waves)
-        ts_storm2rm = [ts_storm2rm;stmID(stm)];
+        ts_storm2rm = [ts_storm2rm;stmID{stm}];
+        continue;
     end
 
     %% ADJUST MODEL OUTPUTS (IF NEEDED)
-    % Wave Model Has Water Level
-    if has_WaterElevation == 1 % Use Provided Water Level Data
-        WL = waves(:,1:2);
-        WL_datestr = waves_datestr;
-    else % Ajust STWAVE Timestep To Hourly
-        % Check STWAVE TimeStep
-        ts_chk = unique(diff(waves(:,1)));
-        % Get First Value (unlickly to have 2 different timesteps in model run
-        ts_chk = ts_chk(1);
-        % If Timestep Is Not Hourly Then Need To Extract Hourly Intervals
-        %{
+    % Check STWAVE TimeStep
+    ts_chk = unique(diff(waves(:,1)));
+    % Get First Value (unlickly to have 2 different timesteps in model run
+    ts_chk = ts_chk(1);
+    % If Timestep Is Not Hourly Then Need To Extract Hourly Intervals
+    %{
             Notes:
             After Analysis of Storm Suite For NACCS It Was Found That
             Model Output For STWAVE Has One Of Three Timesteps: 15 min,
             30 min or hourly (Tropicals). ExtraTropicals provide hourly
             only. This Correction Assumes Model Run Begins At 00:00
-        %}
-        if round(ts_chk*24,1)~=1
-            if round(ts_chk,4)== 0.0104 % 15 Min
-                waves = waves(1:4:end,:);
-                waves_datestr = waves_datestr(1:4:end,:);
-            elseif round(ts_chk,4)== 0.0208 % 30 Min
-                waves = waves(1:2:end,:);
-                waves_datestr = waves_datestr(1:2:end,:);
-            elseif round(ts_chk,4) == 0.0139 % 20 min
-                waves = waves(1:3:end,:);
-                waves_datestr = waves_datestr(1:3:end,:);
-            else
-                error(['Unrecognized timestep for data']);
-            end
-        end
-        % Make Sure That Datasets Are the Sames Size
-        if length(waves(:,1))~=length(WL(:,1))
-            % Try Matching Timesteps Instead Of Range
-            % Find Matching Timestamps STWAVE IN ADCIRC
-            [stVec] = ismember(waves(:,1),WL(:,1));
-            % Find Matching Timestamps ADCIRC IN STWAVE
-            adVec = ismember(WL(:,1),waves(:,1));
-            % Adjust WL Data
-            WL = WL(adVec,:);
-            % ADjust Wave Data
-            waves = waves(stVec,:);
+    %}
+    if round(ts_chk*24,1)~=1
+        if round(ts_chk,4)== 0.0104 % 15 Min
+            waves = waves(1:4:end,:);
+            waves_datestr = waves_datestr(1:4:end,:);
+        elseif round(ts_chk,4)== 0.0208 % 30 Min
+            waves = waves(1:2:end,:);
+            waves_datestr = waves_datestr(1:2:end,:);
+        elseif round(ts_chk,4) == 0.0139 % 20 min
+            waves = waves(1:3:end,:);
+            waves_datestr = waves_datestr(1:3:end,:);
+        else
+            error(['Unrecognized timestep for data']);
         end
     end
-
-    %% MATCH ADCRIC AND STWAVE OUTPUTS
-
-    %{
-            LC_SimOUT_hyd(lc).LCNUM(:,1);   %Date/Time
-            LC_SimOUT_hyd(lc).LCNUM(:,2);   %SWL, m, MSL
-            LC_SimOUT_hyd(lc).LCNUM(:,3);   %Hm0, m
-            LC_SimOUT_hyd(lc).LCNUM(:,4);   %Tp, s
-            LC_SimOUT_hyd(lc).LCNUM(:,5);   %Wave Direction
-            LC_SimOUT_hyd(lc).LCNUM(:,6)    %Duration
-    %}
-    storm_data(ctr,:) = [{stmID(stm)}, {[WL,...
+    % Make Sure That Datasets Are the Sames Size
+    if length(waves(:,1))~=length(WL(:,1))
+        % Try Matching Timesteps Instead Of Range
+        % Find Matching Timestamps STWAVE IN ADCIRC
+        [stVec] = ismember(waves(:,1),WL(:,1));
+        % Find Matching Timestamps ADCIRC IN STWAVE
+        adVec = ismember(WL(:,1),waves(:,1));
+        % Adjust WL Data
+        WL = WL(adVec,:);
+        % ADjust Wave Data
+        waves = waves(stVec,:);
+        % Check length Again
+        if length(waves(:,1))~=length(WL(:,1))
+            % Assign NaN
+            storm_data(stm, 2) = {nan(1,1)};
+            % Store Bad Storm ID
+            ts_storm2rm = [ts_storm2rm;stmID{stm}];
+            % Move To Next Storm
+            continue;
+        end
+    end
+    % Build Storm Data Matrix [ SSL, Hm0, Tp, wDir, date, dt ]
+    storm_data{stm,2} = [WL(:,2),...
         waves(:,2:end),...
-        repmat(mode(diff(WL(:,1))),length(WL(:,1)),1)]}];
-
-    ctr = ctr + 1;
+        WL(:, 1), repmat(mode(diff(WL(:,1))),length(WL(:,1)),1)];
 end
-% Remove Storms WIth No Matching ADCIRC+STWAVE Data
-ts_storm2rm = unique([cell2mat(storm_data(cellfun(@isempty,storm_data(:,2)),1)); ts_storm2rm]);
-storm_data(cellfun(@isempty,storm_data(:,2)),:) = [];
+% Do Unique 
+ts_storm2rm = unique(ts_storm2rm);
 % Print Status
 fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
-% Check For Bad Storms
-if ~exist('ts_storm2rm','var')
-    ts_storm2rm = [];
-end
 end

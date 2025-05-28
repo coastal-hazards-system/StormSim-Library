@@ -1,7 +1,5 @@
 function [project_forcing, config] = call_uncertainty_engine(config, project_forcing)
 %% GRAB INFORMATION FROM "config"
-% Workflow Called
-wFlow = config.workflow;
 % Grab Uncertainty Application Flag
 u_engine = config.u_engine; % Check if user has already applied uncertainty with this function
 
@@ -9,82 +7,39 @@ u_engine = config.u_engine; % Check if user has already applied uncertainty with
 if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicates
     % Display Status Message
     disp('Applying uncertainty to project forcing....');
-    % Execute Code Block By Workflow Type
-    switch wFlow
-        case 1 % StormSim: PROS
-            %% STORMSIM: PROS (STRUCTURE DESIGN)
-            % Scan For Storm Types In "project_forcing"
-            level_1 = fieldnames(project_forcing); % XC and/or TC
-            % For Each Storm Sampling Scheme Available
-            for ii = 1:length(level_1)
+    %% STORMSIM: PROS (STRUCTURE DESIGN)
+    % Scan For Data Types
+    data_types = fieldnames(project_forcing);
+    % Loop Across Each Data Type
+    for dt = 1:length(data_types) % Peaks , Timeseries
+        % Scan For Matching Types
+        match_types = fieldnames(project_forcing.(data_types{dt}));
+        % Keep Relevant Fields 
+        match_types = match_types(contains(match_types, {'Default','WLP','WHP'}));
+        % Loop Across Each Matching Type
+        for mt = 1:length(match_types) % Default, WLP, WHP
+            % Scan For Storm Types
+            storm_types = fieldnames(project_forcing.(data_types{dt}).(match_types{mt}));
+            % Loop Across Each Storm Type
+            for st = 1:length(storm_types) % XC, TC, CC
+                % Data
+                data = project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st});
                 % Load RandNorm
-                switch level_1{ii}
-                    case 'TC'
-                        RandNorm = readmatrix('discrete_norm_444.txt')';
-                    case 'XC'
-                        RandNorm = readmatrix('discrete_norm_20.txt')';
-                end
-                % Scan Contents Of 2nd Structure Level
-                level_2 = fieldnames(project_forcing.(level_1{ii})); % Peaks and/or Timeseries
-                level_2 = level_2(contains(level_2, {'Peaks','Timeseries'}));
-                % For Peaks And/Or Timeseries
-                for jj = 1:length(level_2)
-                    % Search For Alternater DAtasets In Case Of Peaks
-                    if strcmp(level_2{jj},'Peaks')
-                        % Scan Contents Of 3rd Structure Level
-                        level_3 = fieldnames(project_forcing.(level_1{ii}).(level_2{jj}));
-                        % Remove Sample Index Field
-                        level_3 = level_3(contains(level_3,{'Maxima','WHP','WLP'})); % Maxima, Wave Height Priority, Water Level Priority
-                        % For Each Dataset Found
-                        for kk = 1:length(level_3)
-                            % Data
-                            data = project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk});
-                            % Apply Uncertainty
-                            [project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk})] = apply_pros_uncertainty(config, data, 'Peaks', RandNorm);
+                switch config.workflow % PROS - 1, 2, 4 | LCS - 3
+                    case {1,2,4} % Use Pre-computed Discrete Normal Distribution
+                        switch storm_types{st}
+                            case 'TC'
+                                RandNorm = readmatrix('discrete_norm_444.txt')'; % z-scores
+                            case 'XC'
+                                RandNorm = readmatrix('discrete_norm_20.txt')';
                         end
-                    else % Timeseries
-                        % Data
-                        data = project_forcing.(level_1{ii}).(level_2{jj}); % Timeseries Are Restricted To Maxima Data Matching Only
-                        % Apply Uncertainty
-                        [project_forcing.(level_1{ii}).(level_2{jj})] = apply_pros_uncertainty(config, data, 'Timeseries', RandNorm);
-                    end
+                    case {3}
+                        RandNorm = []; % Create Random Normal Distribution for Each Event (randn(size(Resp))
                 end
+                % Apply Uncertainty
+                project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st}) = apply_uncertainty(config, data, RandNorm);
             end
-        case {2,4} % SST/JPM for Forcing Only Using RB1 & RB3 Approach
-            % Do nothing, Uncertainty is incorporated inside SST/JPM
-            % StormSim: EVA, StormSim: PROS-FB
-        case 3 % LCS
-            %% LIFE CYCLE BASE
-            % Scan For Storm Types In "project_forcing"
-            level_1 = fieldnames(project_forcing); % XC and/or TC
-            % For Each Storm Sampling Scheme Available
-            for ii = 1:length(level_1)
-                % Scan Contents Of 2nd Structure Level
-                level_2 = fieldnames(project_forcing.(level_1{ii})); % Peaks and/or Timeseries
-                % For Peaks And/Or Timeseries
-                for jj = 1:length(level_2)
-                    % Search For Alternater DAtasets In Case Of Peaks
-                    if strcmp(level_2{jj},'Peaks')
-                        % Scan Contents Of 3rd Structure Level
-                        level_3 = fieldnames(project_forcing.(level_1{ii}).(level_2{jj})); % Maxima, Wave Height Priority, Water Level Priority
-                        % Remove Sample Index Field
-                        level_3 = level_3(contains(level_3,{'Maxima','WHP','WLP'}));
-                        % For Each Dataset Found
-                        for kk = 1:length(level_3)
-                            % Extract LC Data
-                            lc_data = project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk});
-                            % Compute Structural Parameter UNcertainty Only Once
-                            % Apply Uncertainty
-                            project_forcing.(level_1{ii}).(level_2{jj}).(level_3{kk}) = apply_lcs_uncertainty(config, lc_data, level_2{jj});
-                        end
-                    else % Timeseries
-                        % Extract LC Data
-                        lc_data = project_forcing.(level_1{ii}).(level_2{jj}); % Timeseries Are Restricted To Maxima Data Matching Only
-                        % Apply Uncertainty
-                        project_forcing.(level_1{ii}).(level_2{jj})= apply_lcs_uncertainty(config, lc_data, level_2{jj});
-                    end
-                end
-            end
+        end
     end
     % Add Uncertainty Application Flag To Config
     config.u_engine = 1;

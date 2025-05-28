@@ -40,7 +40,7 @@ config.stationIDs = station;
 % Desired product {'Verified Hourly Height Water Level','Verified 6-Minute Water Level','Verified Monthly Mean Water Level','Preliminary 6-Minute Water Level'};
 config.prod = {'Verified Hourly Height Water Level'};
 % Operational Mode 
-config.opMode = 3;% (1 - Full Record, 2 - Specific Date, 3 - Prediction Only) 
+config.opMode = 2;% (1 - Full Record, 2 - Specific Date, 3 - Prediction Only) 
 % Dates of interest (Only if opMode == 2 or 3)
 config.dBeg = datenum(start_date, 'yyyy-mm-dd HH:MM:SS');
 config.dEnd = config.dBeg + datenum(1,0,0,0,0,0);

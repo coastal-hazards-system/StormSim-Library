@@ -1,4 +1,4 @@
-function S_damage_plotter(config, TimeSeries, pctl, show_figs)
+function S_damage_plotter(config, TimeSeries, pctl, show_figs, outfolder)
 disp('      Plotting StormSim: CSR - Damage Progression Analysis outputs... ');
 %% GRAB DETAILS FROM "config"
 % Define Project CHS Region
@@ -10,8 +10,7 @@ prc = strsplit(config.project_CLs(2:end-1),{' '});
 % Define Simulation Length
 nyears = [0:config.mcs_nYears];
 % Output Save Dir
-outDir = [config.outfolder filesep config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id];
+outDir = fullfile(outfolder, [config.project_name,'_', config.struc_id]);
 % Make Figures Visibles/Invisible
 if show_figs==1
     fig_stat = 'on';

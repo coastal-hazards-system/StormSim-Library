@@ -98,16 +98,18 @@ if run_flag == 1
             config.pros_compute_forcing_HC = 1;
     end
     % Check For TC Probabilities Dependencies
-    chk2 = exist(PM_path,'dir') | exist(PM_path,'file');
-    % Verify Results
-    if chk2 ~= 0
-        disp('CHS tropical cylcones probability masses found...');
-    else
-        disp('CHS tropical cyclones probability masses not found...');
-        % Throw Error Message
-        warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
-        % Update Config
-        config.storm_sampling = 'XC';
+    if contains(config.storm_sampling, {'TC', 'CC'})
+        chk2 = exist(PM_path,'dir') | exist(PM_path,'file');
+        % Verify Results
+        if chk2 ~= 0
+            disp('CHS tropical cylcones probability masses found...');
+        else
+            disp('CHS tropical cyclones probability masses not found...');
+            % Throw Error Message
+            warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
+            % Update Config
+            config.storm_sampling = 'XC';
+        end
     end
 end
 

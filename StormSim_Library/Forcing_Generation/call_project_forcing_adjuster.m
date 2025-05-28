@@ -1,10 +1,6 @@
 function [project_forcing, config] = call_project_forcing_adjuster(config, project_forcing, structure)
 %% GRAB INPUTS FROM "config"
-% Define Workflow
-workflow = config.workflow;
-% Define If Peaks Are Being Used 
-use_peaks = config.use_peaks;
-% Grab Forcing Adjsutment Flag 
+% Grab Forcing Adjsutment Flag
 f_adjust = config.f_adjust;
 
 %% ADJUST PROJECT FORCING ACCORDING TO WORKFLOW
@@ -12,41 +8,22 @@ f_adjust = config.f_adjust;
 if f_adjust == 0
     % Print Status
     disp('Adjusting project forcing datasets....');
-    % Determine Data Type
-    switch workflow
-        case {1,2,4} % StormSim: PROS
-            wName = 'PROS';
-        case 3 % StormSim: LCS
-            wName = 'LCS';
-    end
-    % Grab "project_forcing" Structure Fields
-    level_1 = fieldnames(project_forcing);
-    % Scan Peaks Datasets
-    if use_peaks == 1
-        level_2 = fieldnames(project_forcing.(level_1{1}).('Peaks'));
-        level_2 = level_2(contains(level_2,{'Maxima','WLP','WHP'}));
-    else
-        level_2 = {'Maxima'};
-    end
-    % Loop Through All Peak Datasets & Storm Types
-    for jj = 1:length(level_1)
-        % Scan Peaks And Timeseries Field
-        level_3 = fieldnames(project_forcing.(level_1{jj}));
-        level_3 = level_3(contains(level_3,{'Peaks','Timeseries'}));
-        % Loop Through Peaks/Timeseries
-        for kk = 1:length(level_3)
-            if strcmp(level_3{kk},{'Peaks'})
-                for ii = 1:length(level_2)
-                    % Create Aux Var
-                    aux_var = project_forcing.(level_1{jj}).('Peaks').(level_2{ii});
-                    % Assign To Output Variable
-                    project_forcing.(level_1{jj}).('Peaks').(level_2{ii}) = adjust_project_forcing(config, structure, aux_var, level_1{jj}, wName);
-                end
-            else % Timeseries
-                % Create Aux Var
-                aux_var = project_forcing.(level_1{jj}).('Timeseries');
-                % Assign To Output Variable
-                project_forcing.(level_1{jj}).('Timeseries') = adjust_project_forcing(config, structure, aux_var, level_1{jj}, wName);
+    % Scan For Data Types
+    data_types = fieldnames(project_forcing);
+    % Loop Across Each Data Type
+    for dt = 1:length(data_types)
+        % Scan For Matching Types
+        match_types = fieldnames(project_forcing.(data_types{dt}));
+        % Loop Across Each Matching Type
+        for mt = 1:length(match_types)
+            % Scan For Storm Types
+            storm_types = fieldnames(project_forcing.(data_types{dt}).(match_types{mt}));
+            % Loop Across Each Storm Type
+            for st = 1:length(storm_types)
+                % Data
+                data = project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st});
+                % Adjust Project Forcing Fields
+                project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st}) = adjust_project_forcing(config, structure, data);
             end
         end
     end

@@ -50,7 +50,9 @@ if sum(File_version)>1 % V2 File Indication
     end
 end
 File_version = versions(strcmp(info.Attributes(File_version).Value,versions_to_look));
-
+if strcmp(FileType, 'Timeseries')
+    File_version = "V1";
+end
 % Check If HDF5 File Has Groups
 Has_Groups = length(info.Groups)>0; %#ok<*ISMT>
 % Check If HDF5 File Has Datasets (Base Level)
