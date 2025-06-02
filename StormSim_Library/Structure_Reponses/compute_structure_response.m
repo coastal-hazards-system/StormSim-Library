@@ -1,4 +1,4 @@
-function [Resp, project_forcing] = compute_structure_response(config, structure, project_forcing,  emp_coeff, storm_type)
+function [Resp, project_forcing] = compute_structure_response(config, structure, project_forcing,  emp_coeff, get_max)
 %% GRAB DETAILS FROM "config"
 % Strucutre Type
 struc_type = config.struc_type;
@@ -16,11 +16,14 @@ calc_dn50_ls = config.compute_dn50_leeside;
 calc_dn50_lcbw = config.compute_dn50_lcbw;
 calc_r2p = config.compute_r2p;
 calc_q = config.compute_q;
-calc_q_vol = config.compute_q_vol;
+calc_q_vol = config.compute_q_vol; % Permanently set to 0 for FB
 calc_dd = config.compute_damaging_depth;
 calc_dd_ks = config.compute_damaging_depth_Ks;
 calc_dd_slope = config.compute_damaging_depth_slope;
 calc_p1 = config.compute_p1;
+calc_p2_p3 = config.compute_p2_p3;
+calc_nappe = config.compute_nappe;
+
 % Get Save Point Depth
 SPdepth = config.chs_sp_depth;
 % Remove Responses Based On Structure Type
@@ -35,6 +38,14 @@ switch struc_type
         calc_dn50_ls = 0;
         calc_dn50_lcbw = 0;
         calc_r2p = 0;
+        if calc_p2_p3 == 1
+            calc_p1 = 1;
+            compute_HC = 1;
+        end
+        if calc_nappe == 1
+            calc_q = 1;
+            compute_HC = 1;
+        end
     case 3 % Rubblemound (R2p, q, Dn50)
         calc_p1 = 0;
 end
@@ -64,7 +75,7 @@ berm_width = structure.berm_width;
 berm_slope = structure.berm_slope;
 % Seaside Slope (cot(alpha))
 if config.slope_type == 1 % This flag will be harcoded for distirbutable version
-    slope = structure.(storm_type).seaward_slope; % []
+    slope = structure.seaward_slope; % []
 else % Idealized Slope
     slope = structure.seaside_slope;
 end
@@ -82,6 +93,8 @@ switch struc_type
         P = structure.cem_P;
     case  2
         wall_bottom_elev = structure.wall_bottom_elevation;
+        hw = wall_bottom_elev + crest_elev;
+        toe_elev = wall_bottom_elev;
 end
 % Water Density kg/m^3
 rho_w = structure.water_density;
@@ -91,19 +104,17 @@ rho_w = structure.water_density;
 switch workflow
     case {1,2,4} % RB
         % Create Forcing Variables For Simplicity
-        SWL = project_forcing.(storm_type).SWL; % SWL
-        Hm0 = project_forcing.(storm_type).Hm0; % Hm0
-        Tp = project_forcing.(storm_type).Tp; % Tp
+        SWL = project_forcing.SWL; % SWL
+        Hm0 = project_forcing.Hm0; % Hm0
+        Tp = project_forcing.Tp; % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-        dflat = 3;
     case 3 % LCS
-        SWL = cellfun(@(x) x(:,5),project_forcing.(storm_type),'un',false); % SWL
-        Hm0 = cellfun(@(x) x(:,6),project_forcing.(storm_type),'un',false); % Hm0
-        Tp = cellfun(@(x) x(:,7),project_forcing.(storm_type),'un',false); % Tp
+        SWL = cellfun(@(x) x(:,5),project_forcing,'un',false); % SWL
+        Hm0 = cellfun(@(x) x(:,6),project_forcing,'un',false); % Hm0
+        Tp = cellfun(@(x) x(:,7),project_forcing,'un',false); % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-        dflat = 2;
 end
 
 %% COMPUTE STRUCTURE RESPONSE
@@ -118,21 +129,36 @@ if no_resp~=0
                 slope_aux = cellfun(@(y) repmat(berm_slope, size(y)), SWL, 'un', false);
             end
             % Compute runup & Overtopping
-            if calc_q == 1
+            if calc_q == 1 || calc_nappe == 1
                 [~,~, Resp.q, q_overflow, Resp.q_wave_ot]=cellfun(@(a, b, c, d, e, f) Eurotop_r2p_q_Final(a, b, c, d,...
                     f, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
-                    wall_bottom_elev, berm_width, struc_type),...
+                    wall_bottom_elev, berm_width, g, struc_type),...
                     Hm0, Tp, SWL, Rc, gammas, slope_aux,'un',false);
             end
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
             % Compute Water Depth @ Berm
-            hb = cellfun(@(x) x - abs(berm_elev), SWL,'un',false);
+            hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
             % Compute Wall Pressures
             if calc_p1 == 1 || calc_p2_p3 == 1
                 % P1
-                Resp.p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
-                    zeros(size(a)), c, d, berm_width, slope, rho_w, [1, 1]),Hm0,Tm10,h,hb,'un',false);
+               Resp.p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
+                    0, c, d, berm_width, berm_slope, rho_w, g), Hm0, Tm10, h, hb, 'un', false);
+            end
+            %
+            if calc_p2_p3 == 1
+                % Compute P2 & P3 Wall Pressures (Plots)
+                [Resp.p2dyn, Resp.p2sta, Resp.p2total,...
+                    Resp.p3dyn, Resp.p3sta, Resp.p3total, Resp.pu] = cellfun(@(a, b, c, d, e, f) goda_forces_on_vertical_p2p3(a, b, 1.8,...
+                    0, c, d, e, hw, f, rho_w, g), Hm0, Tm10, h, hb, Rc, Resp.p1, 'un', false);
+            end
+            %
+            if calc_nappe == 1
+                [Resp.X_low, Resp.theta_low, Resp.X_up,...
+                    Resp.theta_up, Resp.Bx, Resp.X_c_surge,...
+                    Resp.theta_center, Resp.Bjet, Resp.Vjet,...
+                    Resp.Fjet] = cellfun(@(a, b, c) floodwall_nappe_response(a, b,...
+                    c, hw, rho_w), SWL, Hm0, Resp.q, 'un', false);
             end
         case {1,3} % Levees & Rubblemound
             % Reformat Slope If Needed
@@ -145,7 +171,7 @@ if no_resp~=0
             if calc_r2p == 1 || calc_q == 1 || calc_q_vol == 1
                 [Resp.R2p, Resp.R2p_SWL, Resp.q, ~, Resp.q_wave_ot]=cellfun(@(a, b, c, d, e,f) Eurotop_r2p_q_Final(a, b, c, d,...
                     f, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
-                    toe_elev, berm_width, struc_type),...
+                    toe_elev, berm_width, g, struc_type),...
                     Hm0, Tp, SWL, Rc, gammas, slope_aux,'un',false);
             end
             % Compute Mean Period
@@ -162,7 +188,10 @@ if no_resp~=0
                 end
                 % Leeside
                 if calc_dn50_ls == 1
-                    [Resp.Dn50_Lee] = cellfun(@(a,b,c,d,e) van_gent_Dn50_leeside_stability(S_ls, a, b, c, d, crest_width, slope, slope_lee, duration, delta, emp_coeff.k_ls1, emp_coeff.k_ls2, e.gamma_f),...
+                    [Resp.Dn50_Lee] = cellfun(@(a,b,c,d,e) ...
+                        van_gent_Dn50_leeside_stability(S_ls, a, b, c, d,...
+                        crest_width, slope, slope_lee, duration, delta, g,...
+                        emp_coeff.k_ls1, emp_coeff.k_ls2, e.gamma_f),...
                         Hm0, Tm10, Tm, Rc,gammas,'un',false);
                 end
                 % Dn50 Seaside Low Crested Breakwater
@@ -173,7 +202,7 @@ if no_resp~=0
                     However, for Midbay, we have both normal structure and low crested because toe berm is at MLLW. 
                     So we have both normal and LC (toe berm) stability computed in same sim.
                     %}
-                    [Resp.Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_Dn50(a,b,delta), Hm0,Rc,'un',false);
+                    [Resp.Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, []), Hm0,Rc,'un',false);
                 end
             end
     end
@@ -185,8 +214,6 @@ if no_resp~=0
     if calc_q_vol == 1 && length(Resp.q{1}(:,1)) > 1
         Resp.Q_vol = cellfun(@(x) sum(x,1,"omitnan"),Resp.q,'un',false);
         Resp.Q_vol_wave_ot = cellfun(@(x) sum(x,1,"omitnan"),Resp.q_wave_ot,'un',false);
-    else
-        calc_q_vol = 0;
     end
 else % StormSim:EVA was called, no structure responses
     Resp = [];
@@ -196,13 +223,13 @@ end
 % For TC SSL, Hm0, Tp Datasets -> Need storm data with replicates without Ua, Ur. JPM accounts for this uncertainty component during the integration process.
 % For XC SSL, Hm0, Tp Datasets -> Need storm data without replicates and without Ua, Ur. PST accounts for both uncertainty components through the bootstrapping process
 % Define Replicate Condition Per Storm Type
-if workflow == 1 && any(contains(fieldnames(project_forcing.(storm_type)),{'_no_rep'}))
+if any(contains(fieldnames(project_forcing),{'_no_rep'}))
     % Grab Values With No Uncertainty For HC Calculations
-    SWL = project_forcing.(storm_type).('SWL_no_rep');
-    Hm0 = project_forcing.(storm_type).('Hm0_no_rep');
-    Tp = project_forcing.(storm_type).('Tp_no_rep');
+    SWL = project_forcing.('SWL_no_rep');
+    Hm0 = project_forcing.('Hm0_no_rep');
+    Tp = project_forcing.('Tp_no_rep');
     % Remove Fields
-    project_forcing.(storm_type) = rmfield(project_forcing.(storm_type),{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
+    project_forcing = rmfield(project_forcing,{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
     % If User Requested Forcing Fields (SSL, Hm0, Tp) HC
     if compute_HC == 1
         % Find SWL Max For Each Storm
@@ -212,25 +239,27 @@ if workflow == 1 && any(contains(fieldnames(project_forcing.(storm_type)),{'_no_
         %
         Resp.('Tp') = cellfun(@(x,y) x(y), Tp, Hm0_indx, 'un', false);
         %
-        var_bool_forcing = [ 1 1 1 ];
+        forcing_bool = [1, 1, 1];
     else
-        var_bool_forcing = [ 0 0 0 ];
+        forcing_bool = [0, 0, 0];
     end
 else
-    var_bool_forcing = [ 0 0 0 ];
+    forcing_bool = [0, 0, 0];
 end
 
 %% FLATTEN DATA & STORE RESPONSES
-% Build Var Inventory Logical Vector
-var_bool = [var_bool_forcing, calc_dn50_ss, calc_dn50_ls, calc_dn50_lcbw, calc_r2p, calc_r2p, calc_q, calc_q,calc_q_vol, calc_q_vol, calc_p1, calc_dd, calc_dd];
-var_names = {'SWL', 'Hm0', 'Tp', 'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'Q_vol', 'Q_vol_wave_ot', 'p1', 'DamDepth', 'DamDepthElev'};
-% Evaluate According To Workflow
-switch workflow
-    case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
-        var_names = var_names(var_bool == 1);
-        % Loop Through Each Response
-        for vv = 1:length(var_names)
-            Resp.(var_names{vv}) = cell2mat(cellfun(@(x) max(x,[],1), Resp.(var_names{vv}), 'un', false));
-        end
+if get_max == 1
+    % Build Var Inventory Logical Vector
+    var_bool = [forcing_bool, calc_dn50_ss, calc_dn50_ls, calc_dn50_lcbw, calc_r2p, calc_r2p, calc_q, calc_q, calc_p1, calc_dd, calc_dd];
+    var_names = {'SWL', 'Hm0', 'Tp', 'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'p1', 'DamDepth', 'DamDepthElev'};
+    % Evaluate According To Workflow
+    switch workflow
+        case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
+            var_names = var_names(var_bool == 1);
+            % Loop Through Each Response
+            for vv = 1:length(var_names)
+                Resp.(var_names{vv}) = cell2mat(cellfun(@(x) max(x,[],1), Resp.(var_names{vv}), 'un', false));
+            end
+    end
 end
 end
