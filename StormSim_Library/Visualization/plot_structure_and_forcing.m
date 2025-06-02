@@ -10,7 +10,7 @@ s_years = [20,50,100,500];
 if use_aep == 1
     v_freq = ceil(1./aep2aef(Resp(1).x_table));
 else
-    v_freq = ceil(1./Resp(1).x_table);
+    v_freq = 1./Resp(1).x_table;
 end
 % Color Vector
 color_str = {'-b','-g','-y','-r'};
