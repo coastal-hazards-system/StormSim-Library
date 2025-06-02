@@ -118,7 +118,7 @@ switch structure_type
         % Initialize Shape Variables
         xs = zeros(1,5);ys=xs;
         % Wall Toe
-        xs(1) = xs_berm(3);ys(1) = wall_bottom;
+        xs(1) = 0;ys(1) = wall_bottom;
         % Wall Toe To Crest Path
         xs(2) =  xs(1);ys(2) = (crest_elevation);
         % Wall Width (Width Is Visual Only)
@@ -138,7 +138,7 @@ if structure_type~=2
     ax.XLim = [0 max(xs)+1];
 else
     xs = xs + 1;
-    ax.XLim = [0 xs];
+    ax.XLim = [0 max(xs)];
 end
 % axis equal;
 ax.YLim = [toe-0.5 max(ys)+0.5];
