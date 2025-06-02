@@ -1,4 +1,4 @@
-function  [Output]= call_hazard_curve_builder_mod(config, structure, project_forcing, Resp, storm_type, use_aep, outPath)
+function  [Output]= call_hazard_curve_builder(config, TC_Prob, Resp, storm_type, use_aep, outPath)
 % CALL_STRUCTURE_CURVE_BUILDER Computes hazard curve for provided forcing
 % and structure responses using StormSim's SST & JPM. Supports hazard curve
 % calculations for: SWL, Hm0, Tp, R2p, R2p+SWL, q, Dn50, Dn50_LCBW, p1.
@@ -25,8 +25,8 @@ function  [Output]= call_hazard_curve_builder_mod(config, structure, project_for
 disp('            Building hazard curves....');
 
 %% QUICK ABORT COMMANDS
-if ~isstruct(Resp) || ~isstruct(project_forcing)
-    error('Error: Variables "Resp" and "project_forcing" need to be populated or empty MATLAB structures....');
+if ~isstruct(Resp)
+    error('Error: Variables "Resp" needs to be populated or empty MATLAB structures....');
 end
 
 %% GRAB DETAILS FROM "config"
@@ -46,13 +46,8 @@ save_name = fullfile(outPath, [config.project_name,'_', config.struc_id]);
 vars_to_process = fieldnames(Resp);
 % Append Data Structure
 data_to_process = Resp;
-% TC Storm Unique Variable
-if strcmp(storm_type, 'TC')
-    % Get Storm Associated Prob Mass
-    TC_Prob = project_forcing.TC_Prob;
-    % Remove Tc Prob From Filenames
-    vars_to_process = vars_to_process(~contains(vars_to_process,{'TC_Prob'}));
-end
+% Remove Tc Prob From Filenames
+vars_to_process = vars_to_process(~contains(vars_to_process,{'TC_Prob'}));
 
 %% INITIALIZE FIELDS && RESPONSE LOOP
 % Initialize Counter
@@ -173,10 +168,10 @@ end
         Output(rIndx).('var') = sVar;
         Output(rIndx).CL = CL; % Percentiles (Cols)
         % Only Grab Frequency Bound On The Table
-        Output(rIndx).('x_plot') = x_plt(x_plt >= min(x_tbl) & x_plt <= max(x_tbl),:);
-        Output(rIndx).('y_plot') = y_plt(x_plt >= min(x_tbl) & x_plt <= max(x_tbl),:);
-        Output(rIndx).('x_table') = x_tbl;
-        Output(rIndx).('y_table') = y_tbl;
+        Output(rIndx).('x_plot') = x_plt(x_plt >= 0.001 & x_plt <= max(x_tbl),:);
+        Output(rIndx).('y_plot') = y_plt(x_plt >= 0.001 & x_plt <= max(x_tbl),:);
+        Output(rIndx).('x_table') = x_tbl(x_tbl >= 0.001 & x_tbl <= max(x_tbl),:);
+        Output(rIndx).('y_table') = y_tbl(x_tbl >= 0.001 & x_tbl <= max(x_tbl),:);
         Output(rIndx).('x_table_ARI') = x_tbl;
         Output(rIndx).('POT') = POT;
         Output(rIndx).('y_label') = y_label;
