@@ -1,4 +1,4 @@
-function [Nappe] = floodwall_nappe_response(SWL, Hm0, q, h_wall, rho_w)
+function [X_low, theta_low, X_up, theta_up, Bx, X_c_surge, theta_center, Bjet, Vjet, Fjet] = floodwall_nappe_response(SWL, Hm0, q, h_wall, rho_w)
 %% VECTORIZE INPUTS 
 data_dims = size(SWL);
 SWL = SWL(:);
@@ -40,7 +40,7 @@ Nappe.Fjet  = rho_w.*Nappe.Bjet.*(Nappe.Vjet).^2; % N/m\
 fnames = fieldnames(Nappe);
 % Reshape Fields 
 for ii = 1:length(fnames)
-    Nappe.(fnames{ii}) = reshape(Nappe.(fnames{ii}), data_dims);
+    eval([fnames{ii} ' = reshape(Nappe.(fnames{ii}), data_dims);']);
 end
 
 %% PARAMETERS NOT FOUND IN TR-21-15 Appendix F

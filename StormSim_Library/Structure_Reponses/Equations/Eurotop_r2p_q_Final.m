@@ -1,6 +1,6 @@
 function [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
     Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
-    gamma_star, gamma_v, gamma_b, wall_toe, berm_width, structure_type)
+    gamma_star, gamma_v, gamma_b, wall_toe, berm_width, g, structure_type)
 
 
 %{
@@ -145,7 +145,6 @@ gamma_b = gamma_b(:);
 
 %% Define variables
 % Adjust Slope To Match Dimensions
-g = 9.80665;                            % gravitational acceleration
 T_m10 = Tp/1.1;                         % neg zero moment period tm_1,0
 L_m10 = g*T_m10.^2 /(2*pi);              % Zero moment wave length
 s_m10 = Hm0./L_m10;                      % Wave steepness

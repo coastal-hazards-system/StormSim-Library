@@ -27,7 +27,7 @@
 %
 %
 %============================================================
-function [Dn50_Lee] = van_gent_Dn50_leeside_stability(S_ls, Hsig, Tm10, Tm, Rc, crest_width, Sslp, Lslp, duration, delta, K_ls1, K_ls2, gamma_f)
+function [Dn50_Lee] = van_gent_Dn50_leeside_stability(S_ls, Hsig, Tm10, Tm, Rc, crest_width, Sslp, Lslp, duration, delta, grav, K_ls1, K_ls2, gamma_f)
 
 %% VECTORIZE INPUTS
 data_dims = size(Hsig);
@@ -39,8 +39,6 @@ Nz = duration./Tm;
 gamma_f = gamma_f(:);
 
 %% DEFINE CONSTANTS
-% Gravitational acceleration (m/s^2)
-grav = 9.80665;
 % Define
 r = 6; % Constant Wave Conditions
 

@@ -1,4 +1,4 @@
-function [p1dyn]=goda_forces_on_vertical_p1(Hm0,Tp,design_scale,beta,hs,d,Bm,m,rho_w, lamdas)
+function [p1dyn]=goda_forces_on_vertical_p1(Hm0,Tp,design_scale,beta,hs,d,Bm,m,rho_w, g)
 %{
 This script computes Goda pressures, forces, and moments on a vertical wall
 using methods from Table VI-5-53 and Table VI-5-55 in the CEM. 
@@ -70,10 +70,9 @@ h_p = hs - (5*Hm0)/m;
 % Negative Water Col Failsafe
 hs(hs<0) = 0; d(d<0)=0; h_p(h_p<0) = 0;
 % lambda coefficients - Vertical Wall
-lambda1 = lamdas(1); % More Cases Will Be Added In The Future
-lambda2 = lamdas(2);
+lambda1 = 1; % More Cases Will Be Added In The Future
+lambda2 = 1;
 % Define Constants
-g = 9.81; % Acceleration of gravity ft./s.^2
 gamma_w = rho_w.*g; % Specific weight of water, pcf
 
 %% COMPUTE WATER COL @ 5*Hm0 (hb)

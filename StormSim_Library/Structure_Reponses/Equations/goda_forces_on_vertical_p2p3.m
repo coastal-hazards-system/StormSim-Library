@@ -1,4 +1,4 @@
-function [p2dyn, p2sta, p2total, p3dyn, p3sta, p3total, pu]=goda_forces_on_vertical_p2p3(Hm0,Tp,design_scale,beta,hs,d,Rc,hw,p1dyn,rho_w,lambdas)
+function [p2dyn, p2sta, p2total, p3dyn, p3sta, p3total, pu]=goda_forces_on_vertical_p2p3(Hm0,Tp,design_scale,beta,hs,d,Rc,hw,p1dyn,rho_w,g)
 
 %{ 
 This script computes Goda pressures, forces, and moments on a vertical wall
@@ -94,10 +94,9 @@ H_design = Hm0*design_scale;
 % Negative Water Col Failsafe
 hs(hs<0) = 0; d(d<0)=0;
 % lambda coefficients - Vertical Wall
-lambda1 = lambdas(1); % More Cases Will Be Added In The Future
-lambda3 = lambdas(2); % More Cases Will Be Added In The Future
+lambda1 = 1; % More Cases Will Be Added In The Future
+lambda3 = 1; % More Cases Will Be Added In The Future
 % Define Constants
-g = 9.81; % Acceleration of gravity ft./s.^2
 gamma_w = rho_w.*g; % Specific weight of water, pcf
 
 %% COMPUTE WAVE NUMBER
