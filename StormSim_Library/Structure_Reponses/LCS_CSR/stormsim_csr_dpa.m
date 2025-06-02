@@ -369,7 +369,7 @@ for NlcS = 1:nLC
         SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
 
         %% TOE BERM LIMIT STATE (LCBW)
-        [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_LCS(Hm0{NlcS}(Ntime),Rc{NlcS}(Ntime),armor_delta,SDn_lcbw);
+        [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_stability(Hm0{NlcS}(Ntime), Rc{NlcS}(Ntime), armor_delta, SDn_lcbw);
 
     end %Ntime_per_LC  %structure_type == 3 % Rubblemound
 
