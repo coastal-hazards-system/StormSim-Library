@@ -120,16 +120,16 @@ switch fext
         % Define Filename Prefix Based On Data Source
         file_search = [name_prefix '_SP*']; % CHS/CSTORM Related Data
         % Scan Project Transect Directory For Processing Checkpoints
-        h5_list = dir(file_search);
+        ss_files = dir(file_search);
         % Evaluate File Existance
-        if isempty(h5_list)
-            hotstart_fail = true;
-            chs_data_filename = [];
-        else
+        if isempty(ss_files) % No StormSim Files Detected
+            hotstart_fail = true; % Set Hotstart to fail
+            chs_data_filename = []; % Nothing To Load
+        else % StormSim FIles Detected
             % Grab "storm" Filename
-            if any(~contains({h5_list.name},{'raw_files'}))
-                storm_data_filename = fullfile(h5_list(~contains({h5_list.name},{'raw_files'})).folder,...
-                    h5_list(~contains({h5_list.name},{'raw_files'})).name);
+            if any(~contains({ss_files.name},{'raw_files'}))
+                storm_data_filename = fullfile(ss_files(~contains({ss_files.name},{'raw_files'})).folder,...
+                    ss_files(~contains({ss_files.name},{'raw_files'})).name);
                 % Files Detected
                 hotstart_fail = false;
                 % Load Data
@@ -139,9 +139,9 @@ switch fext
                 hotstart_fail = true;
             end
             % Grab CHS_Data Filename
-            if any(contains({h5_list.name},{'raw_files'}))
-                chs_data_filename =  fullfile(h5_list(contains({h5_list.name},{'raw_files'})).folder,...
-                    h5_list(contains({h5_list.name},{'raw_files'})).name);
+            if any(contains({ss_files.name},{'raw_files'}))
+                chs_data_filename =  fullfile(ss_files(contains({ss_files.name},{'raw_files'})).folder,...
+                    ss_files(contains({ss_files.name},{'raw_files'})).name);
                 % Load Data
                 load(chs_data_filename, 'CHS_Data');
             else
@@ -159,7 +159,7 @@ end
 
 %% EVALUATE DATASET FOR "HOTSTART"
 % Create New Case For Current Transect
-if ~hotstart_fail % New Case Run
+if ~hotstart_fail % New Case Run (hot start)
     % --------- Verify If "storm" Contents Meet "config" Request ----------
     % Check Storm Sampling
     storm_level_1 = fieldnames(storm);
@@ -235,11 +235,11 @@ if ~hotstart_fail % New Case Run
         disp('Project forcing does not have neccesary dependencies. Restarting import process....');
     end
 else % StormSim Processing Checkpoint Files Not Found
-    % Set Processing Flag to Empty.
-    hotstart_fail = true;% Empty -> Triggers h5 conversion and QA/QC Process
+    % Set Hot Start Fail Flag To True
+    hotstart_fail = true;
 end
 
-%% STORMSIM COLDSTART - STORM SUITE QA/QC AND FORMATTING
+%% STORMSIM COLDSTART - STORM SUITE QA/QC AND FORMATTING (.ZIP)
 % Execute Pre-Processing If Needed
 if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process storm datasets.
     % Determine Minimum File Requirement For config
@@ -254,7 +254,7 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         error('Error ID: 001 | call_chs_data_formater.missing_dependency | Minimum CHS storm data requirements not met for specified inputs.');
     end
 
-    %% CONVERT CHS DATA
+    % CONVERT CHS DATA
     %{
         Run provided CHS h5 files through h5 to MATLAB converter.
         Additionally, extract ADCIRC save point: depth, region, ID.
@@ -290,17 +290,15 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         load(chs_data_filename,'CHS_Data');
     end
 
-    %% FORMAT AND INSPECT CHS TROPICALS CYCLONES PEAKS DATA
-    %{
-    Extracts SWL, Hm0, Tp And wave direction from CHS "Peaks" storm files.
-    %}
+    % FORMAT AND INSPECT CHS TROPICALS CYCLONES PEAKS DATA
     if contains(storm_sampling,{'TC','CC','TS'})
         % Load Storm Probability Massess
         [prob_mass.Param, prob_mass.TC_SRR,...
             prob_mass.TC_Freq, prob_mass.TotalFreq,...
             prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(pm_path, grid_file, region,sp_ID);
         % Format And Inspect Storm Peaks Files
-        [config, storm.('TC'), storm.('TC').removed_storms, ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
+        [config, storm.('TC'), storm.('TC').removed_storms,...
+            ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
         % Check For Missing PM's (Something wrong in PM's)
         if isempty(prob_mass.TC_Freq) && strcmp(storm_sampling, 'TC')
             error('Probability masses came out empty. Please verify path on input file.');
@@ -309,30 +307,35 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         prob_mass = [];
     end
 
-    %% FORMAT CHS EXRTATROPICALS CYCLONES DATA
-    %{
-    Extracts SWL, Hm0, Tp And wave direction from CHS "Peaks" storm files.
-    %}
+    % FORMAT CHS EXRTATROPICALS CYCLONES DATA
     if contains(storm_sampling,{'XC','CC'})
         % Format And Inspect Storm Peaks Files
-        [config, storm.('XC'), storm.('XC').removed_storms, config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC');
+        [config, storm.('XC'), storm.('XC').removed_storms,...
+            config.Nyrs_XC, config.Nstm_XC, ~] = call_chs_storm_quality_check(config, CHS_Data, [], 'XC');
         % Add Fields To Storm
         storm.('XC').Nyrs_XC = config.Nyrs_XC;
         storm.('XC').Nstm_XC = config.Nstm_XC;
     end
 
-    %% TIMESERIES SWL PEAK REPLACER
+    % TIMESERIES PEAK REPLACER
+    % Replace Hydrograph Peak Responses With Peaks Files Responses
     if use_timeseries == 1 && use_peaks == 1
-        [storm, proxy] = chs_timeseries_peak_replacer(storm);
+        [storm, ~] = chs_timeseries_peak_replacer(storm);
     end
 
-    %% EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
+    % EXPORT PROJECT CONFIGURATION FILE & FORMATTED CHS DATA
+    % Remove Temp Folder
+    if exist(temp_path,'dir')
+        rmdir(temp_path,'s');
+    end
     % Export Project Forcing
     save([name_prefix '_SP' num2str(config.sp_ID) '.mat'], 'storm', 'prob_mass');
     % Append Storm Data Dependent Fields To Configuration File
     save(fullfile(config.outfolder, project_name, struc_id, case_name,[ project_name '_' struc_id '_' config.case_name '_config_file.mat']),...
         'config', '-append');
+
 elseif hotstart_fail && strcmp(fext,'.mat')
+    %% STORMSIM COLDSTART - STORM SUITE QA/QC AND FORMATTING (.MAT)
     % Initialize Error Message
     error_msg = "Error: Provided storm data failed to meet user request on configuration file. inspection failed on:";
     % Add Storm Type Error Message
@@ -347,8 +350,13 @@ elseif hotstart_fail && strcmp(fext,'.mat')
     if ~timeseries_chk
         error_msg = error_msg + newline + "Missing timeseries data.";
     end
+    % Remove Temp Folder
+    if exist(temp_path,'dir')
+        rmdir(temp_path,'s');
+    end
     % Display error Message
     error(error_msg);
+
 else % StormSim Processing Checkpoint Met Requirements. Use Loaded Data
     % Remove Temp Folder
     if exist(temp_path,'dir')
