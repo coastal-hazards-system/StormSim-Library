@@ -154,26 +154,6 @@ switch fext
         % Remove Raw Files Mat
         dummy = dummy(~contains({dummy.name},{'raw_files'})); % Only Interested Processed Dataset
     case '.mat'
-        % Load Provided Storm Suite File (storm)
-        try
-            load(config.chs_zip, 'storm');
-        catch
-            error('Provided .mat must include StormSim "storm" variable when using .mat....');
-        end
-        % Validate Loaded Storm Data
-        storm_validation(config, storm);
-        % Load Provided Probability Mass File (prob_mass)
-        if strcmp(config.storm_sampling, {'XC'})
-            prob_mass = [];  
-        else
-            try
-                load(config.prob_mass_source, 'prob_mass');
-            catch
-                error('Provided .mat must include StormSim "prob_mass" variable when .mat....');
-            end
-            % Validate Provided Custom Modeling prob_mass Variable
-            prob_mass_validation(config, prob_mass, storm);
-        end
         % Add CHS Files 2 Convert In Cell Array
         config.chs_files_2_convert = [];
         % Try To Find Savepoint ID From Loaded File
@@ -194,7 +174,7 @@ switch fext
         else
             chs_region = 'Custom_Modeling';
         end
-                % Create String Pattern For Naming Convention
+        % Create String Pattern For Naming Convention
         config.name_prefix = [project_name filesep struc_id filesep...
             project_name '_' struc_id '_' chs_region];
         % Define Naming Convention
@@ -208,8 +188,30 @@ end
 if ~isempty(dummy) % New Case Run
     % Build File Path
     file2look = fullfile(dummy.folder,dummy.name);
+    %
+    disp('Project storm suite detected. Verifying data compliance....');
+    % Load Provided Storm Suite File (storm)
+    try
+        load(config.chs_zip, 'storm');
+    catch
+        error('Provided .mat must include StormSim "storm" variable when using .mat....');
+    end
+    % Validate Loaded Storm Data
+    storm_validation(config, storm);
+    % Load Provided Probability Mass File (prob_mass)
+    if strcmp(config.storm_sampling, {'XC'})
+        prob_mass = [];
+    else
+        try
+            load(config.prob_mass_source, 'prob_mass');
+        catch
+            error('Provided .mat must include StormSim "prob_mass" variable when .mat....');
+        end
+        % Validate Provided Custom Modeling prob_mass Variable
+        prob_mass_validation(config, prob_mass, storm);
+    end
     % Prompt
-    disp(['Project storm suite detected. Creating new case for ' project_name ': ' struc_id '....'])
+    disp(['Data inspection passed. Loading data and creating new case for ' project_name ': ' struc_id '....']);
     % Load Storm File
     load(file2look,'storm');
     % Grab Extratropical Storm Fields If Exist
@@ -252,9 +254,29 @@ config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented
 % Check For Berm
 if config.add_berm == 0 % If No Berm Ensure Fields Are Set To 0
-    config.berm_elevation = 0;
+    switch config.struc_type
+        case 2
+            config.berm_elevation = config.wall_bottom_elevation;
+            config.toe_elevation = config.wall_bottom_elevation;
+        case {1, 3}
+            config.berm_elevation = config.toe_elevation;
+    end
     config.berm_slope = 0;
     config.berm_width = 0;
+end
+% P2, P3 Are Secondary Responses. Need to process FB
+if config.compute_p2_p3 == 1 || config.compute_nappe == 1
+    % Ensure P1 Hazard Curve Is Computed
+    config.compute_p1 = 1;
+    % Ensure Surge & Waves Hazards Are Computed
+    config.pros_compute_forcing_HC = 1;
+end
+% P2, P3, Nappe Are Secondary Responses. Need to process FB
+if config.compute_nappe == 1
+    % Ensure q Hazard Curve Is Computed
+    config.compute_q = 1;
+    % Ensure Surge & Waves Hazards Are Computed
+    config.pros_compute_forcing_HC = 1;
 end
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
