@@ -121,16 +121,16 @@ if use_timeseries == 1
     storm.('Timeseries').Default(rm_bool, :) = [];
 end
 % Remove Storms From Alternate Water Level Priority (WLP) Dataset
-if WLP_switch == 1 
+if WLP_switch == 1 & use_peaks == 1
     % Identify Rows To Remove
-%         rm_bool_wlp = ismember(cell2mat(storm.('Peaks').WLP(:, 1)), removed_storms.WLP);
+    %         rm_bool_wlp = ismember(cell2mat(storm.('Peaks').WLP(:, 1)), removed_storms.WLP);
     % Remove Storms
     storm.('Peaks').WLP(rm_bool, :) = [];
 end
 % Remove Storms From Alternate Wave Height Priority (WLP) Dataset
-if WHP_switch == 1 
+if WHP_switch == 1 & use_peaks == 1
     % Identify Rows To Remove
-%         rm_bool_whp = ismember(cell2mat(storm.('Peaks').WHP(:, 1)), removed_storms.WHP);
+    %         rm_bool_whp = ismember(cell2mat(storm.('Peaks').WHP(:, 1)), removed_storms.WHP);
     % Remove Storms
     storm.('Peaks').WHP(rm_bool, :) = [];
 end
@@ -141,7 +141,7 @@ switch storm_type
     case 'TC'% Tropical Cyclones
         if isempty(prob_mass.TC_Freq)
             % Something Went Wrong In PM Load
-            warning(['Something went wrong loading probability masses..']);
+            warning('Something went wrong loading probability masses..');
         else
             % Remove storms From Frequency Vector
             prob_mass.TC_Freq(rm_bool,:)=[];
@@ -159,19 +159,34 @@ switch storm_type
         % Define Empty Var For Outputs
         XC_Nyrs = [];XC_Nstm = [];
     case 'XC' % Extratropical storms
-        % Get Fieldnames
-        data_type = fieldnames(storm);
-        % Get Most Recent storm Time Stamp
-        [MaxYR,~,~,~,~,~] = datevec(max(cellfun(@(x) max(x(:,5)), storm.(data_type{1}).('Default')(:,2), 'un', true)));
-        % Get Oldest storm Time Stamp
-        [MinYR,~,~,~,~,~] = datevec(min(cellfun(@(x) min(x(:,5)), storm.(data_type{1}).('Default')(:,2), 'un', true)));
-        % Compute Number Of Years
-        XC_Nyrs=MaxYR-MinYR+1;
-        % Number Of storms
         if use_peaks == 1
+            % Determine Number Of Events
             XC_Nstm = height(peaks_data{adcirc_bool==1});
+            % Get Timestamp Vector
+            tVector = peaks_data{adcirc_bool==1}.yyyymmddHHMM;
+            % Check For NaNs
+            hIndx = sum(cell2mat(cellfun(@(x) ~strcmp(x,{'NaN','         NaN'}),tVector,'UniformOutput',false))==0,2)==0;
+            % Get Event Record Years
+            [record_years,~,~,~,~,~] = datevec(cell2mat(tVector(hIndx)), 'yyyymmddHHMM');
+            % Compute Number Of Years
+            XC_Nyrs=max(record_years)-min(record_years)+1;
         else
+            % Determine Number Of Events
             XC_Nstm = height(timeseries_data{adcirc_bool_ts==1});
+            % Get Timestamp Vector
+            tVector = timeseries_data{adcirc_bool_ts==1}.yyyymmddHHMM;
+            % Check For NaNs
+            hIndx = cellfun(@(x) ~contains(cellstr(x),{'NaN','         NaN'}),tVector,'un',false);
+            % Get Event Record Years
+            for kk = 1:length(hIndx)
+                if any(hIndx{kk})
+                    [record_years{kk},~,~,~,~,~] = datevec(tVector{kk}(hIndx{kk}, :), 'yyyymmddHHMM');
+                else
+                    record_years{kk} = NaN;
+                end
+            end
+            % Compute Number Of Years
+            XC_Nyrs = max(cellfun(@max, record_years), [], "omitnan") - min(cellfun(@min, record_years), [], "omitnan")+1;
         end
 end
 
