@@ -1,4 +1,4 @@
-function [Resp] = call_project_response(config, project_forcing, structure, prob_mass, create_plots)
+function [Resp] = call_project_response(config, project_forcing, structure, create_plots)
 %% GRAB INPUTS FROM "config"
 % Define Workflow
 workflow = config.workflow;
@@ -30,11 +30,11 @@ switch workflow
         % Define Workflow ID String
         if workflow == 4
             % Define Workflow Name
-            wName = 'PROS-FB';
-            subDir = [fullfile(subDir, 'PROS-FB'), filesep];
+            wName = 'FB';
+            subDir = [fullfile(subDir, 'PROS'), filesep];
         else
             % Define Workflow Name
-            wName = 'PROS';
+            wName = 'RB';
             subDir = [fullfile(subDir, 'PROS'), filesep];
         end
         % Make Dir
@@ -57,7 +57,7 @@ switch workflow
                     disp(['   Processing ' level_2{ii} ' dataset....']);
                     % Call StormSim: PROS RB1
                     Resp.('Peaks').(level_2{ii}) = stormsim_pros(config, project_forcing.('Peaks').(level_2{ii}),...
-                        structure, emp_coeff, storm_sampling, fullfile(subDir, [ wName '_RB1_' level_2{ii} ]));
+                        structure, emp_coeff, fullfile(subDir, [ wName '1_' level_2{ii} ]));
                 end
             end
         end
@@ -67,7 +67,7 @@ switch workflow
             disp('Running StormSim: Probabilistic Response Of Structures (PROS) - Timeseries....');
             % Call StormSim: PROS RB3
             Resp.('Timeseries').('Default') = stormsim_pros(config, project_forcing.('Timeseries').('Default'),...
-                structure, emp_coeff, storm_sampling, fullfile(subDir, [ wName '_RB3' ]));
+                structure, emp_coeff, fullfile(subDir, [ wName '3' ]));
         end
         % Plot Results
         if create_plots == 1
