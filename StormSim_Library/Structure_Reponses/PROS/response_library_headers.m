@@ -11,6 +11,8 @@ swl_u_a = config.chs_swl_u_a; % SWL Absolute
 swl_u_r = config.chs_swl_u_r; % SWL Proportional
 hm0_u_a = config.chs_hm0_u_a; % Hm0 Absolute
 hm0_u_r = config.chs_hm0_u_r; % Hm0 Proportional
+datum = config.project_datum;
+use_tides = config.apply_random_tides;
 
 %% Determine Response Fields
 % Set Y Scale
@@ -24,8 +26,13 @@ switch staID
         uncert_treatment_jpm = 'combined';% JPM Uncertainty Treatment
         % Define Var Properties
         unit_label = 'm';
-        y_label = ['SWL [' unit_label ' ]'];
-        var_name = 'SWL';
+        if use_tides == 1
+            y_label = ['SWL [' unit_label ', ' datum ' ]'];
+            var_name = 'SWL';
+        else
+            y_label = ['SSL [' unit_label ', ' datum ' ]'];
+            var_name = 'SSL';
+        end
     case 'Hm0'
         U_a = hm0_u_a;
         U_r = hm0_u_r;
