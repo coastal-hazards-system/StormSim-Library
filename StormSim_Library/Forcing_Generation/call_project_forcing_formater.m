@@ -13,12 +13,10 @@ load_project_forcing = config.load_project_forcing;
 ref_case_name = config.ref_case_name;
 % Define Workflow Key Phrase
 switch workflow
-    case 1 % PROS - RB
+    case {1, 4} % PROS
         wName = 'PROS';
-    case 3 % PROS - EVA
+    case 3 % LCS
         wName = 'LCS';
-    case 4 % PROS - FB
-        wName = 'PROS-FB';
 end
 % Initialize Load Flag As False
 load_pass = false;
