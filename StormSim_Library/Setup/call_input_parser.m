@@ -192,7 +192,7 @@ if ~isempty(dummy) % New Case Run
     disp('Project storm suite detected. Verifying data compliance....');
     % Load Provided Storm Suite File (storm)
     try
-        load(config.chs_zip, 'storm');
+        load(file2look, 'storm');
     catch
         error('Provided .mat must include StormSim "storm" variable when using .mat....');
     end
