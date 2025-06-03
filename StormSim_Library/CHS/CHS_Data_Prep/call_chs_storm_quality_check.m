@@ -194,7 +194,7 @@ end
 % Initialize Bias Trigger
 bias_tgr = 1;
 % Load Bias Correction Data For CHS Region
-if ~exist(chs_ssl_bias_file,'file') | contains(chs_region, {'Lake', 'GL'})
+if ~exist(chs_ssl_bias_file,'file') | contains(chs_region, {'Lake'})
     bias_tgr = 0;
 else
     switch chs_region
@@ -222,19 +222,24 @@ else
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
     end
     % Load Bias Correction File
-    load(chs_ssl_bias_file, 'Comb');
+    warning('off');
+    try
+        u_data = load(chs_ssl_bias_file, 'Comb'); % PBL + ADCIRC
+        u_data = u_data.Comb;
+    catch
+        u_data = load(chs_ssl_bias_file, 'WL'); % ADCIRC Only
+        u_data = u_data.WL;
+    end
+    warning('on');
     % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
-    B_a_SWL=Comb.B_a(bias_indx); B_r_SWL=Comb.B_r(bias_indx);
+    B_a_SWL=u_data.B_a(bias_indx); B_r_SWL=u_data.B_r(bias_indx);
     config.chs_swl_b_a = B_a_SWL;
     config.chs_swl_b_r = B_r_SWL;
     % Overwrite Manual Value
-    config.chs_swl_u_a = Comb.U_a(bias_indx); % SWL absolute uncertainty
-    config.chs_swl_u_r = Comb.U_r(bias_indx); % SWL Proportional uncertainty
+    config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
+    config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
 end
-%
-if strcmp(storm_type, 'XC')
-    bias_tgr = 0;
-end
+
 % Apply Bias Correction (If Applicable)
 if bias_tgr == 1
     % Determine Structure Fields
