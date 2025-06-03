@@ -135,17 +135,24 @@ for ii = 1:length(vars_to_process)
     end
 
     %% STORE OUTPUTS
-    Output =  rb_response_appender(Output, ctr, resp_var, y_label, title_str,...
+    % Overwrite Var Name When Dealing With SSL (Surge)
+    if strcmp(var_name, 'SSL')
+        resp_var2 = 'SSL';
+    else
+        resp_var2 = resp_var;
+    end
+    % Append Results To Output Data Structure
+    Output =  rb_response_appender(Output, ctr, resp_var2, y_label, title_str,...
         dummy.HC_plt_x, dummy.HC_plt,...
         dummy.HC_tbl_x, dummy.HC_tbl, data_to_process.(resp_var),...
-        y_scale_log, [50,prc], [save_name '_' resp_var '_' storm_type '_Hazard_Curve.png']);
+        y_scale_log, [50,prc], [save_name '_' resp_var2 '_' storm_type '_Hazard_Curve.png']);
     % Add "_rsp" Fields For Hazard Combinations
     if use_aep == 1
         Output(ctr).tbl_rsp_x = dummy.HC_tbl_rsp_x; % x here implies Responses, AEP/AEF -> Responses
         Output(ctr).x_table_ARI = ceil(1./aep2aef(Output(ctr).x_table_ARI));
     else
         Output(ctr).tbl_rsp_x = aef2aep(dummy.HC_tbl_rsp_x);
-        Output(ctr).x_table_ARI = ceil(1./Output(ctr).x_table_ARI);
+        Output(ctr).x_table_ARI = 1./Output(ctr).x_table_ARI;
     end
     Output(ctr).tbl_rsp_y = dummy.HC_tbl_rsp_y; % y here implies AEF/AEp, Response -> AEP/AEF
 
