@@ -212,8 +212,8 @@ if no_resp~=0
     end
     % Compute Overtopping Volume
     if calc_q_vol == 1 && length(Resp.q{1}(:,1)) > 1
-        Resp.Q_vol = cellfun(@(x) sum(x,1,"omitnan"),Resp.q,'un',false);
-        Resp.Q_vol_wave_ot = cellfun(@(x) sum(x,1,"omitnan"),Resp.q_wave_ot,'un',false);
+        Resp.Q_vol = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),Resp.q,'un',false));
+        Resp.Q_vol_wave_ot = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),Resp.q_wave_ot,'un',false));
     end
 else % StormSim:EVA was called, no structure responses
     Resp = [];
