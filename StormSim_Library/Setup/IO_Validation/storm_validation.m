@@ -55,12 +55,14 @@ for kk = 1:length(st_types)
     switch st_types{kk}
         case 'XC'
             % Check For XC Specific Fields
-            if ~all(contains(data_types, {'Nyrs_XC','Nstm_XC'}))
+            if ~all(contains({'Nyrs_XC','Nstm_XC'}, data_types))
                 error('Error: Could not find expected XC storm additional fields. Make sure to include the record length (Nyrs_XC) and number of XC storms (Nstm_XC) on provided storm suite...');
             end
     end
+    % Get Row Indexes
+    sindx = find(contains(data_types, {'Peaks','Timeseries'}) == 1);
     % Check For Data Type Content Shapes Compliance
-    for ii = find(contains(data_types, {'Peaks','Timeseries'}) == 1)
+    for ii = min(sindx):max(sindx)
         % Scan Matching Type
         match_types = fieldnames(storm.(st_types{kk}).(data_types{ii}));
         % Loop Across Match Types

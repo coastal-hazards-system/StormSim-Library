@@ -54,11 +54,11 @@ if contains(config.storm_sampling, {'CC'})
 end
 
 %% REMOVE UNWANTED FIELDS FROM OUTPUT VAR
-if ~isfield(HC_out, 'XC')
-    HC_out = rmfield(HC_out.XC, {'tbl_rsp_x','tbl_rsp_y'});
+if isfield(HC_out, 'XC')
+    HC_out.XC = rmfield(HC_out.XC, {'tbl_rsp_x','tbl_rsp_y'});
 end
-if ~isfield(HC_out, 'TC')
-    HC_out = rmfield(HC_out.TC, {'tbl_rsp_x','tbl_rsp_y'});
+if isfield(HC_out, 'TC')
+    HC_out.TC = rmfield(HC_out.TC, {'tbl_rsp_x','tbl_rsp_y'});
 end
 
 %% COMPUTE SECONDARY RESPONSES
