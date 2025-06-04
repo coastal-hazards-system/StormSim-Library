@@ -48,9 +48,15 @@ end
         data_out.Tp = cellfun(@(x) repmat(x(:,col_indx(3)),1,n_reps),storm_data,'un',false); %  Tp
 
         %         % Add No Replicate Fields For Forcing HC Computations
-        data_out.SWL_no_rep = cellfun(@(x) x(:,col_indx(1)),storm_data,'un',false); % SWL
-        data_out.Hm0_no_rep = cellfun(@(x) x(:,col_indx(2)),storm_data,'un',false); % Hm0
-        data_out.Tp_no_rep = cellfun(@(x) x(:,col_indx(3)),storm_data,'un',false); % Tp
+        if n_reps == 20
+         reps2 = 1;
+        else % 444 TC Still Need Replicates 
+         reps2 = 444;
+        end
+        %
+        data_out.SWL_no_rep = cellfun(@(x) repmat(x(:,col_indx(1)), 1, reps2),storm_data,'un',false); % SWL
+        data_out.Hm0_no_rep = cellfun(@(x) repmat(x(:,col_indx(2)), 1, reps2),storm_data,'un',false); % Hm0
+        data_out.Tp_no_rep = cellfun(@(x) repmat(x(:,col_indx(3)), 1, reps2),storm_data,'un',false); % Tp
     end
 end
 

@@ -119,11 +119,7 @@ for ii = 1:length(vars_to_process)
         case 'TC' % JPM
             disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_to_process)),'): ', resp_var]);
             % Append DSWs
-            if eva_options.integration_method == 2
-                response_data.data = [response_data.data, TC_Prob(:, 1)];
-            else
-                response_data.data = [response_data.data, TC_Prob(:)];
-            end
+            response_data.data = [response_data.data, TC_Prob(:)];
             % Call JPM
             try
                 [dummy] = StormSim_JPM(response_data, eva_options, plot_options);
