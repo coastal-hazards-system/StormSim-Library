@@ -33,8 +33,7 @@ for st = 1:length(storm_types)
             project_forcing.(data_type{kk}).(match_types{ii}).(storm_types{st}) = create_reps(storm.(storm_types{st}).(data_type{kk}).(match_types{ii})(:, 2), RandNorm, [1 2 3]);
             % Reshape Storm Probability Masses To Be nStorms * normal_discretization
             if strcmp(storm_types{st}, 'TC')
-                TC_Freq = repmat(prob_mass.TC_Freq, 1, RandNorm);
-                project_forcing.(data_type{kk}).(match_types{ii}).(storm_types{st}).TC_Prob = TC_Freq./RandNorm;
+                project_forcing.(data_type{kk}).(match_types{ii}).(storm_types{st}).TC_Prob = prob_mass.TC_Freq;%./RandNorm;
             end
         end
     end
@@ -47,16 +46,10 @@ end
         data_out.Hm0 = cellfun(@(x) repmat(x(:,col_indx(2)),1,n_reps),storm_data,'un',false); % Hm0
         data_out.Tp = cellfun(@(x) repmat(x(:,col_indx(3)),1,n_reps),storm_data,'un',false); %  Tp
 
-        %         % Add No Replicate Fields For Forcing HC Computations
-        if n_reps == 20
-         reps2 = 1;
-        else % 444 TC Still Need Replicates 
-         reps2 = 444;
-        end
         %
-        data_out.SWL_no_rep = cellfun(@(x) repmat(x(:,col_indx(1)), 1, reps2),storm_data,'un',false); % SWL
-        data_out.Hm0_no_rep = cellfun(@(x) repmat(x(:,col_indx(2)), 1, reps2),storm_data,'un',false); % Hm0
-        data_out.Tp_no_rep = cellfun(@(x) repmat(x(:,col_indx(3)), 1, reps2),storm_data,'un',false); % Tp
+        data_out.SWL_no_rep = cellfun(@(x) x(:,col_indx(1)),storm_data,'un',false); % SWL
+        data_out.Hm0_no_rep = cellfun(@(x) x(:,col_indx(2)),storm_data,'un',false); % Hm0
+        data_out.Tp_no_rep = cellfun(@(x) x(:,col_indx(3)),storm_data,'un',false); % Tp
     end
 end
 
