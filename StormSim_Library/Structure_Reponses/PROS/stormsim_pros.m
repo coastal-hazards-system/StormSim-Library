@@ -32,7 +32,7 @@ end
 %% STORMSIM: PROS - XC
 if contains(config.storm_sampling, {'XC','CC'})
     % 1. Compute Structure Responses
-    [Resp, ~] = compute_structure_response(config, structure, project_forcing.('XC'), emp_coeff, 1);
+    [Resp] = compute_structure_response(config, structure, project_forcing.('XC'), emp_coeff, 1);
     % 2. Compute Extremal Distribution Curves
     HC_out.XC = call_hazard_curve_builder(config, [], Resp, 'XC', use_aep, outPath);
 end
@@ -40,9 +40,9 @@ end
 %% STORMSIM: PROS - TC
 if contains(config.storm_sampling, {'TC','CC'})
     % 1. Compute Structure Responses
-    [Resp, project_forcing] = compute_structure_response(config, structure, project_forcing.('TC'), emp_coeff, 1);
+    [Resp] = compute_structure_response(config, structure, project_forcing.('TC'), emp_coeff, 1);
     % 2. Compute Extremal Distribution Curves
-    HC_out.TC = call_hazard_curve_builder(config, project_forcing.TC_Prob, Resp, 'TC', use_aep, outPath);
+    HC_out.TC = call_hazard_curve_builder(config, project_forcing.TC.TC_Prob, Resp, 'TC', use_aep, outPath);
 end
 
 %% STORMSIM: PROS - COMBINE HAZARDS

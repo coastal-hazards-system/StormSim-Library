@@ -1,4 +1,4 @@
-function [Resp, project_forcing] = compute_structure_response(config, structure, project_forcing,  emp_coeff, get_max)
+function [Resp] = compute_structure_response(config, structure, project_forcing,  emp_coeff, get_max)
 %% GRAB DETAILS FROM "config"
 % Strucutre Type
 struc_type = config.struc_type;
@@ -228,8 +228,6 @@ if any(contains(fieldnames(project_forcing),{'_no_rep'}))
     SWL = project_forcing.('SWL_no_rep');
     Hm0 = project_forcing.('Hm0_no_rep');
     Tp = project_forcing.('Tp_no_rep');
-    % Remove Fields
-    project_forcing = rmfield(project_forcing,{'SWL_no_rep','Hm0_no_rep','Tp_no_rep'});
     % If User Requested Forcing Fields (SSL, Hm0, Tp) HC
     if compute_HC == 1
         % Find SWL Max For Each Storm
