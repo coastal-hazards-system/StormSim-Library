@@ -31,7 +31,8 @@ HC_plt_x=flipud(HC_plt_x);
 %% PCHA STANDARD ONLY FIELDS
 if jpm_options.integration_method == 2
     % Define Normal Distribution Discretization Z-Scores
-    dscrtGauss = [1.9982;1.5632;1.3064;1.1147;0.957;0.8202;0.6973;0.5841;0.478;0.377;0.2798;0.1852;0.0922;0;-0.0922;-0.1852;-0.2798;-0.377;-0.478;-0.5841;-0.6973;-0.8202;-0.957;-1.1147;-1.3064;-1.5632;-1.9982];
+%     dscrtGauss = [1.9982;1.5632;1.3064;1.1147;0.957;0.8202;0.6973;0.5841;0.478;0.377;0.2798;0.1852;0.0922;0;-0.0922;-0.1852;-0.2798;-0.377;-0.478;-0.5841;-0.6973;-0.8202;-0.957;-1.1147;-1.3064;-1.5632;-1.9982];
+    dscrtGauss = readmatrix('discrete_norm_444.txt');
     % Define Number Of Replicates
     nReps = length(dscrtGauss);
     % Repeat Normal Replicates Per Number Of Storms
@@ -107,10 +108,13 @@ end
 %% PERFORM INTEGRATION
 % Find Valid Entries
 pass_indx = ~isnan(Resp) & Resp>0;
+% Keep Valid
+Resp = Resp(pass_indx, 1);
+ProbMass = ProbMass(pass_indx, 1);
 % Sort Response
-[y, I] = sort(Resp(pass_indx, 1), 'descend');%sort response for non-dry storms;
+[y, I] = sort(Resp, 'descend');%sort response for non-dry storms;
 % y: Response, thresholds for defining hazard curve
-x = cumsum(ProbMass(pass_indx(I), 1)); %HC_Prob: exceedance of threshold rates
+x = cumsum(ProbMass(I, 1)); %HC_Prob: exceedance of threshold rates
 x(x==0)=1e-16;
 % Sort in ascending order
 dm = sortrows([x y], 1, 'ascend');
