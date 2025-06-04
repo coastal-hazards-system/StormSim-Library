@@ -148,13 +148,34 @@ switch fext
                 CHS_Data = [];
             end
         end
-    case '.mat'
-        storm_data_filename = chs_zip; % mat file with "storm" variable
-        load(storm_data_filename,'storm');
-        load(pm_path, 'prob_mass');
-        CHS_Data = [];
-        % Files Detected
-        hotstart_fail = false;
+    case '.mat' % This is meant to load storm variable
+        % Load Dataset
+        mf = matfile(chs_zip);
+        vars = who(mf);
+        if strcmp(vars, 'CHS_Data')
+            % Define CHS_Data Filename To Load
+            chs_data_filename = chs_zip;
+            % Force .zip Case
+            fext = '.zip';
+            hotstart_fail = true;
+        else % Provided .mat has storm
+            load(chs_zip,'storm');
+            CHS_Data = []; % Assume .mat is for storm
+            % Determine How To Handle PMs
+            if strcmp(storm_sampling, 'XC')
+                prob_mass = [];
+            elseif isfolder(pm_path)
+                [prob_mass.Param, prob_mass.TC_SRR,...
+                    prob_mass.TC_Freq, prob_mass.TotalFreq,...
+                    prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(pm_path, grid_file, region, sp_ID);
+            elseif isfile(pm_path) % .mat
+                load(pm_path, 'prob_mass');
+            else
+                error('Error: Provided .mat file with probability masses does not include variable "prob_mass".')
+            end
+            % Files Detected
+            hotstart_fail = false;
+        end
 end
 
 %% EVALUATE DATASET FOR "HOTSTART"
@@ -242,18 +263,6 @@ end
 %% STORMSIM COLDSTART - STORM SUITE QA/QC AND FORMATTING (.ZIP)
 % Execute Pre-Processing If Needed
 if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process storm datasets.
-    % Determine Minimum File Requirement For config
-    % Total Files Needed = storm_types * Data_type * 2 (comes from models (ADCIRC + Wave))
-    % Storm_types: XC and/or TC | Data_type: Peaks and/or Timeseries
-    % Min/Max files: 2 (1 storm_type & 1 data_type) / 8 ( 2 storm_types & 2 Data_types)
-    [min_file_req, chs_files_2_convert,...
-        chs_files_2_convert_paths] = minimum_file_requirement_check(chs_files_2_convert_paths, chs_files_2_convert,....
-        storm_sampling, use_peaks, use_timeseries);
-    % Throw Error If Minimum Is Not Met
-    if length(chs_files_2_convert)~=min_file_req
-        error('Error ID: 001 | call_chs_data_formater.missing_dependency | Minimum CHS storm data requirements not met for specified inputs.');
-    end
-
     % CONVERT CHS DATA
     %{
         Run provided CHS h5 files through h5 to MATLAB converter.
@@ -264,6 +273,17 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
     %}
     % Evaluate Case Based On File Type
     if isempty(chs_data_filename)
+        % Determine Minimum File Requirement For config
+        % Total Files Needed = storm_types * Data_type * 2 (comes from models (ADCIRC + Wave))
+        % Storm_types: XC and/or TC | Data_type: Peaks and/or Timeseries
+        % Min/Max files: 2 (1 storm_type & 1 data_type) / 8 ( 2 storm_types & 2 Data_types)
+        [min_file_req, chs_files_2_convert,...
+            chs_files_2_convert_paths] = minimum_file_requirement_check(chs_files_2_convert_paths, chs_files_2_convert,....
+            storm_sampling, use_peaks, use_timeseries);
+        % Throw Error If Minimum Is Not Met
+        if length(chs_files_2_convert)~=min_file_req
+            error('Error ID: 001 | call_chs_data_formater.missing_dependency | Minimum CHS storm data requirements not met for specified inputs.');
+        end
         % Remove Unwanted Storm Types
         switch storm_sampling
             case 'XC'
@@ -293,9 +313,13 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
     % FORMAT AND INSPECT CHS TROPICALS CYCLONES PEAKS DATA
     if contains(storm_sampling,{'TC','CC','TS'})
         % Load Storm Probability Massess
-        [prob_mass.Param, prob_mass.TC_SRR,...
-            prob_mass.TC_Freq, prob_mass.TotalFreq,...
-            prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(pm_path, grid_file, region,sp_ID);
+        if isfolder(pm_path) % Prob Mass Source folder
+            [prob_mass.Param, prob_mass.TC_SRR,...
+                prob_mass.TC_Freq, prob_mass.TotalFreq,...
+                prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(pm_path, grid_file, region,sp_ID);
+        elseif isfile(pm_path)
+            load(pm_path, 'prob_mass');
+        end
         % Format And Inspect Storm Peaks Files
         [config, storm.('TC'), storm.('TC').removed_storms,...
             ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');

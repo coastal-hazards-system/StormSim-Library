@@ -181,11 +181,29 @@ switch fext
         file2look = config.chs_zip;
         % Look For File
         dummy = dir(file2look); % Search For Expected StormSim Naming Convention On Project Folder
+        % Check If .mat is storm or CHS_Data
+        mf = matfile(fullfile(dummy.folder,dummy.name));
+        vars = who(mf);
+        if strcmp(vars, 'CHS_Data')
+            % Load
+            load(fullfile(dummy.folder,dummy.name), 'CHS_Data');
+            % Get File Names From Loaded Data Structure
+            [chs_files_2_convert_paths, chs_files_2_convert, ~] = ...
+                cellfun(@(x) fileparts(x), {CHS_Data.Filename}, 'un', false);
+            % Append File Extension
+            chs_files_2_convert = cellfun(@(x) [x '.h5'],...
+                chs_files_2_convert, 'un', false);
+            %
+            config.chs_files_2_convert = [chs_files_2_convert_paths', chs_files_2_convert'];
+            % Asign CHS Region
+            config.region = strsplit(chs_files_2_convert{1}, '_'); 
+            config.region = config.region{1};
+        end
 end
 
 %% CHECK IF STORMSIM PROCESSED SAVEPOINT DATA EXIST FOR CURRENT proj_name, struc_id, case_name
 % If File Is Found Prompt User And Grab Needed Metadata
-if ~isempty(dummy) % New Case Run
+if ~isempty(dummy) & ~strcmp(vars, 'CHS_Data')% New Case Run
     % Build File Path
     file2look = fullfile(dummy.folder,dummy.name);
     %
@@ -212,8 +230,6 @@ if ~isempty(dummy) % New Case Run
     end
     % Prompt
     disp(['Data inspection passed. Loading data and creating new case for ' project_name ': ' struc_id '....']);
-    % Load Storm File
-    load(file2look,'storm');
     % Grab Extratropical Storm Fields If Exist
     if isfield(storm,'XC')
         % Grab XC_Nyrs & XC_Nstm
