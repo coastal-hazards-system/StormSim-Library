@@ -118,8 +118,14 @@ for ii = 1:length(vars_to_process)
             end
         case 'TC' % JPM
             disp(['               Performing Joint Probability Method (JPM) for station (',num2str(ii),'/',num2str(length(vars_to_process)),'): ', resp_var]);
+            % Scale Prob Mass If Needed
+            if dcols ~= 1 % Need To Scale DSW For Replicates
+                tc_dsw = repmat(TC_Prob./dcols, 1, dcols);
+            else
+                tc_dsw = TC_Prob;
+            end
             % Append DSWs
-            response_data.data = [response_data.data, TC_Prob(:)];
+            response_data.data = [response_data.data, tc_dsw(:)];
             % Call JPM
             try
                 [dummy] = StormSim_JPM(response_data, eva_options, plot_options);
