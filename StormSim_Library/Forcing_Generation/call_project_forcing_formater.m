@@ -1,4 +1,4 @@
-function project_forcing = call_project_forcing_formater(config, storm, prob_mass)
+function [project_forcing, config]  = call_project_forcing_formater(config, storm, prob_mass)
 %% GRAB INPUT FROM "config"
 % Define Requested Workflow (1 -> RB1 Approach, other-> Life-Cycle Base)
 workflow = config.workflow;
@@ -64,4 +64,8 @@ if ~load_pass
             save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
     end
 end
+
+%% RESET DATA MOD FLAGS 
+config.u_engine = 0;
+config.f_adjust = 0;
 end
