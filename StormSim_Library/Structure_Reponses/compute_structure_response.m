@@ -142,7 +142,7 @@ if no_resp~=0
             % Compute Wall Pressures
             if calc_p1 == 1 || calc_p2_p3 == 1
                 % P1
-               Resp.p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
+                Resp.p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
                     0, c, d, berm_width, berm_slope, rho_w, g), Hm0, Tm10, h, hb, 'un', false);
             end
             %
@@ -255,10 +255,17 @@ if get_max == 1
     % Evaluate According To Workflow
     switch workflow
         case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
+            %
             var_names = var_names(var_bool == 1);
+            % Remove Unwanted Fields 
+            rm_indx = sum(cell2mat(cellfun(@(x) strcmp(fieldnames(Resp), x), var_names, 'un', false)), 2) == 0;
+            if any(rm_indx)
+                rm_names = fieldnames(Resp);
+                Resp = rmfield(Resp, rm_names(rm_indx));
+            end
             % Loop Through Each Response
             for vv = 1:length(var_names)
-                Resp.(var_names{vv}) = cell2mat(cellfun(@(x) max(x,[],1), Resp.(var_names{vv}), 'un', false));
+                    Resp.(var_names{vv}) = cell2mat(cellfun(@(x) max(x,[],1), Resp.(var_names{vv}), 'un', false));
             end
     end
 end
