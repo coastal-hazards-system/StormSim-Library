@@ -126,14 +126,14 @@ switch staID
         uncert_treatment_jpm = 'none';
         unit_label = 'Pa';pres_lbl = {'Dynamic', 'Static', 'Total'};
         y_label = ['P_2 (' pres_lbl{strcmp(staID, {'p2dyn', 'p2sta', 'p2total'})} ') [ ' unit_label ' ]'];
-        var_name = 'P_2 (Dynamic)';
+        var_name = ['P_2 (' pres_lbl{strcmp(staID, {'p2dyn', 'p2sta', 'p2total'})} ')'];
     case {'p3dyn', 'p3sta', 'p3total'}
         U_a = 0;U_r = 0;
         y_scale_log = 0;
         uncert_treatment_jpm = 'none';
         unit_label = 'Pa';pres_lbl = {'Dynamic', 'Static', 'Total'};
         y_label = ['P_3 (' pres_lbl{strcmp(staID, {'p3dyn', 'p3sta', 'p3total'})} ') [ ' unit_label ' ]'];
-        var_name = 'P_3 (Dynamic)';
+        var_name = ['P_3 (' pres_lbl{strcmp(staID, {'p2dyn', 'p2sta', 'p2total'})} ')'];
     case 'pu'
         U_a = 0;U_r = 0;
         y_scale_log = 0;
