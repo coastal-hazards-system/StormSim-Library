@@ -1,4 +1,4 @@
-function [storm_data, ts_storm2rm] = chs_timeseries_formater_mod(swl_timeseries, hm0_timeseries, storms2rm,...
+function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0_timeseries, storms2rm,...
     STWAVE_headers_location, Tp_special)
 %{
     %% DESCRIPTION
@@ -60,44 +60,65 @@ for stm = 1:length(stmID)
     % ADCIRC
     WL = swl_timeseries.("Water Elevation"){stm,1};
     WL_datestr = num2str(swl_timeseries.("yyyymmddHHMM"){stm,1});
-    WL = [datenum(WL_datestr,'yyyymmddHHMM'), WL];
+
     % STWAVE
     waves = [hm0_timeseries.(STWAVE_headers_location.Hm0){stm,1},...
         hm0_timeseries.(STWAVE_headers_location.Tp){stm,1},...
         hm0_timeseries.(STWAVE_headers_location.wDir){stm,1}];
-    waves_datestr = num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1});
-    waves = [datenum(waves_datestr,'yyyymmddHHMM'), waves];
+
+    wv_dtime = datetime(num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", 'yyyyMMddHHmm');
+    ad_dtime = datetime(num2str(swl_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", 'yyyyMMddHHmm');
+    dt_wv = unique(diff(wv_dtime));dt_wv = dt_wv(1);
+    dt_ad = unique(diff(ad_dtime));dt_ad = dt_ad(1);
+
     % Lake Ontrario Special Case
     if Tp_special == 1
         waves(:,3) = waves(:,3).*1.2;
     end
 
     %% EXTRACT ADCRIC DATA THAT RESIDES INSIDE STWAVE TEMPORAL RANGE
-    % Get Beggining Of Time Window
-    tmin = min(waves(:,1));
-    % Get End Of Time Window
-    tmax = max(waves(:,1));
     % Extract ADCIRC Data Points Within Time Window
-    WL = WL(WL(:,1)>=tmin & WL(:,1)<=tmax,:);
-
-    %% REMOVE BAD ENTRIES
-    % ADCIRC
-    WL_datestr(WL(:,2)<-90,:) = [];
-    WL(WL(:,2)<-90,:) = [];
-    % STWAVE
-    waves_datestr(sum(waves<-90,2)>=1)=[];
-    waves(sum(waves<-90,2)>=1,:)=[];
-    % Append To Index Variable
-    if isempty(WL) || isempty(waves)
-        ts_storm2rm = [ts_storm2rm;stmID{stm}];
-        continue;
-    end
+    WL = WL(ad_dtime>=min(wv_dtime) & ad_dtime<=max(wv_dtime), :);
 
     %% ADJUST MODEL OUTPUTS (IF NEEDED)
-    % Check STWAVE TimeStep
-    ts_chk = unique(diff(waves(:,1)));
-    % Get First Value (unlickly to have 2 different timesteps in model run
-    ts_chk = ts_chk(1);
+    % Adjust Storm Time Matching (If Needed)
+    if dt_ad > dt_wv
+        % Determine Stride For Data Pull To Match ADCIRC Model
+        tstp_stride = dt_ad/dt_wv;
+        % Limit Indexing To integer Values
+        if mod(tstp_stride,1) == 0
+            waves = waves(1:tstp_stride:end, :);
+            wv_dtime = wv_dtime(1:tstp_stride:end,:);
+            dt_final = datenum(dt_ad);
+        end
+    elseif dt_ad < dt_wv
+        % Determine Stride For Data Pull To Match Wave Model
+        tstp_stride = dt_wv/dt_ad;
+        % Limit Indexing To integer Values
+        if mod(tstp_stride,1) == 0
+            WL = WL(1:tstp_stride:end, :);
+            ad_dtime = ad_dtime(1:tstp_stride:end,:);
+            dt_final = datenum(dt_wv);
+        end
+    else % dt are the same , nothing to do
+        tstp_stride = dt_ad/dt_wv; % Returns 1
+    end
+    % Failsafe In Case dt's are not divisible
+    if mod(tstp_stride, 1) ~= 0 % timesteps are different but not divisible
+        % Try To Get Hourly
+        ad_stride = minutes(60)/ad_dtime;
+        wv_stride = minutes(60)/wv_dtime;
+        dt_final = datenum(0,0,0,0,60,0);
+        %
+        if mod(ad_stride, 1) == 0 & mod(wv_stride, 1) == 0
+            WL = WL(1:ad_stride:end, :);
+            ad_dtime = ad_dtime(1:ad_stride:end, :);
+            waves = waves(1:wv_stride:end, :);
+            wv_dtime = wv_dtime(1:wv_stride:end, :);
+        else
+            error('Error: Unable to timestep match storm data or build hourly dataset.');
+        end
+    end
     % If Timestep Is Not Hourly Then Need To Extract Hourly Intervals
     %{
             Notes:
@@ -106,27 +127,13 @@ for stm = 1:length(stmID)
             30 min or hourly (Tropicals). ExtraTropicals provide hourly
             only. This Correction Assumes Model Run Begins At 00:00
     %}
-    if round(ts_chk*24,1)~=1
-        if round(ts_chk,4)== 0.0104 % 15 Min
-            waves = waves(1:4:end,:);
-            waves_datestr = waves_datestr(1:4:end,:);
-        elseif round(ts_chk,4)== 0.0208 % 30 Min
-            waves = waves(1:2:end,:);
-            waves_datestr = waves_datestr(1:2:end,:);
-        elseif round(ts_chk,4) == 0.0139 % 20 min
-            waves = waves(1:3:end,:);
-            waves_datestr = waves_datestr(1:3:end,:);
-        else
-            error(['Unrecognized timestep for data']);
-        end
-    end
     % Make Sure That Datasets Are the Sames Size
     if length(waves(:,1))~=length(WL(:,1))
         % Try Matching Timesteps Instead Of Range
         % Find Matching Timestamps STWAVE IN ADCIRC
-        [stVec] = ismember(waves(:,1),WL(:,1));
+        [stVec] = ismember(wv_dtime(:,1),ad_dtime(:,1));
         % Find Matching Timestamps ADCIRC IN STWAVE
-        adVec = ismember(WL(:,1),waves(:,1));
+        adVec = ismember(ad_dtime(:,1),wv_dtime(:,1));
         % Adjust WL Data
         WL = WL(adVec,:);
         % ADjust Wave Data
@@ -142,11 +149,24 @@ for stm = 1:length(stmID)
         end
     end
     % Build Storm Data Matrix [ SSL, Hm0, Tp, wDir, date, dt ]
-    storm_data{stm,2} = [WL(:,2),...
-        waves(:,2:end),...
-        WL(:, 1), repmat(mode(diff(WL(:,1))),length(WL(:,1)),1)];
+    storm_mat = [WL,...
+        waves,...
+        datenum(ad_dtime), repmat(dt_final, length(WL(:,1)), 1)];
+
+    %% REMOVE BAD ENTRIES
+    % ADCIRC
+    storm_mat(storm_mat(:, 1)<-90, :) = [];
+    % STWAVE
+    storm_mat(sum(storm_mat(:, 2:3)<-90, 2)>=1, :)=[];
+    % Append To Index Variable
+    if isempty(storm_mat)
+        ts_storm2rm = [ts_storm2rm;stmID{stm}];
+        continue;
+    end
+    % Store Final Results
+    storm_data{stm,2} = storm_mat;
 end
-% Do Unique 
+% Do Unique
 ts_storm2rm = unique(ts_storm2rm);
 % Print Status
 fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
