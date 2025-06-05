@@ -153,6 +153,13 @@ switch fext
         dummy = dir(fullfile(config.outfolder, file2look)); % Search For Expected StormSim Naming Convention On Project Folder
         % Remove Raw Files Mat
         dummy = dummy(~contains({dummy.name},{'raw_files'})); % Only Interested Processed Dataset
+        % Check If .mat is storm or CHS_Data
+        if isempty(dummy)
+            vars = 'none';
+        else
+            mf = matfile(fullfile(dummy.folder,dummy.name));
+            vars = who(mf);
+        end
     case '.mat'
         % Add CHS Files 2 Convert In Cell Array
         config.chs_files_2_convert = [];
@@ -196,7 +203,7 @@ switch fext
             %
             config.chs_files_2_convert = [chs_files_2_convert_paths', chs_files_2_convert'];
             % Asign CHS Region
-            config.region = strsplit(chs_files_2_convert{1}, '_'); 
+            config.region = strsplit(chs_files_2_convert{1}, '_');
             config.region = config.region{1};
         end
 end
