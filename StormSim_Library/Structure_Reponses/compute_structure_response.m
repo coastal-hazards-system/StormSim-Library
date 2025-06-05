@@ -255,8 +255,12 @@ if get_max == 1
         case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
             %
             var_names = var_names(var_bool == 1);
+            %
+            if calc_q_vol == 1
+                vars_to_find = [var_names,{'Q_vol_wave_ot', 'Q_vol'}];
+            end
             % Remove Unwanted Fields 
-            rm_indx = sum(cell2mat(cellfun(@(x) strcmp(fieldnames(Resp), x), var_names, 'un', false)), 2) == 0;
+            rm_indx = sum(cell2mat(cellfun(@(x) strcmp(fieldnames(Resp), x), vars_to_find, 'un', false)), 2) == 0;
             if any(rm_indx)
                 rm_names = fieldnames(Resp);
                 Resp = rmfield(Resp, rm_names(rm_indx));
