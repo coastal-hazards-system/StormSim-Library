@@ -190,7 +190,7 @@ for j = 1:simulation_years
             % Keep Match Storms
             smpl = smpl(ai);
             % Sample Random Storm From Instensity Bin
-            lcs_data(n, 1) = randsample(smpl, 1, true, TC_Freq(bi));
+            lcs_data(n, 1) = randsample(smpl, 1, true, TC_Freq(bi(ai)));
             % Increment Storm
             n=n+1;
             % Increment Number of Storm In Storm Year

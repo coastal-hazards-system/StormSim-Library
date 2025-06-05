@@ -160,8 +160,10 @@ for j = 1:simulation_years
 end%for j
 % Call Copula Sampler [ SSL, Hm0, Tp, wDir, storm_IDs ]
 [Y] = copula_sampler(storm_peaks(:, 2:5), XC_INDEX);
+% Get Storm Rows To Pull
+[~, stm_2_pull] = find(cell2mat(arrayfun(@(x) XC_INDEX == x, storm_peaks(:, 1), 'un', false)'));
 % Monte Carlo Simulation Outputs (Sample Extratropical Storms Peaks)
-lcs_data = [XC_INDEX, SimOUT_XC, Y, storm_peaks(ismember(XC_INDEX, storm_peaks(:, 1)), end)]; % Headers: [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order, SSL, Hm0, Tp, wDir, storm_duration ]
+lcs_data = [XC_INDEX, SimOUT_XC, Y, storm_peaks(stm_2_pull, end)]; % Headers: [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order, SSL, Hm0, Tp, wDir, storm_duration ]
 % Sampled Storm Indexes (For Timeseries LC Creation)
 sampled_storms = [XC_INDEX, SimOUT_XC]; % [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order ]
 
