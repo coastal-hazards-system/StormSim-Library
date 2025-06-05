@@ -191,9 +191,15 @@ end
 %% PLOT BOOTSTRAPING
 if gpd_pass && plot_options.create_plots
     % Initialize Figure
-    fig=figure('Color',[1 1 1],'visible','off');
+    fig=figure('Color',[1 1 1],'visible','off', 'Units', 'normalized','Position', [1 1 1 1]);
+    %
+    if plot_options.y_log == 1
+        y_scale = 'log';
+    else
+        y_scale = 'linear';
+    end
     % Initialize Axes
-    ax = axes('xscale','log','XGrid','on','XMinorTick','on',...
+    ax = axes('xscale','log','YScale',y_scale,'XGrid','on','XMinorTick','on',...
         'YGrid','on','YMinorTick','on','XDir','reverse','FontSize',12);
     % hold Axes Properties
     hold(ax,'on');
@@ -239,7 +245,7 @@ if gpd_pass && plot_options.create_plots
 end
 
 %% Compute mean and percentiles
-Boot_mean_plt = mean(Resp_boot_plt, 1, 'omitnan');
+Boot_mean_plt = mean(Resp_boot_plt, 1, 'includenan');
 Boot_plt = prctile(Resp_boot_plt, pst_options.prc, 1);
 
 %For this application only: delete results if WL >= 1e3 meters
@@ -305,6 +311,6 @@ SST_output.HC_tbl = HC_tbl_y;
 SST_output.HC_tbl_rsp_x = HC_tbl_rsp_x;
 SST_output.HC_emp = HC_emp;
 SST_output.HC_tbl_rsp_y = HC_tbl_rsp_y;
-SST_output.HC_plt_x = HC_plt_x; 
+SST_output.HC_plt_x = HC_plt_x;
 SST_output.HC_tbl_x = HC_tbl_x;
 end
