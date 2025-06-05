@@ -11,6 +11,8 @@ g = config.gravity_constant;
 % Get Secondary Responses To Compute
 calc_p2_p3 = config.compute_p2_p3;
 calc_nappe = config.compute_nappe;
+% Force Q vol to 0
+config.compute_q_vol = 0;
 
 %% INITIALIZE FIELDS
 % Get Storm Types On Data
@@ -109,7 +111,7 @@ for st = 1:length(storm_types)
             project_forcing.Hm0 = Hm0;
             project_forcing.Tp = Tp;
             % Compute All Requested Structure Responses as a f(SWL, Hm0, Tp)
-            [Resp.(field_to_get{dd}), ~] = compute_structure_response(config, structure, project_forcing, emp_coeff, 0);
+            [Resp.(field_to_get{dd})] = compute_structure_response(config, structure, project_forcing, emp_coeff, 0);
         end
     end
 
