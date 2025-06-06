@@ -211,6 +211,10 @@ end
 warning('on','all');
 %% AUX FUNCTION: TIMESERIES LC CREATOR
     function lc_out = timeseries_lc_creation(sample_indx, storm)
+        % Compute Stride To Make Data Hourly 
+        hourly_stride = num2cell(1./(cellfun(@(x) x(1, 6), storm(:,2), 'un', true).*24));
+        % Make storm data hourly 
+        storm(:, 2) = cellfun(@(x, y) y(1:x:end,:), hourly_stride, storm(:, 2), 'un', false);
         % Indentify Storm IDs To Pull Hydrographs For
         [~, pull_indx] = arrayfun(@(x) ismember(x,...
             cell2mat(storm(:, 1))),...
