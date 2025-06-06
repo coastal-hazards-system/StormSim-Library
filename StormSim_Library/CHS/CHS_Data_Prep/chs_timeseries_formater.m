@@ -66,8 +66,14 @@ for stm = 1:length(stmID)
         hm0_timeseries.(STWAVE_headers_location.Tp){stm,1},...
         hm0_timeseries.(STWAVE_headers_location.wDir){stm,1}];
 
-    wv_dtime = datetime(num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", 'yyyyMMddHHmm');
-    ad_dtime = datetime(num2str(swl_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", 'yyyyMMddHHmm');
+    % Determine Date Format
+    dformat = 'yyyyMMddHHmmss';
+    ad_len = length(num2str(swl_timeseries.("yyyymmddHHMM"){stm,1}(1, :)));
+    wv_len = length(num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1}(1, :)));
+
+
+    wv_dtime = datetime(num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", dformat(1:wv_len));
+    ad_dtime = datetime(num2str(swl_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", dformat(1:ad_len));
     dt_wv = unique(diff(wv_dtime));dt_wv = dt_wv(1);
     dt_ad = unique(diff(ad_dtime));dt_ad = dt_ad(1);
 
@@ -79,6 +85,7 @@ for stm = 1:length(stmID)
     %% EXTRACT ADCRIC DATA THAT RESIDES INSIDE STWAVE TEMPORAL RANGE
     % Extract ADCIRC Data Points Within Time Window
     WL = WL(ad_dtime>=min(wv_dtime) & ad_dtime<=max(wv_dtime), :);
+    ad_dtime = ad_dtime(ad_dtime>=min(wv_dtime) & ad_dtime<=max(wv_dtime), :);
 
     %% ADJUST MODEL OUTPUTS (IF NEEDED)
     % Adjust Storm Time Matching (If Needed)
