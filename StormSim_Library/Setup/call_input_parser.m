@@ -1,4 +1,4 @@
-function [config, structure] = call_input_parser(input_filename)
+function [config, structure] = call_input_parser_mod(input_filename)
 %{
     %% DESCRIPTION
     This function parses StormSim's project input file and creates "config"
@@ -62,14 +62,203 @@ project_name = config.project_name;
 struc_id = config.struc_id;
 % Case Name
 case_name = config.case_name;
+% Outfolder
+out_folder = config.outfolder;
+% Sim Directory
+sim_dir = fullfile(out_folder, project_name, struc_id);
 % Make Temp Path Empty
 config.temp_path = '';
+% OutDir
+case_folder = fullfile(out_folder, project_name, struc_id, case_name);
+% Project And Transect ID Folder And Subfolder
+if ~exist(case_folder,'dir')
+    mkdir(case_folder);
+end
+% Make Sure Specified File Exist
+if ~exist(config.chs_zip, 'file') % Valid Zip Folder Detected
+    error('Error: Provided file through config.chs_zip not found. Please verify path...');
+end
+
+%% VERIFY IF STORMSIM FILES ALREADY EXIST FOR CURRENT SIMULATION
+% Check For StormSim Files On Transect Directory
+ss_files_list = dir(fullfile(sim_dir, '*_SP*.mat')); % Search For Expected StormSim Naming Convention On Project Folder
+% If Any File Is Found Try Loading To Save Processing Time
+if ~isempty(ss_files_list)
+    ss_storm = ss_files_list(~contains({ss_files_list.name},{'raw_files'})); % Existing storm .mat created by StormSim
+    ss_raw = ss_files_list(contains({ss_files_list.name},{'raw_files'})); % Existing CHS_Data .mat created by StormSim
+    % Check For StormSim Processed CHS_Data .mat
+    if ~isempty(ss_raw)
+        % Load CHS_Data
+        load(fullfile(ss_raw.folder, ss_raw.name), 'CHS_Data');
+        % Get File Names From Loaded Data Structure
+        [file_list_paths, file_list, ~] = ...
+            cellfun(@(x) fileparts(x), {CHS_Data.Filename}, 'un', false);
+        % Append File Extension
+        file_list = cellfun(@(x) [x '.h5'],...
+            file_list, 'un', false);
+        % Write Out Files On Loaded Data
+        config.chs_files_2_convert = [file_list_paths(:), file_list(:)];
+        % Grab CHS Study Details
+        [config.region, config.sp_ID, config.sp_ID_wave] = get_study_details(file_list);
+        % Create String Pattern For Naming Convention
+        config.name_prefix = fullfile(project_name, struc_id,...
+            [project_name '_' struc_id '_' config.region]);
+    end
+    % Check For StormSim Processed storm .mat
+    if ~isempty(ss_storm)
+        % Load storm
+        load(fullfile(ss_storm.folder, ss_storm.name), 'storm', 'prob_mass');
+        % Grab Extratropical Storm Fields If Exist
+        if isfield(storm,'XC')
+            % Grab XC_Nyrs & XC_Nstm
+            config.Nyrs_XC = storm.('XC').('Nyrs_XC');
+            config.Nstm_XC = storm.('XC').('Nstm_XC');
+        end
+    end
+else
+    ss_storm = [];
+    ss_raw = [];
+end
+% Get File Extension For "config.chs_zip"
+[~,fname, fext] = fileparts(config.chs_zip);
+% Get config.chs_zip Data Type
+data_case = identify_storm_data_type(config.chs_zip);
+
+%% GRAB CHS_DATA DETAILS
+% This code section is executed if user provided a "CHS_Data" type dataset
+% through config.chs_zip. This can be a .mat file or .zip folder (with HDF5 files).
+if isempty(ss_raw) && strcmp(data_case, 'chs_data')
+    switch fext
+        case '.mat'
+            % Load CHS_Data
+            load(config.chs_zip, 'CHS_Data');
+            % Get File Names From Loaded Data Structure
+            [file_list_paths, file_list, ~] = ...
+                cellfun(@(x) fileparts(x), {CHS_Data.Filename}, 'un', false);
+            % Append File Extension
+            file_list = cellfun(@(x) [x '.h5'],...
+                file_list, 'un', false);
+            % Write Out Files On Loaded Data
+            config.chs_files_2_convert = [file_list_paths(:), file_list(:)];
+            % Grab CHS Study Details
+            [config.region, config.sp_ID, config.sp_ID_wave] = get_study_details(file_list);
+            % Create String Pattern For Naming Convention
+            config.name_prefix = fullfile(project_name, struc_id,...
+                [project_name '_' struc_id '_' config.region]);
+            % Copy File To Add Naming Convention
+            copyfile(config.chs_zip, [config.name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat']);
+        case '.zip'
+            % Create Temp Folder
+            if exist('Temp','dir')==7
+                % Determine How Many Temp Dirs Are Present
+                temp_list = dir('Temp*');
+                % Build Temp Folder Name
+                config.temp_path = ['Temp_' num2str(length(temp_list) + 1)];
+                % Assign Variable For Convenience
+                temp_path = config.temp_path;
+                % Create Temp Folder
+                mkdir(temp_path);
+            else % Temp Does Not Exist
+                config.temp_path = 'Temp';
+                temp_path = config.temp_path;
+                mkdir('Temp');
+            end
+            % Decompress Zip Folder
+            unzip(config.chs_zip,temp_path);
+            % Scan Unzip Directory
+            temp_dir = dir([temp_path filesep '**' filesep '*.h5']);
+            % Add Field To config
+            config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
+            % Grab ADCIRC Reference File
+            CHS_file_ref = config.chs_files_2_convert(contains(config.chs_files_2_convert(:,2), {'ADCIRC'}), :);
+            % Try And Find SP Depth On HDF5 Attributes
+            try
+                % Get H5 Info
+                sp_depth = h5info(fullfile(CHS_file_ref{1, 1}, CHS_file_ref{1, 2}));
+                % Need To Access Attributes Of First Storm
+                sp_depth = sp_depth.Groups.Attributes;
+                % Grab Save Point Depth
+                config.chs_sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
+            catch
+                disp('Warning: could not find ADCIRC savepoint depth on h5 attributes. Using value on config file....');
+            end
+            % Grab File List To Extract Study Details From Naming
+            file_list = config.chs_files_2_convert(:,2);
+            % Grab CHS Study Details
+            [config.region, config.sp_ID, config.sp_ID_wave] = get_study_details(file_list);
+            % Create String Pattern For Naming Convention
+            config.name_prefix = fullfile(project_name, struc_id,...
+                [project_name '_' struc_id '_' config.region]);
+    end
+end
+
+%% GRAB STORM DETAILS
+% This code section is executed if user provided a "storm" type dataset
+% through config.chs_zip. "storm" meaning a dataset containing surge and
+% wave data for each event matched in time.
+if isempty(ss_storm) && strcmp(data_case, 'storm_data')
+    % Add CHS Files 2 Convert In Cell Array
+    config.chs_files_2_convert = [];
+    % Try To Find Savepoint ID On Filename
+    if contains(fname, {'SP'})
+        sp_id = strsplit(fname, {'_', 'SP'});
+        config.sp_ID = str2double(sp_id{end});
+    else
+        % Define Save Point ID As Empty
+        config.sp_ID = [];
+    end
+    config.sp_ID_wave = []; % Not important
+    % Try And Find CHS Region On File Name
+    if contains(fname, {'CHS-'})
+        chs_region = strsplit(fname, '_');
+        chs_region = chs_region{contains(chs_region, {'CHS-'})};
+        config.region = chs_region;
+    else
+        chs_region = 'Custom_Modeling';
+        config.region = [];% User Needs To Provide Prob Mass
+    end
+    % Make Sure prob_mass Is .mat For Custom modeling
+    if (isempty(config.sp_ID) || isempty(config.chs_region)) && exist(config.prob_mass_source, 'dir') == 7 % User Provided Path As prob_mass
+        error('Error: Could not parse save point ID and/or CHS study from provided file (config.chs_zip). Please provided a corresponding .mat with prob_mass variable on config.prob_mass_source.');
+    end
+    % Load File
+    load(config.chs_zip, 'storm');
+    % Validate "storm" dataset
+    storm_validation(config, storm);
+    % Grab Extratropical Storm Fields If Exist
+    if isfield(storm,'XC')
+        % Grab XC_Nyrs & XC_Nstm
+        config.Nyrs_XC = storm.('XC').('Nyrs_XC');
+        config.Nstm_XC = storm.('XC').('Nstm_XC');
+    end
+    % Handle Prob Mass
+    if strcmp(storm_sampling, 'XC')
+        prob_mass = [];
+    elseif isfolder(config.prob_mass_source)
+        [prob_mass.Param, prob_mass.TC_SRR,...
+            prob_mass.TC_Freq, prob_mass.TotalFreq,...
+            prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(config.prob_mass_source, config.grid_file, config.region, config.sp_ID);
+    elseif isfile(config.prob_mass_source) % .mat
+        % Load File
+        load(config.prob_mass_source, 'prob_mass');
+        % Validate Provided Custom Modeling prob_mass Variable
+        prob_mass_validation(config, prob_mass, storm);
+    end
+    % Create String Pattern For Naming Convention
+    config.name_prefix = fullfile(project_name, struc_id,...
+        [project_name '_' struc_id '_' chs_region]);
+    % Create StormSim storm file
+    save([config.name_prefix '_SP' num2str(config.sp_ID) '.mat'], 'storm', 'prob_mass');
+end
+
+%% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
 % Overwrite Bias & Uncertainty With Loaded Data
-if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file')
+if exist(fullfile(sim_dir, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file')
     % Load Config
-    config_load = load([pwd filesep project_name filesep struc_id filesep case_name filesep project_name '_' struc_id '_' case_name '_config_file.mat']);config_load = config_load.config;
-    % Add Values
-    if strcmp(config.chs_ssl_bias_and_uncertainty_file,config_load.chs_ssl_bias_and_uncertainty_file) % Same Bias File
+    config_load = load(fullfile(sim_dir, case_name, [project_name '_' struc_id '_' case_name '_config_file.mat']));
+    config_load = config_load.config;
+    % Pull Bias & Uncertainty Values If Same File For Convenience
+    if strcmp(config.chs_ssl_bias_and_uncertainty_file, config_load.chs_ssl_bias_and_uncertainty_file) % Same Bias File
         try
             % SSL Proportional & Abolute Uncertainty
             config.chs_swl_u_a = config_load.chs_swl_u_a;
@@ -80,180 +269,15 @@ if exist(fullfile(pwd, project_name, struc_id, case_name, [project_name '_' stru
             config.chs_swl_b_a = config_load.chs_swl_b_a;
             config.chs_swl_b_r = config_load.chs_swl_b_r;
         end
-    else
+    end
+    % If SP ID Doesn't Match Wipe Transect Folder, New Forcing
+    if config.sp_ID ~= config_load.sp_ID
         % Delete Files Because Bias Needs to Be Recomputed
-        delete([pwd filesep project_name filesep struc_id filesep '*.mat']);
+        rmdir(sim_dir, 's');
     end
 end
 
-%% DETERMINE FORCING DATA SOURCE CASE
-% Make Sure Specified File Exist
-if exist(config.chs_zip,'file')~=2 % Valid Zip Folder Detected
-    error('Error ID: 001 | call_input_parser.missing_dependency | CHS zip folder not found. Please verify file path...');
-end
-% Get File Extension For "config.chs_zip"
-[~,fname,fext] = fileparts(config.chs_zip);
-% Build File Listing According To File Extension
-switch fext
-    case '.zip'
-        % Create Temp Folder
-        if exist('Temp','dir')==7
-            % Determine How Many Temp Dirs Are Present
-            temp_list = dir('Temp*');
-            % Build Temp Folder Name
-            config.temp_path = ['Temp_' num2str(length(temp_list) + 1)];
-            % Assign Variable For Convenience
-            temp_path = config.temp_path;
-            % Create Temp Folder
-            mkdir(temp_path);
-        else % Temp Does Not Exist
-            config.temp_path = 'Temp';
-            temp_path = config.temp_path;
-            mkdir('Temp');
-        end
-        % Decompress Zip Folder
-        unzip(config.chs_zip,temp_path);
-        % Scan Unzip Directory
-        temp_dir = dir([temp_path filesep '**' filesep '*.h5']);
-        % Add Field To config
-        config.chs_files_2_convert = sortrows([{temp_dir.folder}', {temp_dir.name}'],2,'ascend');
-        % Grab ADCIRC Reference File
-        CHS_file_ref = config.chs_files_2_convert(contains(config.chs_files_2_convert(:,2), {'ADCIRC'}), :);
-        % Try And Find SP Depth On HDF% Attributes
-        try
-            % Get H5 Info
-            sp_depth = h5info(fullfile(CHS_file_ref{1, 1}, CHS_file_ref{1, 2}));
-            % Need To Access Attributes Of First Storm
-            sp_depth = sp_depth.Groups.Attributes;
-            % Grab Save Point Depth
-            config.chs_sp_depth = str2double(sp_depth(strcmp({sp_depth.Name},{'Save Point Depth'})).Value);
-        catch
-            disp('Warning: could not find ADCIRC savepoint depth on h5 attributes. Using value on config file....');
-        end
-        % ADCIRC Indx
-        ad_indx = contains(config.chs_files_2_convert(:,2),'ADCIRC');
-        % ADCIRC Reference File
-        ad_ref = config.chs_files_2_convert(ad_indx, 2); ad_ref = ad_ref(1); % Keep 1 File Only
-        % Wave Reference File
-        wave_ref = config.chs_files_2_convert(~ad_indx, 2); wave_ref = wave_ref(1); % Keep 1 File Only
-        % Split Into Identifiers
-        chs_ident = cellfun(@(x) strsplit(x, '_'), [ad_ref;wave_ref], 'un', false);
-        % Store CHS Region
-        config.region = chs_ident{1}{1};
-        % Store ADCIRC SP ID
-        config.sp_ID = str2double(chs_ident{1}{5}(3:end));
-        % Add CHS Wave SP ID
-        config.sp_ID_wave = str2double(chs_ident{2}{5}(3:end));
-        % Create String Pattern For Naming Convention
-        config.name_prefix = [project_name filesep struc_id filesep...
-            project_name '_' struc_id '_' config.region];
-        % Define Naming Convention
-        file2look = [config.name_prefix '_SP*'];
-        % Look For File
-        dummy = dir(fullfile(config.outfolder, file2look)); % Search For Expected StormSim Naming Convention On Project Folder
-        % Remove Raw Files Mat
-        dummy = dummy(~contains({dummy.name},{'raw_files'})); % Only Interested Processed Dataset
-        % Check If .mat is storm or CHS_Data
-        if isempty(dummy)
-            vars = 'none';
-        else
-            mf = matfile(fullfile(dummy.folder,dummy.name));
-            vars = who(mf);
-        end
-    case '.mat'
-        % Add CHS Files 2 Convert In Cell Array
-        config.chs_files_2_convert = [];
-        % Try To Find Savepoint ID From Loaded File
-        if contains(fname, {'SP'})
-            sp_id = strsplit(fname, {'_', 'SP'});
-            config.sp_ID = str2double(sp_id{end});
-        else
-            % Define Save Point ID As Empty
-            config.sp_ID = [];
-        end
-        config.sp_ID_wave = [];
-        % Define Region As Empty
-        config.region = [];
-        % Create String Pattern For Naming Convention
-        if contains(fname, {'CHS-'})
-            chs_region = strsplit(fname, '_');
-            chs_region = chs_region{contains(chs_region, {'CHS-'})};
-        else
-            chs_region = 'Custom_Modeling';
-        end
-        % Create String Pattern For Naming Convention
-        config.name_prefix = [project_name filesep struc_id filesep...
-            project_name '_' struc_id '_' chs_region];
-        % Define Naming Convention
-        file2look = config.chs_zip;
-        % Look For File
-        dummy = dir(file2look); % Search For Expected StormSim Naming Convention On Project Folder
-        % Check If .mat is storm or CHS_Data
-        mf = matfile(fullfile(dummy.folder,dummy.name));
-        vars = who(mf);
-        if strcmp(vars, 'CHS_Data')
-            % Load
-            load(fullfile(dummy.folder,dummy.name), 'CHS_Data');
-            % Get File Names From Loaded Data Structure
-            [chs_files_2_convert_paths, chs_files_2_convert, ~] = ...
-                cellfun(@(x) fileparts(x), {CHS_Data.Filename}, 'un', false);
-            % Append File Extension
-            chs_files_2_convert = cellfun(@(x) [x '.h5'],...
-                chs_files_2_convert, 'un', false);
-            %
-            config.chs_files_2_convert = [chs_files_2_convert_paths', chs_files_2_convert'];
-            % Asign CHS Region
-            config.region = strsplit(chs_files_2_convert{1}, '_');
-            config.region = config.region{1};
-        end
-end
-
-%% CHECK IF STORMSIM PROCESSED SAVEPOINT DATA EXIST FOR CURRENT proj_name, struc_id, case_name
-% If File Is Found Prompt User And Grab Needed Metadata
-if ~isempty(dummy) & ~strcmp(vars, 'CHS_Data')% New Case Run
-    % Build File Path
-    file2look = fullfile(dummy.folder,dummy.name);
-    %
-    disp('Project storm suite detected. Verifying data compliance....');
-    % Load Provided Storm Suite File (storm)
-    try
-        load(file2look, 'storm');
-    catch
-        error('Provided .mat must include StormSim "storm" variable when using .mat....');
-    end
-    % Validate Loaded Storm Data
-    storm_validation(config, storm);
-    % Load Provided Probability Mass File (prob_mass)
-    if strcmp(config.storm_sampling, {'XC'})
-        prob_mass = [];
-    else
-        try
-            load(config.prob_mass_source, 'prob_mass');
-        catch
-            error('Provided .mat must include StormSim "prob_mass" variable when .mat....');
-        end
-        % Validate Provided Custom Modeling prob_mass Variable
-        prob_mass_validation(config, prob_mass, storm);
-    end
-    % Prompt
-    disp(['Data inspection passed. Loading data and creating new case for ' project_name ': ' struc_id '....']);
-    % Grab Extratropical Storm Fields If Exist
-    if isfield(storm,'XC')
-        % Grab XC_Nyrs & XC_Nstm
-        config.Nyrs_XC = storm.('XC').('Nyrs_XC');
-        config.Nstm_XC = storm.('XC').('Nstm_XC');
-    end
-else
-    file2look = []; % This is used to determine if welcome message should be printed
-end
-
-%% FAILSAFES
-% WLP, WHP Require Peaks & Timeseries Files
-if sum([config.use_peaks,config.use_timeseries])~=2
-    % Set WLP, WHP To Off
-    config.create_wlp = 0;
-    config.create_whp = 0;
-end
+%% APPEND ADDITIONAL SIMULATION DETAILS TO CONFIG
 % Uncertainty Engine Field Initialization
 config.u_engine = 0;
 % Forcing Adjustments Field Initialization
@@ -275,34 +299,53 @@ config.slope_type = 0; % Idealized Slope
 config.structure_dir = 0; % Assume Shore Normal Waves
 config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented
-% Check For Berm
-if config.add_berm == 0 % If No Berm Ensure Fields Are Set To 0
-    switch config.struc_type
-        case 2
-            config.berm_elevation = config.wall_bottom_elevation;
-            config.toe_elevation = config.wall_bottom_elevation;
-        case {1, 3}
-            config.berm_elevation = config.toe_elevation;
-    end
-    config.berm_slope = 0;
-    config.berm_width = 0;
-end
-% P2, P3 Are Secondary Responses. Need to process FB
-if config.compute_p2_p3 == 1 || config.compute_nappe == 1
-    % Ensure P1 Hazard Curve Is Computed
-    config.compute_p1 = 1;
-    % Ensure Surge & Waves Hazards Are Computed
-    config.pros_compute_forcing_HC = 1;
-end
-% P2, P3, Nappe Are Secondary Responses. Need to process FB
-if config.compute_nappe == 1
-    % Ensure q Hazard Curve Is Computed
-    config.compute_q = 1;
-    % Ensure Surge & Waves Hazards Are Computed
-    config.pros_compute_forcing_HC = 1;
-end
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
+% isempty(ss_files_list) -> 1 (Print Welcome Message) , 0 (No Print)
 % Set-up Computational Environment
-[config, structure] = call_environment_setup(config, isempty(file2look));
+[config, structure] = call_environment_setup(config, isempty(ss_files_list));
+
+%% AUX FUNCTIONS
+% Function 1: Extracts CHS study Details Needed For StormSim Simulation
+    function [region, sp_ID, sp_ID_wave] = get_study_details(files_in)
+        % ADCIRC Indx
+        ad_indx = contains(files_in,'ADCIRC');
+        % ADCIRC Reference File
+        ad_ref = files_in(ad_indx); ad_ref = ad_ref(1); % Keep 1 File Only
+        % Wave Reference File
+        wave_ref = files_in(~ad_indx); wave_ref = wave_ref(1); % Keep 1 File Only
+        % Split Into Identifiers
+        chs_ident = cellfun(@(x) strsplit(x, '_'), [ad_ref;wave_ref], 'un', false);
+        % Store CHS Region
+        region = chs_ident{1}{1};
+        % Store ADCIRC SP ID
+        sp_ID = str2double(chs_ident{1}{5}(3:end));
+        % Add CHS Wave SP ID
+        sp_ID_wave = str2double(chs_ident{2}{5}(3:end));
+    end
+% Function 2: Identify What Type Of Modeling Data Is Provided By User
+    function data_case = identify_storm_data_type(chs_zip)
+        % Get File Extension
+        [~, ~, file_extension] = fileparts(chs_zip);
+        % Determine Modeling Data Provided Through config.chs_zip
+        switch file_extension
+            case '.mat' % Option 1: mat file with "storm" & "prob_mass" | Option 2: mat file with "CHS_Data"
+                data_case = {'chs_data', 'storm_data'};
+                % Verify Variable Inside .mat File
+                mf = matfile(chs_zip);
+                vars = who(mf);
+                % Make Sure We Only Allow For Supported Vars
+                var_pass = contains({'CHS_Data','storm'}, vars);
+                %
+                if sum(var_pass) == 0 || sum(var_pass) >1
+                    error('Error: Provided .mat file under chs_zip must have "CHS_Data" or "storm" variables (not both).')
+                else
+                    data_case = data_case{var_pass};
+                end
+            case '.zip' % Zip Folder Downloaded From CHS
+                data_case = 'chs_data';
+            otherwise
+                error('Error: Unsuported file type for config.chs_zip. Please provide valid .mat file or CHS .zip folder')
+        end
+    end
 end % End of Function

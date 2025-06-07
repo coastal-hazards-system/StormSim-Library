@@ -27,10 +27,6 @@ PM_path = config.prob_mass_source;
 outfolder = config.outfolder;
 % OutDir
 outDir = fullfile(outfolder, project_name, struc_id, case_name);
-% Project And Transect ID Folder And Subfolder
-if ~exist(outDir,'dir')
-    mkdir(outDir);
-end
 % Define Workflow
 workflow = config.workflow;
 % Get Structure Type
@@ -60,6 +56,38 @@ switch struc_type
         config.compute_p2_p3 = 0;
         % Nappe
         config.compute_nappe = 0;
+end
+% Check For Berm
+if config.add_berm == 0 % If No Berm Ensure Fields Are Set To 0
+    switch config.struc_type
+        case 2
+            config.berm_elevation = config.wall_bottom_elevation;
+            config.toe_elevation = config.wall_bottom_elevation;
+        case {1, 3}
+            config.berm_elevation = config.toe_elevation;
+    end
+    config.berm_slope = 0;
+    config.berm_width = 0;
+end
+% P2, P3 Are Secondary Responses. Need to process FB
+if config.compute_p2_p3 == 1 || config.compute_nappe == 1
+    % Ensure P1 Hazard Curve Is Computed
+    config.compute_p1 = 1;
+    % Ensure Surge & Waves Hazards Are Computed
+    config.pros_compute_forcing_HC = 1;
+end
+% P2, P3, Nappe Are Secondary Responses. Need to process FB
+if config.compute_nappe == 1
+    % Ensure q Hazard Curve Is Computed
+    config.compute_q = 1;
+    % Ensure Surge & Waves Hazards Are Computed
+    config.pros_compute_forcing_HC = 1;
+end
+% WLP, WHP Require Peaks & Timeseries Files
+if sum([config.use_peaks,config.use_timeseries])~=2
+    % Set WLP, WHP To Off
+    config.create_wlp = 0;
+    config.create_whp = 0;
 end
 
 %% DISPLAY WELCOME MESSAGE
