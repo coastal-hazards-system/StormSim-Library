@@ -194,7 +194,7 @@ end
 % Initialize Bias Trigger
 bias_tgr = 1;
 % Load Bias Correction Data For CHS Region
-if ~exist(chs_ssl_bias_file,'file') | contains(chs_region, {'Lake'})
+if ~exist(chs_ssl_bias_file,'file') | contains(chs_region, {'Lake'}) | isempty(spID)
     bias_tgr = 0;
 else
     switch chs_region
