@@ -17,19 +17,20 @@ function prob_mass_validation(config, prob_mass, storm)
 % Scan Provided PM File Fields
 pm_fields = fieldnames(prob_mass);
 % Verify How Many Fields Are Found
-if sum(contains(pm_fields, {'TC_SRR', 'TC_Freq', 'Total_Freq', 'smpl1', 'smpl2', 'smpl3'})) ~= 6
+if sum(contains(pm_fields, {'TC_SRR', 'TC_Freq', 'TotalFreq', 'smpl1', 'smpl2', 'smpl3'})) ~= 6
     error('Error: Provided "prob_mass" variable does not comply with the expected fields. Aborting...');
 end
 % Determine Number Of TC Storms In Storm Suite
-if config.use_peaks == 1
-    number_of_storms = length(storm.TC.Peaks.Maxima(:,1));
-else
-    number_of_storms = length(storm.TC.Timeseries.Maxima(:,1));
-end
+% if config.use_peaks == 1
+%     number_of_storms = length(storm.TC.Peaks.Default(:,1));
+% else
+%     number_of_storms = length(storm.TC.Timeseries.Default(:,1));
+% end
 % Ensure Each TC Storm Has An Associated Likelihood of Occurrence
-if number_of_storms~=length(prob_mass.('TC_Freq'))
-    error('Error: Provided "prob_mass.TC_Freq" field must match the number of TC storms on storm suite. Aborting...');
-elseif prob_mass.TotalFreq~=sum(prob_mass.TC_Freq) % Make Sure Total Frequency Matches
+% if number_of_storms~=length(prob_mass.('TC_Freq'))
+%     error('Error: Provided "prob_mass.TC_Freq" field must match the number of TC storms on storm suite. Aborting...');
+% else
+if prob_mass.TotalFreq~=sum(prob_mass.TC_Freq) % Make Sure Total Frequency Matches
     % Throw Warning
     disp('Warning: Field "prob_mass.TotalFreq" field does not match sum(prob_mass.TC_Freq)...');
 end
