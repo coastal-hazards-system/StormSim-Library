@@ -46,7 +46,7 @@ for kk = 1:length(st_types)
     % Scan Data Type Fieldnames
     data_types = fieldnames(storm.(st_types{kk})); % Peaks and/or Timeseries
     % Check For Data Type Compliance
-    chk = sum(contains(data_types, {'Peaks','Timeseries'})) == pass_cnt;
+    chk = any(contains(data_types, {'Peaks','Timeseries'}));
     % throw Error If Not Met
     if ~chk
         error('Error: Could not find expected data types "Peaks" and/or "Timeseries per user request on config...')
