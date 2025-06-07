@@ -54,8 +54,9 @@ if workflow == 3
     % Set Stone Size To Zero
     calc_dn50_ss = 0;
     calc_dn50_ls = 0;
-    calc_dn50_lcbw = 0;
     calc_q_vol = 0;
+else
+    calc_FS_lcbw = 0; % This is only meant for LCS
 end
 % No Structural Response Computed
 no_resp = sum([calc_dn50_ss,calc_dn50_ls,calc_dn50_lcbw,calc_r2p,calc_q,calc_q_vol,calc_p1,calc_dd]);
@@ -99,7 +100,7 @@ end
 % Water Density kg/m^3
 rho_w = structure.water_density;
 
-%% DEFINE CONSTANTS
+%% GET FORCING FIELDS
 % Grab Workflow Specific Fields
 switch workflow
     case {1,2,4} % RB
@@ -115,6 +116,16 @@ switch workflow
         Tp = cellfun(@(x) x(:,7),project_forcing,'un',false); % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
+end
+
+%% GET LCBW SPECIFIC FIELDS
+if struc_type == 3
+    crest_elev_lcbw = structure.crest_elevation_lcbw; % Crest Elevation
+    Rc_lcbw = cellfun(@(x) crest_elev_lcbw - x, SWL, 'un', false); % Freeboard
+    SG = 1 + config.armor_delta;% Armor Stone Specific Gravity
+    dr = SG*rho_w;% Armor Stone Density [kg/m^3]
+    V_ss_lcbw = structure.lcbw_seaside_mass/dr; % Seaside Median Volume of Armor Stone
+    SDn_lcbw = V_ss_lcbw^(1/3);% (LCBW) Seaside Nominal Stone Diameter (m)
 end
 
 %% COMPUTE STRUCTURE RESPONSE
@@ -202,7 +213,14 @@ if no_resp~=0
                     However, for Midbay, we have both normal structure and low crested because toe berm is at MLLW. 
                     So we have both normal and LC (toe berm) stability computed in same sim.
                     %}
-                    [Resp.Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, []), Hm0,Rc,'un',false);
+                    if workflow == 3
+                        calc_dn50_lcbw = 0; % Turn Of To Pull Correct Label
+                        calc_FS_lcbw = 1; % Turn On To Pull Correct Label
+                        % Compute LCBW FS
+                        [Resp.FS_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, SDn_lcbw), Hm0, Rc_lcbw,'un', false);
+                    else
+                        [Resp.Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, []), Hm0, Rc_lcbw, 'un', false);
+                    end
                 end
             end
     end
@@ -223,13 +241,12 @@ end
 % For TC SSL, Hm0, Tp Datasets -> Need storm data with replicates without Ua, Ur. JPM accounts for this uncertainty component during the integration process.
 % For XC SSL, Hm0, Tp Datasets -> Need storm data without replicates and without Ua, Ur. PST accounts for both uncertainty components through the bootstrapping process
 % Define Replicate Condition Per Storm Type
-if any(contains(fieldnames(project_forcing),{'_no_rep'}))
-    % Grab Values With No Uncertainty For HC Calculations
-    SWL = project_forcing.('SWL_no_rep');
-    Hm0 = project_forcing.('Hm0_no_rep');
-    Tp = project_forcing.('Tp_no_rep');
-    % If User Requested Forcing Fields (SSL, Hm0, Tp) HC
-    if compute_HC == 1
+if ismember(workflow, [1,2,4])
+    if compute_HC == 1 & any(contains(fieldnames(project_forcing),{'_no_rep'}))
+        % Grab Values With No Uncertainty For HC Calculations
+        SWL = project_forcing.('SWL_no_rep');
+        Hm0 = project_forcing.('Hm0_no_rep');
+        Tp = project_forcing.('Tp_no_rep');
         % Find SWL Max For Each Storm
         Resp.('SWL') = cellfun(@(x) max(x,[],1),SWL,'un',false);
         % Find Hm0 Max For Each Storm
@@ -248,8 +265,8 @@ end
 %% FLATTEN DATA & STORE RESPONSES
 if get_max == 1
     % Build Var Inventory Logical Vector
-    var_bool = [forcing_bool, calc_dn50_ss, calc_dn50_ls, calc_dn50_lcbw, calc_r2p, calc_r2p, calc_q, calc_q, calc_p1, calc_dd, calc_dd];
-    var_names = {'SWL', 'Hm0', 'Tp', 'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'p1', 'DamDepth', 'DamDepthElev'};
+    var_bool = [forcing_bool, calc_dn50_ss, calc_dn50_ls, calc_dn50_lcbw, calc_FS_lcbw, calc_r2p, calc_r2p, calc_q, calc_q, calc_p1, calc_dd, calc_dd];
+    var_names = {'SWL', 'Hm0', 'Tp', 'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'FS_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'p1', 'DamDepth', 'DamDepthElev'};
     % Evaluate According To Workflow
     switch workflow
         case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
@@ -259,7 +276,7 @@ if get_max == 1
             if calc_q_vol == 1
                 vars_to_find = [var_names,{'Q_vol_wave_ot', 'Q_vol'}];
             end
-            % Remove Unwanted Fields 
+            % Remove Unwanted Fields
             rm_indx = sum(cell2mat(cellfun(@(x) strcmp(fieldnames(Resp), x), vars_to_find, 'un', false)), 2) == 0;
             if any(rm_indx)
                 rm_names = fieldnames(Resp);
@@ -267,7 +284,7 @@ if get_max == 1
             end
             % Loop Through Each Response
             for vv = 1:length(var_names)
-                    Resp.(var_names{vv}) = cell2mat(cellfun(@(x) max(x,[],1), Resp.(var_names{vv}), 'un', false));
+                Resp.(var_names{vv}) = cell2mat(cellfun(@(x) max(x,[],1), Resp.(var_names{vv}), 'un', false));
             end
     end
 end

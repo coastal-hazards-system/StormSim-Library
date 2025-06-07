@@ -237,7 +237,7 @@ Szero_with_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false)
 Ssea_with_repairs = cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 SLee_with_repairs =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 SLee_no_repairs =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
-LCBW_FS =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
+% LCBW_FS =  cellfun(@(x) zeros(x,1),num2cell(nTimes_per_LC),'un',false);
 % Repair Indexes Storage Variables
 Seaside_Repair_Indexes = {};
 Leeside_Repair_Indexes =  {};
@@ -369,7 +369,7 @@ for NlcS = 1:nLC
         SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
 
         %% TOE BERM LIMIT STATE (LCBW)
-        [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_stability(Hm0{NlcS}(Ntime), Rc{NlcS}(Ntime), armor_delta, SDn_lcbw);
+%         [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_stability(Hm0{NlcS}(Ntime), Rc{NlcS}(Ntime), armor_delta, SDn_lcbw);
 
     end %Ntime_per_LC  %structure_type == 3 % Rubblemound
 
@@ -402,8 +402,8 @@ LS_final = cellfun(@(x) x(end),SLee_no_repairs,'un',true);
 %     num2cell(1:nLC),'un',false)';
 
 %% COMPUTE MEAN DAMAGE CURVE
-[LSmax,LSPcurves,~] = compute_lcs_yearly_curve_mod(LC_SimOUT_hyd, SLee_no_repairs, nYears);
-[Smax,SPcurves,~] = compute_lcs_yearly_curve_mod(LC_SimOUT_hyd, Ssea_no_repairs, nYears);
+[LSmax,LSPcurves,~] = compute_lcs_yearly_curve(LC_SimOUT_hyd, SLee_no_repairs, nYears);
+[Smax,SPcurves,~] = compute_lcs_yearly_curve(LC_SimOUT_hyd, Ssea_no_repairs, nYears);
 % Fill values for year 0
 Smax = [0;Smax];
 LSmax = [0;LSmax];
