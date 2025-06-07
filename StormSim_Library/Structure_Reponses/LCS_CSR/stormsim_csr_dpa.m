@@ -1,4 +1,4 @@
-function [CSR_Timeseries_DPA] = stormsim_csr_dpa_mod(config, structure, emp_coeff, LC_SimOUT_hyd)
+function [CSR_Timeseries_DPA] = stormsim_csr_dpa(config, structure, emp_coeff, LC_SimOUT_hyd)
 %{
 LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
