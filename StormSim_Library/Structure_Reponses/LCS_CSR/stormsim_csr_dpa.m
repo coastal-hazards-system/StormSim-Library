@@ -503,7 +503,7 @@ CSR_Timeseries_DPA.LSmax = LSmax;
 CSR_Timeseries_DPA.LSPcurves = LSPcurves;
 CSR_Timeseries_DPA.SPcurves = SPcurves;
 % Low Crested Breakwater Stability Number
-CSR_Timeseries_DPA.LCBW_FS = LCBW_FS;
+% CSR_Timeseries_DPA.LCBW_FS = LCBW_FS;
 
 %% AUX FUNCTIONS
 % DETERMINE STORM END ROW
