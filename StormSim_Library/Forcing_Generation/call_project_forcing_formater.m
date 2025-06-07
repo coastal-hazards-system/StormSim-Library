@@ -37,10 +37,10 @@ if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
         % Project Forcing Was Succesfully Loaded, Skip Next Step
         load_pass = true;
         % Prompt User Of Loading
-        dips(['Successfully loaded project_forcing from simulation case'  ref_case_name]);
+        disp(['Successfully loaded project_forcing from simulation case '  ref_case_name]);
     catch
         % Prompt User Of Loading Fail
-        dips(['Loading of project_forcing from simulation case'  ref_case_name 'failed. Initializing new run....']);
+        disp(['Loading of project_forcing from simulation case '  ref_case_name 'failed. Initializing new run....']);
         % Set Load Flag To False
         load_pass = false; % Will create new "project_forcing" according to requested workflow.
     end
