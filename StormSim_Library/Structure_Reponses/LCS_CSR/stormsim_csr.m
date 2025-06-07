@@ -4,8 +4,8 @@ storm_type = fieldnames(project_forcing);
 % Compute Structure Respose: q, R2%, Dn50, Dn50 LCBW, P1
 for ii = 1:length(storm_type)
     Resp.(storm_type{ii}) = compute_structure_response(config, structure,...
-        project_forcing,...
-        emp_coeff, storm_type{ii});
+        project_forcing.(storm_type{ii}),...
+        emp_coeff, 0);
     % Rubblemound Only
     if config.struc_type == 3
         switch data_type
