@@ -275,6 +275,8 @@ if get_max == 1
             %
             if calc_q_vol == 1
                 vars_to_find = [var_names,{'Q_vol_wave_ot', 'Q_vol'}];
+            else
+                vars_to_find = var_names;
             end
             % Remove Unwanted Fields
             rm_indx = sum(cell2mat(cellfun(@(x) strcmp(fieldnames(Resp), x), vars_to_find, 'un', false)), 2) == 0;
