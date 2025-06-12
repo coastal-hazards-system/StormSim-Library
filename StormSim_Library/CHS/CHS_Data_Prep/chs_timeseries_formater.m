@@ -30,9 +30,6 @@ function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0
 %}
 
 %% DEFINE INPUTS
-stmID = cellfun(@str2double,swl_timeseries.('Storm ID'), 'un', false);
-% Initialize Storage Matrix
-storm_data = [stmID ,cell(length(stmID(:,1)),1)];
 %
 ts_storm2rm = storms2rm;
 % Display Completion Progress Initial Print
@@ -40,6 +37,9 @@ fprintf(1,'   Completion Progress: %3d%%\n',0);
 % Ensure Data Is Sorted Per Storm ID
 swl_timeseries = sortrows(swl_timeseries,'Storm ID','ascend');
 hm0_timeseries = sortrows(hm0_timeseries,'Storm ID','ascend');
+stmID = cellfun(@str2double,swl_timeseries.('Storm ID'), 'un', false);
+% Initialize Storage Matrix
+storm_data = [stmID ,cell(length(stmID(:,1)),1)];
 
 %% ADCIRC-STWAVE TIMESERIES MATCHING PROCESS
 % Loop Through All Storms
@@ -57,23 +57,25 @@ for stm = 1:length(stmID)
     end
 
     %% EXTRACT STORM DATA
+    % Get Storm Row Index
+    pull_indx = cell2mat(stmID) == stmID{stm};
     % ADCIRC
-    WL = swl_timeseries.("Water Elevation"){stm,1};
-    WL_datestr = num2str(swl_timeseries.("yyyymmddHHMM"){stm,1});
+    WL = swl_timeseries.("Water Elevation"){pull_indx,1};
+    WL_datestr = num2str(swl_timeseries.("yyyymmddHHMM"){pull_indx,1});
 
     % STWAVE
-    waves = [hm0_timeseries.(STWAVE_headers_location.Hm0){stm,1},...
-        hm0_timeseries.(STWAVE_headers_location.Tp){stm,1},...
-        hm0_timeseries.(STWAVE_headers_location.wDir){stm,1}];
+    waves = [hm0_timeseries.(STWAVE_headers_location.Hm0){pull_indx,1},...
+        hm0_timeseries.(STWAVE_headers_location.Tp){pull_indx,1},...
+        hm0_timeseries.(STWAVE_headers_location.wDir){pull_indx,1}];
 
     % Determine Date Format
     dformat = 'yyyyMMddHHmmss';
-    ad_len = length(num2str(swl_timeseries.("yyyymmddHHMM"){stm,1}(1, :)));
-    wv_len = length(num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1}(1, :)));
+    ad_len = length(num2str(swl_timeseries.("yyyymmddHHMM"){pull_indx,1}(1, :)));
+    wv_len = length(num2str(hm0_timeseries.("yyyymmddHHMM"){pull_indx,1}(1, :)));
 
 
-    wv_dtime = datetime(num2str(hm0_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", dformat(1:wv_len));
-    ad_dtime = datetime(num2str(swl_timeseries.("yyyymmddHHMM"){stm,1}), "InputFormat", dformat(1:ad_len));
+    wv_dtime = datetime(num2str(hm0_timeseries.("yyyymmddHHMM"){pull_indx,1}), "InputFormat", dformat(1:wv_len));
+    ad_dtime = datetime(num2str(swl_timeseries.("yyyymmddHHMM"){pull_indx,1}), "InputFormat", dformat(1:ad_len));
     dt_wv = unique(diff(wv_dtime));dt_wv = dt_wv(1);
     dt_ad = unique(diff(ad_dtime));dt_ad = dt_ad(1);
 
