@@ -87,7 +87,7 @@ use_timeseries = config.use_timeseries;
 % Storm Sampling
 storm_sampling = config.storm_sampling;
 % Define File Name Prefix
-name_prefix = fullfile(config.outfolder, config.name_prefix);
+name_prefix = config.name_prefix;
 % Define CHS_Data file (.zip, .mat)
 chs_zip = config.chs_zip;
 % Define CHS_Data Fiel Extension

@@ -101,7 +101,7 @@ if ~isempty(ss_files_list)
         % Grab CHS Study Details
         [config.region, config.sp_ID, config.sp_ID_wave] = get_study_details(file_list);
         % Create String Pattern For Naming Convention
-        config.name_prefix = fullfile(project_name, struc_id,...
+        config.name_prefix = fullfile(sim_dir,...
             [project_name '_' struc_id '_' config.region]);
     end
     % Check For StormSim Processed storm .mat
@@ -143,7 +143,7 @@ if isempty(ss_raw) && strcmp(data_case, 'chs_data')
             % Grab CHS Study Details
             [config.region, config.sp_ID, config.sp_ID_wave] = get_study_details(file_list);
             % Create String Pattern For Naming Convention
-            config.name_prefix = fullfile(project_name, struc_id,...
+            config.name_prefix = fullfile(sim_dir,...
                 [project_name '_' struc_id '_' config.region]);
             % Copy File To Add Naming Convention
             copyfile(config.chs_zip, [config.name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat']);
@@ -187,7 +187,7 @@ if isempty(ss_raw) && strcmp(data_case, 'chs_data')
             % Grab CHS Study Details
             [config.region, config.sp_ID, config.sp_ID_wave] = get_study_details(file_list);
             % Create String Pattern For Naming Convention
-            config.name_prefix = fullfile(project_name, struc_id,...
+            config.name_prefix = fullfile(sim_dir,...
                 [project_name '_' struc_id '_' config.region]);
     end
 end
