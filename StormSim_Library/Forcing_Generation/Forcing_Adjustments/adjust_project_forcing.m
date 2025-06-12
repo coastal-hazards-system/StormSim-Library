@@ -8,7 +8,8 @@ use_tides = config.apply_random_tides;
 swl_slr = config.swl_slr;
 % Depth Limitation Switch
 apply_DL = config.apply_depth_limitation;
-% Storm
+% gravity constant 
+g = config.gravity_constant;
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Toe Elevation (<0 below datum zero)
@@ -56,7 +57,7 @@ end
 h = cellfun(@(x) x - toe_elev, SWL(:, 1), 'un', false);
 % Apply Depth Limitation
 if apply_DL == 1
-    Hm0 = cellfun(@(x, y, z) apply_depth_limitation(x, y, z), Hm0, Tp, h,'un',false);
+    Hm0 = cellfun(@(x, y, z) apply_depth_limitation(x, y, z, g), Hm0, Tp, h,'un',false);
 end
 
 %% STORE ADJUSTED DATA

@@ -1,4 +1,4 @@
-function Hm0 = apply_depth_limitation(Hm0,Tp,h)
+function Hm0 = apply_depth_limitation(Hm0, Tp, h, g)
 %% VECTORIZE INPUTS
 data_dims = size(Hm0);
 Hm0 = Hm0(:);
@@ -7,9 +7,8 @@ h = h(:);
 %% Depth limitation wave transformation
 %     disp('      Checking for depth limited waves...')
 % Empirical Breaker Index Coefficient
-K_b =  max(0.01,normrnd(1,0.3,size(h)));
+K_b =  1; % max(0.01,normrnd(1,0.3,size(h)));
 % Compute Wave Number
-g = 9.81;
 [km,~,~]=cellfun(@(x,y) wavnum1_VG(x,y,g),{Tp},{h},'UniformOutput',false);
 km = cell2mat(km);
 % Compute Depth Limited Waves
