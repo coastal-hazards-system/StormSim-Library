@@ -27,7 +27,7 @@ HISTORY OF REVISIONS:
 ***************  ALPHA  VERSION  **  FOR INTERNAL TESTING ONLY ************
 %}
 function boot = ecdf_boot(empHC,Nsim)
-%     rng('default');
+rng('default');
 Nstrm = size(empHC,1);
 dlt = abs(diff(empHC)); dlt = [dlt;dlt(end)];
 boot=zeros(Nsim,Nstrm);
