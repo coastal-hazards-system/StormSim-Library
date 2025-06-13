@@ -1,4 +1,4 @@
-function [config, structure] = call_input_parser_mod(input_filename)
+function [config, structure] = call_input_parser(input_filename)
 %{
     %% DESCRIPTION
     This function parses StormSim's project input file and creates "config"
@@ -275,13 +275,18 @@ if exist(fullfile(sim_dir, case_name, [project_name '_' struc_id '_' case_name ,
         % Delete Files Because Bias Needs to Be Recomputed
         rmdir(sim_dir, 's');
     end
+    % Grab Forcing Adjustment Flags
+    config.u_engine = config_load.u_engine;
+    config.f_adjust = config_load.f_adjust;
+else
+    % Uncertainty Engine Field Initialization
+    config.u_engine = 0;
+    % Forcing Adjustments Field Initialization
+    config.f_adjust = 0;
 end
 
 %% APPEND ADDITIONAL SIMULATION DETAILS TO CONFIG
-% Uncertainty Engine Field Initialization
-config.u_engine = 0;
-% Forcing Adjustments Field Initialization
-config.f_adjust = 0;
+
 % Make Sure Confidence Limits Are In The Expected Format
 try
     % Split Sring

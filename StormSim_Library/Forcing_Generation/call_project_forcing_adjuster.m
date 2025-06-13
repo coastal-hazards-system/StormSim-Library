@@ -2,7 +2,15 @@ function [project_forcing, config] = call_project_forcing_adjuster(config, proje
 %% GRAB INPUTS FROM "config"
 % Grab Forcing Adjsutment Flag
 f_adjust = config.f_adjust;
-
+save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
+    config.case_name , [config.project_name,'_', config.struc_id]);
+% Define Workflow Key Phrase
+switch config.workflow
+    case {1, 4} % PROS
+        wName = 'PROS';
+    case 3 % LCS
+        wName = 'LCS';
+end
 %% ADJUST PROJECT FORCING ACCORDING TO WORKFLOW
 % Adjust Forcing If Needed
 if f_adjust == 0
@@ -23,12 +31,15 @@ if f_adjust == 0
                 % Data
                 data = project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st});
                 % Adjust Project Forcing Fields
-                project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st}) = adjust_project_forcing(config, structure, data);
+                [project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st}), config] = adjust_project_forcing(config, structure, data, storm_types{st});
             end
         end
     end
     % Raise Flag In Case Function Is Executed Again
     config.f_adjust = 1;
+    %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
+    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing');
+    save([save_name '_' config.case_name '_config_file.mat'], 'config');
 else
     % Display Status Message
     disp('Project forcing has already been adjusted, skipping....');

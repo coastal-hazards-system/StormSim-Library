@@ -2,7 +2,15 @@ function [project_forcing, config] = call_uncertainty_engine(config, project_for
 %% GRAB INFORMATION FROM "config"
 % Grab Uncertainty Application Flag
 u_engine = config.u_engine; % Check if user has already applied uncertainty with this function
-
+save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
+    config.case_name , [config.project_name,'_', config.struc_id]);
+% Define Workflow Key Phrase
+switch config.workflow
+    case {1, 4} % PROS
+        wName = 'PROS';
+    case 3 % LCS
+        wName = 'LCS';
+end
 %% APPLY FORCING AND STRCUCTURAL UNCERTAINTY
 if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicates
     % Display Status Message
@@ -14,7 +22,7 @@ if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicate
     for dt = 1:length(data_types) % Peaks , Timeseries
         % Scan For Matching Types
         match_types = fieldnames(project_forcing.(data_types{dt}));
-        % Keep Relevant Fields 
+        % Keep Relevant Fields
         match_types = match_types(contains(match_types, {'Default','WLP','WHP'}));
         % Loop Across Each Matching Type
         for mt = 1:length(match_types) % Default, WLP, WHP
@@ -43,6 +51,10 @@ if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicate
     end
     % Add Uncertainty Application Flag To Config
     config.u_engine = 1;
+    %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
+    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing');
+    save([save_name '_' config.case_name '_config_file.mat'], 'config');
+
 else % Project Forcing Replicates Already Have Uncertainty Applied
     % Display Status Message
     disp('Project forcing already has uncertainty, skipping....');

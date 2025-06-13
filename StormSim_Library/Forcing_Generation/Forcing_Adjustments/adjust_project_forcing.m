@@ -1,4 +1,4 @@
-function [project_forcing] = adjust_project_forcing(config, structure, project_forcing)
+function [project_forcing, config] = adjust_project_forcing(config, structure, project_forcing, st_type)
 %% GRAB DETAILS FROM "config"
 % Define Tide File
 tide_file = config.tide_file;
@@ -43,7 +43,10 @@ end
 %% SWL ADJUSTMENTS
 % Apply Random Tide To SWL
 if exist(tide_file,'file') == 2 && use_tides == 1
-    SWL = apply_random_tide(tide_file, SWL, t_size);
+    if ~isfield(config, ['tide_indx_' lower(st_type)])
+        config.(['tide_indx_' lower(st_type)]) = [];
+    end
+    [SWL, config.(['tide_indx_' lower(st_type)])] = apply_random_tide(tide_file, SWL, t_size, config.(['tide_indx_' lower(st_type)]));
 end
 % Apply SLR
 if swl_slr~=0

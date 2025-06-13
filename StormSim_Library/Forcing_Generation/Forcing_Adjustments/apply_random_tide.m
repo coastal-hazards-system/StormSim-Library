@@ -1,4 +1,4 @@
-function SWL = apply_random_tide_mod(tide_file, SWL, t_size)
+function [SWL, tide_indx] = apply_random_tide(tide_file, SWL, t_size, tide_indx)
 %% IMPORT TIDAL DATA
 warning('off');
 % Import Tidal Data Provided
@@ -10,7 +10,9 @@ warning('on');
 %% ADD RANDOM TIDE ACCORDINGLY
 % Create Random Tide Indexes
 rand_tide = {};
-tide_indx = cellfun(@(x) randi([1 length(tidal_data)], length(x), 1), t_size, 'un', false);
+if isempty(tide_indx)
+    tide_indx = cellfun(@(x) randi([1 length(tidal_data)], length(x), 1), t_size, 'un', false);
+end
 % For Each Event
 for stm = 1:length(tide_indx)
     % Verify If Tidal Indexes Are Good For Timeseries

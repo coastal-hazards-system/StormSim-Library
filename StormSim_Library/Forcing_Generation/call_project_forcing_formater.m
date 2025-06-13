@@ -25,6 +25,8 @@ load_pass = false;
 % Build Ref Case Path
 mcs_ref_pth = fullfile(config.outfolder, config.project_name, config.struc_id,...
     ref_case_name, [config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat']);
+existing_file = [save_name '_' wName '_project_forcing.mat'];
+existing_config = [save_name '_' config.case_name '_config_file.mat'];
 % Evaluate According To User Selection
 if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
     try
@@ -44,6 +46,13 @@ if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
         % Set Load Flag To False
         load_pass = false; % Will create new "project_forcing" according to requested workflow.
     end
+elseif exist(existing_file, 'file') == 2
+    load(existing_file,'project_forcing');
+    config2 = load(existing_config, 'config');
+    config.u_engine = config2.config.u_engine;
+    config.f_adjust = config2.config.f_adjust;   
+    disp('Successfully loaded project_forcing');
+    load_pass = true;
 end
 
 %% FORMAT STORM SUITE ACCORDING TO WORKFLOW
@@ -63,9 +72,8 @@ if ~load_pass
             % Save Peaks Life Cycle Structures
             save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
     end
+    % RESET DATA MOD FLAGS
+    config.u_engine = 0;
+    config.f_adjust = 0;
 end
-
-%% RESET DATA MOD FLAGS 
-config.u_engine = 0;
-config.f_adjust = 0;
 end
