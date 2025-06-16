@@ -1,4 +1,4 @@
-function [CSR_Timeseries_DPA] = stormsim_csr_dpa(config, structure, emp_coeff, LC_SimOUT_hyd)
+ function [CSR_Timeseries_DPA] = stormsim_csr_dpa(config, structure, emp_coeff, LC_SimOUT_hyd)
 %{
 LICENSING:
     This code is part of StormSim software suite developed by the U.S. Army
@@ -152,6 +152,10 @@ dw = config.water_density;
 Ssea_ULS = config.seaside_S_uls;
 % Leeside Damage Ultimate Limit State (ULS)
 Slee_ULS = config.leeside_S_uls;
+% Seaside Damage Serviceability Limit State (SLS)
+Ssea_SLS = config.seaside_design_S;%e.g. S=7, just before exposure of underlayer
+% Leeside Damage Serviceability Limit State (SLS)
+Slee_SLS = config.leeside_design_S; %e.g. S=7, just before exposure of underlayer
 % Coefficients are found in CEM and in Eurotop. For levees with grass, the
 % surface roughness influence increses for small wave heights.
 gamma_f = config.roughness_ifactor;
@@ -273,8 +277,10 @@ for NlcS = 1:nLC
         % Verify Damage State (Define Ks, dS)
         [Ks_DwR, dS_DwR, first_damaging_storm_DwR] = ...
             damage_state(DwR, first_damaging_storm_DwR, LC_SimOUT_hyd, NlcS, Ntime, Ksi, Ksp);
+        % Determine Repair Conditions 
+        repair_sea_now = repair_condition(repair_switch, Ssea_SLS, Ssea_ULS, Ssea_with_repairs_last);
         % Verify For Breaching Condition
-        if Ssea_with_repairs_last>Ssea_ULS && repair_switch == 1
+        if repair_sea_now && repair_switch > 0
             % Store Breaching Timestep (Row ID)
             if storm_end_seaside == 0
                 % Update Storm End Row
@@ -331,8 +337,10 @@ for NlcS = 1:nLC
         if Hm0{NlcS}(Ntime)<0.1 || Tp{NlcS}(Ntime)<0 || Rc{NlcS}(Ntime)<0
             z1p{NlcS}(Ntime)=0;
         end
+                % Determine Repair Conditions 
+        repair_lee_now = repair_condition(repair_switch, Slee_SLS, Slee_ULS, SLee_with_repairs_last);
         % Verify For Breaching Condition
-        if SLee_with_repairs_last>Ssea_ULS && repair_switch == 1 % Breach
+        if repair_lee_now && repair_switch > 0 % Breach
             % Store Breaching Timestep (Row ID)
             if storm_end_leeside == 0
                 % Update Storm End Row
@@ -367,9 +375,6 @@ for NlcS = 1:nLC
         % Store t-1 Damage State
         u1p_last = u1p{NlcS}(Ntime);
         SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);
-
-        %% TOE BERM LIMIT STATE (LCBW)
-%         [LCBW_FS{NlcS}(Ntime)] = melby_low_crested_stability(Hm0{NlcS}(Ntime), Rc{NlcS}(Ntime), armor_delta, SDn_lcbw);
 
     end %Ntime_per_LC  %structure_type == 3 % Rubblemound
 
@@ -423,7 +428,7 @@ LSmean = repmat(mean(LS_final,'omitnan'),size(p));
 stats = table(p,Smean,Sp,LSmean,LSp);
 
 %% COMPUTE AMOUNT OF REPAIRS
-if repair_switch == 1
+if repair_switch > 0 
     % Seaside N Repairs
     if ~isempty(Seaside_Repair_Indexes)
         sea_repairs = cellfun(@(x) length(x), Seaside_Repair_Indexes(:, 1),'UniformOutput',true);
@@ -486,7 +491,7 @@ CSR_Timeseries_DPA.Leeside_Repair_Indexes = Leeside_Repair_Indexes;
 % Mean & Percentiles For THe Final Accumulated Damage Of All LC's
 CSR_Timeseries_DPA.stats = stats;
 % Repairs Stats
-if repair_switch == 1
+if repair_switch > 0
     CSR_Timeseries_DPA.Repairs_Stats = Repairs_Stats;
 else
     CSR_Timeseries_DPA.seaside_repair_count = sea_repairs;
@@ -502,8 +507,6 @@ CSR_Timeseries_DPA.LSmax = LSmax;
 % Yearly Mean Maximum Cummulative Damages Percentiles
 CSR_Timeseries_DPA.LSPcurves = LSPcurves;
 CSR_Timeseries_DPA.SPcurves = SPcurves;
-% Low Crested Breakwater Stability Number
-% CSR_Timeseries_DPA.LCBW_FS = LCBW_FS;
 
 %% AUX FUNCTIONS
 % DETERMINE STORM END ROW
@@ -540,5 +543,31 @@ CSR_Timeseries_DPA.SPcurves = SPcurves;
             Ks_DwR = Ksi;
             dS_DwR = 0.5;
         end % DwR &&
+    end
+% Determine Repair Condition 
+     function repair_flag = repair_condition(repair_switch, SLS, ULS, S_last)
+        % Determine Repair Conditions 
+        switch repair_switch
+            case 1 % Include Service Limit State Repairs (SLS)
+                if S_last>SLS
+                    repair_flag = true;
+                end
+            case 2 % Repair for Ultimate Limit State (ULS)
+                if S_last>ULS
+                    repair_flag = true;
+                end
+            case 3 % Repair for Service & Ultimate Limit State
+                if S_last>ULS || S_last>SLS
+                    repair_flag = true;
+                end
+            case 0  % No Repairs
+                repair_flag = false;
+            otherwise 
+                error(['Error: Please specify supported repair scenario: ' newline ...
+                    '0 - Repairs Not Included In Analysis' newline ...
+                    '1 - SLS Repairs Are Included In Analysis' newline ...
+                    '2 - repairs for ULS only' newline ...
+                    '3 - repairs for both ULS and SLS']);
+        end
     end
 end
