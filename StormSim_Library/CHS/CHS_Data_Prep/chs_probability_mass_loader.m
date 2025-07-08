@@ -30,7 +30,6 @@ pm_version = pm_version{end};
 if exist(pm_path,'dir')
     switch pm_version
         case 'NACCS' % North Atalantic Comprehensive Study (2015)
-            % Make Sure TO Correct NACCS
 %             pm_version = 'CHS-NA';
             try
                 % Listing of closest (CRL) to each save point.
@@ -132,13 +131,26 @@ if exist(pm_path,'dir')
                     col_indx = 3;
                 otherwise
                     % Get File Dir
-                    dummy = dir(fullfile(grid_file,'*_staID.mat'));
-                    % Savepoint location info
-                    load(fullfile(grid_file, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
-                    % Define Row Index
-                    bias_indx = find(staID(:, 1) == Nsvpt);
-                    % Define Latitude Column
-                    col_indx = 2;
+                    dummy = dir(fullfile(grid_file,'*.mat'));
+                    % Define Load Cases 
+                    load_cases = {'nodeID','staID'};
+                    % Identify Case
+                    load_bool = cellfun(@(x) contains({dummy.name}, x),  {'nodeID','staID'});
+                    % Load Grid Files
+                    switch load_cases{load_bool}
+                        case 'nodeID'
+                            % Load Grid Files
+                            staID = load(fullfile(grid_file, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
+                            % Define Latitude Column
+                            col_indx = 3;
+                        case 'staID'
+                            % Load Grid Files
+                            load(fullfile(grid_file, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                            % Define Latitude Column
+                            col_indx = 2;
+                    end
+                    % Find Correct Row ID For DSWs
+                    bias_indx = find(staID(:,1) == Nsvpt); % Row INdex For Bias And Uncertainty
             end
             % Find CRL closest to savepoint
             [nearest_lat, nearest_lon, ~, dist, ic] = find_nearest_latlon(staID(bias_indx, col_indx), staID(bias_indx, col_indx+1), CRL(:,1), CRL(:,2), []);

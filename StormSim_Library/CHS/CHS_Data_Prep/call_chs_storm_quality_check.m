@@ -207,18 +207,22 @@ else
             adcirc_node_id = SPs(SPs(:,1) == spID, 2);
             % Find Correct Row ID For Bias & Uncertainty
             bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
-        case {'NACCS', 'CHS-NA'}
-            % Get File Dir
-            dummy = dir(fullfile(grid_path,'*_nodeID*.mat'));
-            % Load Grid Files
-            staID = load(fullfile(grid_path, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
-            % Find Correct Row ID For DSWs
-            bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
         otherwise
             % Get File Dir
-            dummy = dir(fullfile(grid_path,'*_staID.mat'));
+            dummy = dir(fullfile(grid_path,'*.mat'));
+            % Define Load Cases
+            load_cases = {'nodeID','staID'};
+            % Identify Case
+            load_bool = cellfun(@(x) contains({dummy.name}, x),  {'nodeID','staID'});
             % Load Grid Files
-            staID = load(fullfile(grid_path, dummy.name), 'staID');staID = staID.staID;  % SPs
+            switch load_cases{load_bool}
+                case 'nodeID'
+                    % Load Grid Files
+                    staID = load(fullfile(grid_path, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
+                case 'staID'
+                    % Load Grid Files
+                    load(fullfile(grid_path, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
+            end
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
     end
