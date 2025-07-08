@@ -6,11 +6,14 @@ save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
     config.case_name , [config.project_name,'_', config.struc_id]);
 % Define Workflow Key Phrase
 switch config.workflow
-    case {1, 4} % PROS
-        wName = 'PROS';
+    case 1
+        wName = 'PROS-RB';
+    case 4 % PROS
+        wName = 'PROS-FB';
     case 3 % LCS
         wName = 'LCS';
 end
+
 %% ADJUST PROJECT FORCING ACCORDING TO WORKFLOW
 % Adjust Forcing If Needed
 if f_adjust == 0
@@ -38,7 +41,7 @@ if f_adjust == 0
     % Raise Flag In Case Function Is Executed Again
     config.f_adjust = 1;
     %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
-    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing');
+    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing','-v7.3');
     save([save_name '_' config.case_name '_config_file.mat'], 'config');
 else
     % Display Status Message

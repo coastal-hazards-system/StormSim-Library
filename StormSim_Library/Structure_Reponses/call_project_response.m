@@ -78,6 +78,8 @@ switch workflow
                 mkdir(subDir);
             end
         end
+        % Update Naming Label 
+        wName = ['PROS-' wName];
     case 3 % CSR
         %% STORMSIM: LCS-CSR
         % Define Workflow ID
@@ -115,5 +117,5 @@ end
 % Display Status
 disp('Saving project responses....');
 % Save Outputs
-save([subDir project_name '_' struc_id '_' case_name '_PROS-' wName '_project_responses.mat'],'Resp','-v7.3');
+save([subDir project_name '_' struc_id '_' case_name '_' wName '_project_responses.mat'],'Resp','-v7.3');
 end

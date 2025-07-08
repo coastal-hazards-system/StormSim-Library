@@ -52,7 +52,7 @@ if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicate
     % Add Uncertainty Application Flag To Config
     config.u_engine = 1;
     %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
-    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing');
+    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing','-v7.3');
     save([save_name '_' config.case_name '_config_file.mat'], 'config');
 
 else % Project Forcing Replicates Already Have Uncertainty Applied
