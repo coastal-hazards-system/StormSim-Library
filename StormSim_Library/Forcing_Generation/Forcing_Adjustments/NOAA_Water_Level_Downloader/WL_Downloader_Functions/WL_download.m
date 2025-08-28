@@ -66,7 +66,7 @@ for jj = 1:Lend
             end
             % Temporary failsafe - got empty table when there is data in
             % record 
-             if isempty(wltable)==1
+             if isempty(wltable)==1 || width(wltable)>5
                  uBound = datenum(stDates{jj}{kk},'yyyymmdd HH:MM');
                  % Get Initial Time Stamp of Actual Segmentation
                  lBound = datenum(endDates{jj}{kk},'yyyymmdd HH:MM');
