@@ -92,8 +92,8 @@ switch resp_var
             end
             if size(aep_out,1)>100
                 nan_index = find(isnan(aep_out(:,ii)),1,'first');
-                aep_out(nan_index-1,ii)=nan;
-                aep_out(nan_index-2,ii)=nan;
+                % aep_out(nan_index-1,ii)=nan; % WHY -1
+                % aep_out(nan_index-2,ii)=nan; % wHY -2
             end
         end
 end
