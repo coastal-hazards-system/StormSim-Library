@@ -1,5 +1,5 @@
 function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0_timeseries, storms2rm,...
-    STWAVE_headers_location, Tp_special)
+    STWAVE_headers_location, Tp_special, print_progress)
 %{
     %% DESCRIPTION
     This function parses converted CHS data structure to generate a
@@ -33,7 +33,9 @@ function [storm_data, ts_storm2rm] = chs_timeseries_formater(swl_timeseries, hm0
 %
 ts_storm2rm = storms2rm;
 % Display Completion Progress Initial Print
-fprintf(1,'   Completion Progress: %3d%%\n',0);
+if print_progress
+    fprintf(1,'   Completion Progress: %3d%%\n',0);
+end
 % Ensure Data Is Sorted Per Storm ID
 swl_timeseries = sortrows(swl_timeseries,'Storm ID','ascend');
 hm0_timeseries = sortrows(hm0_timeseries,'Storm ID','ascend');
@@ -45,7 +47,9 @@ storm_data = [stmID ,cell(length(stmID(:,1)),1)];
 % Loop Through All Storms
 for stm = 1:length(stmID)
     % Print Status
-    fprintf(1,'\b\b\b\b%3.0f%%',(100*(stm/length(stmID))));
+    if print_progress
+        fprintf(1,'\b\b\b\b%3.0f%%',(100*(stm/length(stmID))));
+    end
     % Skip Bad Storm
     if ismember(stmID{stm},storms2rm) || length(swl_timeseries.("Water Elevation"){stm,1}) == 1
         % Assign NaN
@@ -115,8 +119,8 @@ for stm = 1:length(stmID)
     % Failsafe In Case dt's are not divisible
     if mod(tstp_stride, 1) ~= 0 % timesteps are different but not divisible
         % Try To Get Hourly
-        ad_stride = minutes(60)/ad_dtime;
-        wv_stride = minutes(60)/wv_dtime;
+        ad_stride = minutes(60)/unique(diff(ad_dtime));
+        wv_stride = minutes(60)/unique(diff(wv_dtime));
         dt_final = datenum(0,0,0,0,60,0);
         %
         if mod(ad_stride, 1) == 0 & mod(wv_stride, 1) == 0
@@ -178,5 +182,7 @@ end
 % Do Unique
 ts_storm2rm = unique(ts_storm2rm);
 % Print Status
-fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
+if print_progress
+    fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
+end
 end
