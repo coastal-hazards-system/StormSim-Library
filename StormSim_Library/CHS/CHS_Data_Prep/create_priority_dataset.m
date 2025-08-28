@@ -1,10 +1,5 @@
-function [storm_data, ts_storm2rm] = create_priority_dataset(peaks_table, timeseries_table_surge, timeseries_table_wave, storms2rm, wave_headers, storm_duration, Tp_special, priority_type)
+function [storm_data, ts_storm2rm] = create_priority_dataset(peaks_table, timeseries_table_surge, timeseries_table_wave, storms2rm, wave_headers, storm_duration, Tp_special, priority_type, print_progress)
 %% DEFINE INPUTS
-% Grab Storm IDs
-stmID = num2cell(str2double(peaks_table.("Storm ID")));
-% Initialize Storage Matrix
-storm_data = [stmID ,cell(length(stmID(:,1)),1)];
-%
 ts_storm2rm = storms2rm;
 % Define Time Window Around Peak To Pull Response From Timeseries
 tdelta = datenum(0, 0, 0, 3, 0, 0); %  +/- 3 hours
@@ -13,27 +8,36 @@ peaks_table = sortrows(peaks_table,'Storm ID','ascend');
 % Sort Data Table
 timeseries_table_surge = sortrows(timeseries_table_surge,'Storm ID','ascend');
 timeseries_table_wave = sortrows(timeseries_table_wave,'Storm ID','ascend');
+% Grab Storm IDs
+stmID = num2cell(str2double(peaks_table.("Storm ID")));
+% Initialize Storage Matrix
+storm_data = [stmID ,cell(length(stmID(:,1)),1)];
 
 %% PROMT USER
 % Display Progress Step
 switch priority_type
     case 'wlp'
-        disp('Building water level priority (WLP) dataset....');
+        disp_toggle(print_progress,'Building water level priority (WLP) dataset....');
         timeseries_table = timeseries_table_wave;
+        chk_field = wave_headers.Hm0;
     case 'whp'
-        disp('Building wave height priority (WHP) dataset....');
+        disp_toggle(print_progress,'Building wave height priority (WHP) dataset....');
         timeseries_table = timeseries_table_surge;
+        chk_field = "Water Elevation";
 end
 % Display Completion Progress Initial Print
-fprintf(1,'   Completion Progress: %3d%%\n',0);
-
+if print_progress
+    fprintf(1,'   Completion Progress: %3d%%\n',0);
+end
 %%
 % Find Table Row To Extract
 for stm = 1:length(stmID)
     % Print Status
-    fprintf(1,'\b\b\b\b%3.0f%%',(100*(stm/length(stmID))));
+    if print_progress
+        fprintf(1,'\b\b\b\b%3.0f%%',(100*(stm/length(stmID))));
+    end
     % Skip Bad Storm
-    if ismember(stmID{stm}, storms2rm) || length(timeseries_table.("Water Elevation"){stm,1}) == 1
+    if ismember(stmID{stm}, storms2rm) || length(timeseries_table.(chk_field){stm,1}) == 1
         % Assign NaN
         storm_data(stm, 2) = {nan(1,1)};
         % Store Bad Storm ID
@@ -109,5 +113,7 @@ end
 % Do Unique
 ts_storm2rm = unique(ts_storm2rm);
 % Print Status
-fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
+if print_progress
+    fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(stm/length(stmID))));
+end
 end
