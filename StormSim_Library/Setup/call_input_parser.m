@@ -304,6 +304,8 @@ config.slope_type = 0; % Idealized Slope
 config.structure_dir = 0; % Assume Shore Normal Waves
 config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented
+% This helps toggle print outs 
+config.print_progress = true;
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % isempty(ss_files_list) -> 1 (Print Welcome Message) , 0 (No Print)

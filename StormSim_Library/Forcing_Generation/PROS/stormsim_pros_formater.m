@@ -1,4 +1,4 @@
-function project_forcing = stormsim_pros_formater(storm_sampling, storm, prob_mass)
+function project_forcing = stormsim_pros_formater(storm_sampling, storm, prob_mass, print_progress)
 %% PREP INPUTS
 % Execute Code Block According To Strom Type Being Calle
 switch storm_sampling
@@ -12,7 +12,7 @@ end
 % Loop Across Each Storm Type
 for st = 1:length(storm_types)
     % Disp
-    disp(['Reshaping ' storm_types{st} ' forcing data for response base analysis....']);
+    disp_toggle(print_progress, ['Reshaping ' storm_types{st} ' forcing data for response base analysis....']);
     % Get Data Types (Peaks/Timeseries)
     data_type = fieldnames(storm.(storm_types{st}));
     data_type(~contains(data_type, {'Peaks', 'Timeseries'})) = [];

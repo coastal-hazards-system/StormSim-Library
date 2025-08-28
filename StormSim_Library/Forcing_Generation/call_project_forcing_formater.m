@@ -65,7 +65,7 @@ if ~load_pass
     switch workflow
         case {1,4} % StormSim: PROS (RB1, RB3, FB)
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
-            project_forcing = stormsim_pros_formater(storm_sampling, storm, prob_mass);
+            project_forcing = stormsim_pros_formater(storm_sampling, storm, prob_mass, config.print_progress);
             % Save Peaks Life Cycle Structures
             save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
         case 3 % StormSim: LCS

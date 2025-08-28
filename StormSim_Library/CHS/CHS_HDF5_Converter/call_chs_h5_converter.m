@@ -1,9 +1,9 @@
-function Data_out = call_chs_h5_converter(files_2_convert)
+function Data_out = call_chs_h5_converter(files_2_convert, print_progress)
     % initialize Counter
     ctr = 1;
     % Loop Through H5 Files In Zip Folder
     for jj = 1:length(files_2_convert)
-        disp(['   - ' files_2_convert{jj} '...']);
+        disp_toggle(print_progress,['   - ' files_2_convert{jj} '...']);
         % Call H5 Converter
         [cData] = chs_h5_converter(files_2_convert{jj});
         % Store Converted Filename
@@ -13,5 +13,5 @@ function Data_out = call_chs_h5_converter(files_2_convert)
         % Increment Counter
         ctr = ctr + 1;
     end
-    disp('H5 conversion was sucessfull...');
+    disp_toggle(print_progress,'H5 conversion was sucessfull...');
 end

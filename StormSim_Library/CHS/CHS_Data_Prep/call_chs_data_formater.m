@@ -113,6 +113,8 @@ pm_path = config.prob_mass_source;
 temp_path = config.temp_path;
 % Grid File
 grid_file = config.chs_grid_file_source;
+% Print Out Switch 
+disp_on = config.print_progress;
 
 %% CHECK IF PROCESSED SAVEPOINT DATA EXIST FOR TRANSECT (struc_id)
 % Check For StormSim Files On Transect Directory
@@ -133,14 +135,15 @@ if ~isempty(ss_files_list)
     end
     % Check For StormSim Processed storm .mat
     if ~isempty(ss_storm)
-        disp('StormSim generated storm .mat detected. Loading data..');
+
+        disp_toggle(disp_on,'StormSim generated storm .mat detected. Loading data..');
         % Load storm
         load(fullfile(ss_storm.folder, ss_storm.name), 'storm', 'prob_mass');
         % Hotstart Is Possible
         hotstart_fail = false;
         % Load CHS_Data For Output
         if ~isempty(chs_data_filename)
-            disp('StormSim generated CHS_Data .mat detected. Loading data..');
+            disp_toggle(disp_on,'StormSim generated CHS_Data .mat detected. Loading data..');
             load(chs_data_filename, 'CHS_Data'); % Need To Load Here For Output Arguments
         end
     else
@@ -217,7 +220,7 @@ if ~hotstart_fail % New Case Run (hot start)
     % Determine If Pre-Processing Needs To Be Run
     if stm_type_chk && peaks_chk && timeseries_chk
         % .mats Have The Necessary information For Requested Config. Do Nothing.
-        disp('Project forcing detected. Loading processed SP data....');
+        disp_toggle(disp_on,'Project forcing detected. Loading processed SP data....');
         % hotstrat Conditions Have Been Met
         hotstart_fail = false;
     else % .mats Do Not Have Required Data For Requested Config
@@ -229,7 +232,7 @@ if ~hotstart_fail % New Case Run (hot start)
         if ~strcmp(fext, '.zip') && isempty(chs_data_filename)
             storm_simulation_error_msg(stm_type_chk, peaks_chk, timeseries_chk, temp_path);
         else
-            disp('Project forcing does not have neccesary dependencies. Restarting import process....');
+            disp_toggle(disp_on,'Project forcing does not have neccesary dependencies. Restarting import process....');
         end
     end
 end
@@ -270,9 +273,9 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         % Append Filenames With Paths
         full_file_path = cellfun(@(x,y) [x filesep y],chs_files_2_convert_paths,chs_files_2_convert,'un',false);
         % Print Status
-        disp('Begin CHS h5 file conversion....');
+        disp_toggle(disp_on,'Begin CHS h5 file conversion....');
         % Convert CHS Data
-        CHS_Data = call_chs_h5_converter(full_file_path);
+        CHS_Data = call_chs_h5_converter(full_file_path, disp_on);
         % Export Data
         save([name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat'],'CHS_Data');
         % Remove Temp Dir
@@ -280,7 +283,7 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
             rmdir(temp_path,'s');
         end
     else  % chs_data_filename already exists
-        disp('StormSim generated CHS_Data .mat detected. Loading data..');
+        disp_toggle(disp_on,'StormSim generated CHS_Data .mat detected. Loading data..');
         % Load CHS_Data From Provided File
         load(chs_data_filename,'CHS_Data');
     end

@@ -44,6 +44,8 @@ chs_ssl_bias_file = config.chs_ssl_bias_and_uncertainty_file;
 grid_path = config.chs_grid_file_source;
 % Storm Duration
 storm_duration = config.storm_duration;
+%
+disp_on = config.print_progress;
 
 %% DEFINE AUX VARIABLES
 % storm Type Flag To Search For
@@ -59,9 +61,9 @@ end
 if use_peaks == 1
     % Display Progress Step
     if strcmp(storm_type,'XC')
-        disp(['Matching CHS extratropical peak waves and water levels....']);
+        disp_toggle(disp_on,['Matching CHS extratropical peak waves and water levels....']);
     else
-        disp(['Matching CHS tropical peak waves and water levels....']);
+        disp_toggle(disp_on,['Matching CHS tropical peak waves and water levels....']);
     end
     % Pull Storm Data From Parsed H5 Files
     [peaks_data, adcirc_bool,  STWAVE_headers_location, Tp_special] = chs_file_selection(CHS_Data, 'Peaks', storm_if);
@@ -76,29 +78,29 @@ end
 if use_timeseries == 1
     % Display Progress Step
     if strcmp(storm_type,'XC')
-        disp(['Matching CHS extratropical timeseries waves and water levels....']);
+        disp_toggle(disp_on,['Matching CHS extratropical timeseries waves and water levels....']);
     else
-        disp(['Matching CHS tropical timeseries waves and water levels....']);
+        disp_toggle(disp_on,['Matching CHS tropical timeseries waves and water levels....']);
     end
     % Pull Storm Data From Parsed H5 Files
     [timeseries_data, adcirc_bool_ts,  STWAVE_headers_location_ts, Tp_special_ts] = chs_file_selection(CHS_Data, 'Timeseries', storm_if);
     % Create ADCIRC-STWAVE TimeSeries Dataset
     [storm.Timeseries.Default, storm2rm] = chs_timeseries_formater(timeseries_data{adcirc_bool_ts},...
         timeseries_data{~adcirc_bool_ts},...
-        storm2rm, STWAVE_headers_location_ts, Tp_special_ts);
+        storm2rm, STWAVE_headers_location_ts, Tp_special_ts, disp_on);
     % Create Alternate Datasets
     if use_peaks == 1
         % Create Water Level Priority
         if WLP_switch == 1
             [storm.('Peaks').WLP, ~] = create_priority_dataset(peaks_data{adcirc_bool},...
                 timeseries_data{adcirc_bool_ts}, timeseries_data{~adcirc_bool_ts},...
-                storm2rm, STWAVE_headers_location_ts, storm_duration, Tp_special_ts, 'wlp');
+                storm2rm, STWAVE_headers_location_ts, storm_duration, Tp_special_ts, 'wlp', disp_on);
         end
         % Create Wave Height Priority
         if WHP_switch == 1
             [storm.('Peaks').WHP, ~] = create_priority_dataset(peaks_data{~adcirc_bool}, ...
                 timeseries_data{adcirc_bool_ts}, timeseries_data{~adcirc_bool_ts},...
-                storm2rm, STWAVE_headers_location, storm_duration, Tp_special, 'whp');
+                storm2rm, STWAVE_headers_location, storm_duration, Tp_special, 'whp', disp_on);
         end
     end
 end
