@@ -298,7 +298,6 @@ switch structure_type
 end
 
 %% RESHAPE OUTPUTS
-R2p = R2p;
 q_wave_ot(q_wave_ot<10^-6) = 0;
 q_wave_ot(isnan(q_wave_ot)) = 0;
 % q Overflow
