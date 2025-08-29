@@ -214,8 +214,10 @@ else
             dummy = dir(fullfile(grid_path,'*.mat'));
             % Define Load Cases
             load_cases = {'nodeID','staID'};
+            % Pull Grid File
+            dummy = dummy(contains({dummy.name},{'nodeID','staID'}));
             % Identify Case
-            load_bool = cellfun(@(x) contains({dummy.name}, x),  {'nodeID','staID'});
+            load_bool = cell2mat(cellfun(@(x)contains(dummy.name, x), {'nodeID','staID'}, 'un', false));
             % Load Grid Files
             switch load_cases{load_bool}
                 case 'nodeID'
