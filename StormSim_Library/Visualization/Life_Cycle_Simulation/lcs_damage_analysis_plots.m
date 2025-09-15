@@ -34,7 +34,7 @@ dmg_events_sub = cellfun(@sum, dmg_events_bool);
 % Compute Percentage
 dmg_events_sub_percent = cell2mat(arrayfun(@(x, y) 100.*x./y, dmg_events_sub,dmg_events_len,'un',false));
 % Bin Storms Rc By Year And LC
-[~,~,~,Rc_binning] = compute_lcs_yearly_curve({stm_data.LCNUM}, cellfun(@(x) x.Rc, resp.diagnostics, 'un', false), nYears, 0);
+[,~,~,Rc_binning] = compute_lcs_yearly_curve({stm_data.LCNUM}, cellfun(@(x) x.Rc, resp.diagnostics, 'un', false), nYears);
 
 %% FIGURE 2: PLOT Damaging Events Submergance Percentage
 figure('Units','Normalized','Position',[0.15078125,0.165972222222222,0.3328125,0.459027777777778]);
