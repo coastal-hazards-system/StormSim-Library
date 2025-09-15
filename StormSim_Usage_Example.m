@@ -166,7 +166,7 @@ t5 = toc(t5);
 
 %% STEP 6: COMPUTE  PROJECT RESPONSES 
 t6 = tic;
-Resp = call_project_response(config, project_forcing, structure, prob_mass, config.create_plots);
+Resp = call_project_response(config, project_forcing, structure, config.create_plots);
 t6 = toc(t6);
 
 %% PRINT TIME 
