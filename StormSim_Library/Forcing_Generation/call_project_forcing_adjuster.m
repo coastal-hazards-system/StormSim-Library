@@ -42,7 +42,7 @@ if f_adjust == 0
     config.f_adjust = 1;
     %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
     save([save_name '_' wName '_project_forcing.mat'], 'project_forcing','-v7.3');
-    save([save_name '_' config.case_name '_config_file.mat'], 'config');
+    save([save_name '_' config.case_name '_config_file.mat'], 'config', '-append');
 else
     % Display Status Message
     disp('Project forcing has already been adjusted, skipping....');

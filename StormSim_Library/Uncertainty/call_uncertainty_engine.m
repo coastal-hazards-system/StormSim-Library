@@ -6,8 +6,10 @@ save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
     config.case_name , [config.project_name,'_', config.struc_id]);
 % Define Workflow Key Phrase
 switch config.workflow
-    case {1, 4} % PROS
-        wName = 'PROS';
+    case 1 % PROS
+        wName = 'PROS-RB';
+    case 4
+        wName = 'PROS-FB';
     case 3 % LCS
         wName = 'LCS';
 end
@@ -53,7 +55,7 @@ if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicate
     config.u_engine = 1;
     %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
     save([save_name '_' wName '_project_forcing.mat'], 'project_forcing','-v7.3');
-    save([save_name '_' config.case_name '_config_file.mat'], 'config');
+    save([save_name '_' config.case_name '_config_file.mat'], 'config', '-append');
 
 else % Project Forcing Replicates Already Have Uncertainty Applied
     % Display Status Message
