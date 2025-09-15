@@ -146,6 +146,7 @@ end
 % Initialize Storm Counter
 n=1;
 lcs_data = zeros(sum(TC_MCS),9);
+cumulativeProb = cumsum(TC_SRR(1:3)./TC_SRR(end));
 % Loop Through Simulation Length
 for j = 1:simulation_years
     %
@@ -159,10 +160,14 @@ for j = 1:simulation_years
             % Random Number from 0 - 1
             smpl_flag = rand;
             % Determine Random Intensity To Sample
-            [~, IIdx] = max([smpl_flag<=TC_SRR(1,1),...
-                smpl_flag>TC_SRR(1,1) && smpl_flag<1-TC_SRR(1,3)...
-                smpl_flag>= 1-TC_SRR(1,3)]);
-            %                     % Make Sure Resulting Intensity Has A Population
+            if smpl_flag < cumulativeProb(1)
+                IIdx = 1;
+            elseif smpl_flag < cumulativeProb(2)
+                IIdx = 2;
+            elseif smpl_flag < cumulativeProb(3)
+                IIdx = 3;
+            end
+            % Make Sure Resulting Intensity Has A Population
             chk = [];
             while isempty(chk)
                 % Look Into Resulting Intensity Population
@@ -172,9 +177,13 @@ for j = 1:simulation_years
                     % Random Number from 0 - 1
                     smpl_flag = rand;
                     % Determine Random Intensity To Sample
-                    [~, IIdx] = max([smpl_flag<=TC_SRR(1,1),...
-                        smpl_flag>TC_SRR(1,1) && smpl_flag<1-TC_SRR(1,3)...
-                        smpl_flag>= 1-TC_SRR(1,3)]);
+                    if smpl_flag < cumulativeProb(1)
+                        IIdx = 1;
+                    elseif smpl_flag < cumulativeProb(2)
+                        IIdx = 2;
+                    elseif smpl_flag < cumulativeProb(3)
+                        IIdx = 3;
+                    end
                     % Try New Intensity
                     chk = eval(['smpl' num2str(IIdx) ';']);
                 end
