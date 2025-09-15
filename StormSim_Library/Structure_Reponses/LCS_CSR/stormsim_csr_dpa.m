@@ -551,14 +551,20 @@ CSR_Timeseries_DPA.SPcurves = SPcurves;
             case 1 % Include Service Limit State Repairs (SLS)
                 if S_last>SLS
                     repair_flag = true;
+                else
+                    repair_flag = false;
                 end
             case 2 % Repair for Ultimate Limit State (ULS)
                 if S_last>ULS
                     repair_flag = true;
+                else
+                    repair_flag = false;
                 end
             case 3 % Repair for Service & Ultimate Limit State
                 if S_last>ULS || S_last>SLS
                     repair_flag = true;
+                else
+                    repair_flag = false;
                 end
             case 0  % No Repairs
                 repair_flag = false;
