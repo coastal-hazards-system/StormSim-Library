@@ -22,7 +22,7 @@ else
     wall_bottom_elev = structure.toe_elevation;
 end
 % Seaward Slope
-seaward_slope = structure.seaside_slope;
+% seaward_slope = structure.seaside_slope;
 % Berm Slope
 berm_slope = structure.berm_slope;
 % Compute Freeboard

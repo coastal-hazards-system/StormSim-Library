@@ -90,7 +90,7 @@ crest_elevation = structure.('crest_elevation');
 % Define Crest Width
 crest_width = structure.('crest_width');
 switch structure_type
-    case {1,3} % Levee
+    case {1,3,4} % Levee
         % Define Seward Slope
         seaside_slope = 1/structure.('seaside_slope');
         % Define Landward Slope

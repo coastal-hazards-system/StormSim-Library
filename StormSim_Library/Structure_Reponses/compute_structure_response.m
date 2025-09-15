@@ -48,6 +48,11 @@ switch struc_type
         end
     case 3 % Rubblemound (R2p, q, Dn50)
         calc_p1 = 0;
+        calc_dn50_lcbw = 0;
+    case 4  % LCBW
+        calc_p1 = 0;
+        calc_dn50_ss = 0;
+        calc_dn50_ls = 0;
 end
 % Remove Responses Based On Workflow
 if workflow == 3
@@ -74,16 +79,11 @@ berm_elev = structure.berm_elevation; %
 berm_width = structure.berm_width;
 % Berm Slope
 berm_slope = structure.berm_slope;
-% Seaside Slope (cot(alpha))
-if config.slope_type == 1 % This flag will be harcoded for distirbutable version
-    slope = structure.seaward_slope; % []
-else % Idealized Slope
-    slope = structure.seaside_slope;
-end
-% Leeside Slope
-slope_lee = structure.leeside_slope;
 % Rubblemound Fields
 switch struc_type
+    case 4
+        % Delta
+        delta = structure.armor_delta;
     case 3
         % Delta
         delta = structure.armor_delta;
@@ -99,6 +99,20 @@ switch struc_type
 end
 % Water Density kg/m^3
 rho_w = structure.water_density;
+% GET BW SPECIFIC FIELDS
+if ismember(struc_type, [3, 4])
+    SG = 1 + config.armor_delta;% Armor Stone Specific Gravity
+    dr = SG*rho_w;% Armor Stone Density [kg/m^3]
+    V_ss = structure.seaside_mass/dr; % Seaside Median Volume of Armor Stone
+    SDn = V_ss^(1/3);% (LCBW) Seaside Nominal Stone Diameter (m)
+end
+% Get Slopes
+if ismember(struc_type, [1, 3, 4])
+    % Seaside Slope (cot(alpha))
+    slope = structure.seaside_slope;
+    % Leeside Slope
+    slope_lee = structure.leeside_slope;
+end
 
 %% GET FORCING FIELDS
 % Grab Workflow Specific Fields
@@ -118,16 +132,6 @@ switch workflow
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
 end
 
-%% GET LCBW SPECIFIC FIELDS
-if struc_type == 3
-    crest_elev_lcbw = structure.crest_elevation_lcbw; % Crest Elevation
-    Rc_lcbw = cellfun(@(x) crest_elev_lcbw - x, SWL, 'un', false); % Freeboard
-    SG = 1 + config.armor_delta;% Armor Stone Specific Gravity
-    dr = SG*rho_w;% Armor Stone Density [kg/m^3]
-    V_ss_lcbw = structure.lcbw_seaside_mass/dr; % Seaside Median Volume of Armor Stone
-    SDn_lcbw = V_ss_lcbw^(1/3);% (LCBW) Seaside Nominal Stone Diameter (m)
-end
-
 %% COMPUTE STRUCTURE RESPONSE
 if no_resp~=0
     % Call Eurotop Influence Factors
@@ -136,9 +140,7 @@ if no_resp~=0
     switch struc_type
         case 2 % Floodwall
             % Reformat Slope If Needed
-            if length(slope) == 1
-                slope_aux = cellfun(@(y) repmat(berm_slope, size(y)), SWL, 'un', false);
-            end
+            slope_aux = cellfun(@(y) zeros(size(y)), SWL, 'un', false);
             % Compute runup & Overtopping
             if calc_q == 1 || calc_nappe == 1
                 [~,~, Resp.q, q_overflow, Resp.q_wave_ot]=cellfun(@(a, b, c, d, e, f) Eurotop_r2p_q_Final(a, b, c, d,...
@@ -171,13 +173,9 @@ if no_resp~=0
                     Resp.Fjet] = cellfun(@(a, b, c) floodwall_nappe_response(a, b,...
                     c, hw, rho_w), SWL, Hm0, Resp.q, 'un', false);
             end
-        case {1,3} % Levees & Rubblemound
+        case {1,3,4} % Levees & Rubblemound & LCBW
             % Reformat Slope If Needed
-            if length(slope) == 1
-                slope_aux = cellfun(@(y) repmat(slope, size(y)), SWL, 'un', false);
-            else
-                slope_aux = {slope};
-            end
+            slope_aux = cellfun(@(y) repmat(slope, size(y)), SWL, 'un', false);
             % Compute runup & Overtopping
             if calc_r2p == 1 || calc_q == 1 || calc_q_vol == 1
                 [Resp.R2p, Resp.R2p_SWL, Resp.q, ~, Resp.q_wave_ot]=cellfun(@(a, b, c, d, e,f) Eurotop_r2p_q_Final(a, b, c, d,...
@@ -205,22 +203,22 @@ if no_resp~=0
                         emp_coeff.k_ls1, emp_coeff.k_ls2, e.gamma_f),...
                         Hm0, Tm10, Tm, Rc,gammas,'un',false);
                 end
-                % Dn50 Seaside Low Crested Breakwater
-                if calc_dn50_lcbw == 1
-                    %{
+            end
+            % Dn50 Seaside Low Crested Breakwater
+            if calc_dn50_lcbw == 1
+                %{
                     Melby addition for LCBW. This is a temporary fix for Midbay. Ultimately we will have a branch whether  
                     breakwater is normal or low-crested.  In that case, there will not be a separate crest elevation for low-crested structure.  
                     However, for Midbay, we have both normal structure and low crested because toe berm is at MLLW. 
                     So we have both normal and LC (toe berm) stability computed in same sim.
-                    %}
-                    if workflow == 3
-                        calc_dn50_lcbw = 0; % Turn Of To Pull Correct Label
-                        calc_FS_lcbw = 1; % Turn On To Pull Correct Label
-                        % Compute LCBW FS
-                        [Resp.FS_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, SDn_lcbw), Hm0, Rc_lcbw,'un', false);
-                    else
-                        [Resp.Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, []), Hm0, Rc_lcbw, 'un', false);
-                    end
+                %}
+                if workflow == 3 % Compute Dn50 (PROS)
+                    calc_dn50_lcbw = 0; % Turn Of To Pull Correct Label
+                    calc_FS_lcbw = 1; % Turn On To Pull Correct Label
+                    % Compute LCBW FS
+                    [Resp.FS_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, SDn), Hm0, Rc,'un', false);
+                else % Compute Stability Number (Ns)
+                    [Resp.Dn50_LCBW] = cellfun(@(a,b) melby_low_crested_stability(a, b, delta, []), Hm0, Rc, 'un', false);
                 end
             end
     end

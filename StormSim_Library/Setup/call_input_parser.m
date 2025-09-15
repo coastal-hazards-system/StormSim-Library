@@ -285,6 +285,34 @@ else
     config.f_adjust = 0;
 end
 
+%% APPLY STRUCTURE TYPE RESPONSES RESTRICTIONS 
+% Grab Structure Response Switches
+switch config.struc_type
+    case 1 % Levee
+        config.compute_dn50_seaside = 0;
+        config.compute_dn50_leeside = 0;
+        config.compute_dn50_lcbw = 0;
+        config.compute_p1 = 0;
+        config.compute_p2_p3 = 0;
+        config.compute_nappe = 0;
+    case 2 % Floodwall
+        config.compute_dn50_seaside = 0;
+        config.compute_dn50_leeside = 0;
+        config.compute_dn50_lcbw = 0;
+        config.compute_r2p = 0;
+    case 3 % Rubble Mound
+        config.compute_dn50_lcbw = 0;
+        config.compute_p1 = 0;
+        config.compute_p2_p3 = 0;
+        config.compute_nappe = 0;
+    case 4 % Low Crested Break Water
+        config.compute_dn50_seaside = 0;
+        config.compute_dn50_leeside = 0;
+        config.compute_p1 = 0;
+        config.compute_p2_p3 = 0;
+        config.compute_nappe = 0;
+end
+
 %% APPEND ADDITIONAL SIMULATION DETAILS TO CONFIG
 
 % Make Sure Confidence Limits Are In The Expected Format
@@ -300,7 +328,6 @@ catch % In Case Of Unexpected Format , Default To
     config.project_CLs = '[16 84]';
 end
 % Deprecated Or Hidden Features
-config.slope_type = 0; % Idealized Slope
 config.structure_dir = 0; % Assume Shore Normal Waves
 config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented

@@ -252,7 +252,7 @@ switch structure_type
         % foreshore influence
         q_wave_ot(~rIndx) = sqrt(g.*Hm0(~rIndx).^3).*OT_coeff3.*...
             exp(-(OT_coeff4./gamma_beta_OT(~rIndx)).*Rc_corrt(~rIndx)./Hm0(~rIndx));
-    case 3 % Rubblemound
+    case {3, 4} % Rubblemound
         %     disp('      Calculating Rubble Mound Overtopping and Runup...')
         % Embankment coefficients
         runup_coeff1 = 1.65; % EurOtop Eq 6.1
