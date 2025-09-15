@@ -40,6 +40,13 @@ switch staID
         unit_label = 'm';
         y_label = ['H_{m_{0}} [' unit_label ' ]'];
         var_name = 'H_{m_{0}}';
+    case 'Hm0t'
+        U_a = hm0_u_a;
+        U_r = hm0_u_r;
+        uncert_treatment_jpm = 'combined';
+        unit_label = 'm';
+        y_label = ['H_{m_{0t}} [' unit_label ' ]'];
+        var_name = 'H_{m_{0t}}';
     case 'Tp'
         U_a = 0;
         U_r = sqrt(1+hm0_u_r)-1;

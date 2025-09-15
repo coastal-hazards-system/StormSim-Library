@@ -23,7 +23,7 @@ calc_dd_slope = config.compute_damaging_depth_slope;
 calc_p1 = config.compute_p1;
 calc_p2_p3 = config.compute_p2_p3;
 calc_nappe = config.compute_nappe;
-
+calc_wave_transmission = config.compute_wave_transmission;
 % Get Save Point Depth
 SPdepth = config.chs_sp_depth;
 % Remove Responses Based On Structure Type
@@ -222,6 +222,23 @@ if no_resp~=0
                 end
             end
     end
+    if calc_wave_transmission == 1
+        if exist('slope', 'var')
+            tana=1/slope;
+        else
+            tana=0;
+        end
+        [Kt] = cellfun(@(a,b,c) eurotop_wave_transmission(a,b,c,crest_width,tana,g),Hm0,Tp,Rc,'un',false);
+        % Compute Transmitted Wave
+        switch workflow
+            case {1,2,4} % PROS
+                Resp.Hm0t = cellfun(@(x, y) mean(x.*y,2,"omitnan"), project_forcing.('Hm0_no_rep'), Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
+            case 3 % LCS
+                Resp.Hm0t = cellfun(@(x, y) x.*y, Hm0, Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
+        end
+        % For PROS need to use _no_reps Hm0 in order to properly account
+        % for uncertainty
+    end
     % Damaging Depth Response
     if calc_dd == 1
         [Resp.DamDepthElev, Resp.DamDepth]= cellfun(@(x, y, z) damaging_depth(x, y, z, SPdepth, g, calc_dd_ks, calc_dd_slope), SWL, Hm0, Tp, 'un', false);
@@ -245,6 +262,7 @@ if ismember(workflow, [1,2,4])
         SWL = project_forcing.('SWL_no_rep');
         Hm0 = project_forcing.('Hm0_no_rep');
         Tp = project_forcing.('Tp_no_rep');
+        % Take The Mean 
         % Find SWL Max For Each Storm
         Resp.('SWL') = cellfun(@(x) max(x,[],1),SWL,'un',false);
         % Find Hm0 Max For Each Storm
@@ -263,8 +281,8 @@ end
 %% FLATTEN DATA & STORE RESPONSES
 if get_max == 1
     % Build Var Inventory Logical Vector
-    var_bool = [forcing_bool, calc_dn50_ss, calc_dn50_ls, calc_dn50_lcbw, calc_FS_lcbw, calc_r2p, calc_r2p, calc_q, calc_q, calc_p1, calc_dd, calc_dd];
-    var_names = {'SWL', 'Hm0', 'Tp', 'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'FS_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'p1', 'DamDepth', 'DamDepthElev'};
+    var_bool = [forcing_bool, calc_dn50_ss, calc_dn50_ls, calc_dn50_lcbw, calc_FS_lcbw, calc_r2p, calc_r2p, calc_q, calc_q, calc_p1, calc_dd, calc_dd, calc_wave_transmission];
+    var_names = {'SWL', 'Hm0', 'Tp', 'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'FS_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'p1', 'DamDepth', 'DamDepthElev', 'Hm0t'};
     % Evaluate According To Workflow
     switch workflow
         case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
