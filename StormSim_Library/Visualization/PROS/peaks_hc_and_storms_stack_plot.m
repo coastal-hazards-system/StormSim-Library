@@ -49,8 +49,9 @@ end
 y_limit = [];
 for ii = 1:length(storm_types)
     % HC Data
-    resp_indx = cellfun(@(x) find(strcmp(x, {Resp.(storm_types{ii}).var})), {'SWL'; 'Hm0'; 'Tp'}, 'un', true);
-    % Grab HC Data
+    resp_indx = cellfun(@(x) find(strcmp(x, {Resp.(storm_types{ii}).var})), {'SSL';'SWL'; 'Hm0'; 'Tp'}, 'un', false);
+    resp_indx = cell2mat(resp_indx(~cellfun(@isempty, resp_indx)));
+% Grab HC Data
     hcData.(storm_types{ii}) = Resp.(storm_types{ii})(resp_indx);
     % Loop For Each Storm Type
     for kk = 1:length(resp_indx)
