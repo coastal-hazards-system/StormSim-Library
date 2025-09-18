@@ -31,6 +31,11 @@ case_name = config.case_name;
 %% SWL
 % Search For SWL
 SWL = Resp(strcmp({Resp.var},{'SWL'}));
+swl_var = 'SWL';
+if isempty(SWL)
+    SWL = Resp(strcmp({Resp.var},{'SSL'}));
+    swl_var = 'SSL';
+end
 % Search For SWL
 Hm0 = Resp(strcmp({Resp.var},{'Hm0'}));
 % Search For R2p
@@ -83,7 +88,7 @@ if ~isempty(SWL)
         ylim(ax, [toe_elevation-0.5 y_lim_ax+0.1]);
         t_str = ax.Title.String;
         t_str(1) = {strrep([strrep(t_str{1}, '_', ' ') ' | Case Name: ' case_name],'_',' ')};
-        t_str(2) = {['CL: ' num2str(CLs(ii)) ' % | ' storm_type ' | SWL (left) | R_{2%} (right)']};
+        t_str(2) = {['CL: ' num2str(CLs(ii)) ' % | ' storm_type ' | ' swl_var ' (left) | R_{2%} (right)']};
         title(ax, t_str,'Interpreter','tex');
         exportgraphics(fig, fullfile(outpath, [project_name '_' structure_id '_' case_name '_SWL_and_R2p_' num2str(CLs(ii)) '_CL_' storm_type '_Hazards.png']));
         close all;
@@ -93,6 +98,8 @@ end
 if ~isempty(Hm0)
     f_data = Hm0.y_table(f_indx,:);
     y_lim_ax = max(max([f_data,f_data2],[],'all','omitnan'),crest_elevation);
+    % Define CLs
+    CLs = Hm0.CL;
     % Loop Through Each CL
     for ii = 1:length(CLs)
         % Create Figure (Sturcture) Cross-Section
