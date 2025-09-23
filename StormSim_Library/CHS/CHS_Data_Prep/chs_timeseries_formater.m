@@ -168,9 +168,9 @@ for stm = 1:length(stmID)
 
     %% REMOVE BAD ENTRIES
     % ADCIRC
-    storm_mat(storm_mat(:, 1)<-90, :) = [];
+    storm_mat(storm_mat(:, 1)<-90, :) = NaN;
     % STWAVE
-    storm_mat(sum(storm_mat(:, 2:3)<-90, 2)>=1, :)=[];
+    storm_mat(sum(storm_mat(:, 2:3)<-90, 2)>=1, 2:3)=NaN;
     % Append To Index Variable
     if isempty(storm_mat)
         ts_storm2rm = [ts_storm2rm;stmID{stm}];
