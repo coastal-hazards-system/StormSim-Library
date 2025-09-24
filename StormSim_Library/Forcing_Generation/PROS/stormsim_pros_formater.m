@@ -36,6 +36,13 @@ for st = 1:length(storm_types)
                 project_forcing.(data_type{kk}).(match_types{ii}).(storm_types{st}).TC_Prob = prob_mass.TC_Freq;%./RandNorm;
             end
         end
+        % Include dt
+        if strcmp(data_type{kk}, 'Timeseries')
+            project_forcing.(data_type{kk}).Default.(storm_types{st}).dt = cellfun(@(x) x(:, end), storm.(storm_types{st}).(data_type{kk}).('Default')(:, 2),'un',false);
+        else % Peaks
+            n_events = length(storm.(storm_types{st}).(data_type{kk}).('Default')(:, 1));
+            project_forcing.(data_type{kk}).Default.(storm_types{st}).dt = repmat({config.storm_duration}, n_events, 1);
+        end
     end
 end
 
@@ -45,7 +52,6 @@ end
         data_out.SWL = cellfun(@(x) repmat(x(:,col_indx(1)),1,n_reps),storm_data,'un',false); % SWL
         data_out.Hm0 = cellfun(@(x) repmat(x(:,col_indx(2)),1,n_reps),storm_data,'un',false); % Hm0
         data_out.Tp = cellfun(@(x) repmat(x(:,col_indx(3)),1,n_reps),storm_data,'un',false); %  Tp
-
         %
         data_out.SWL_no_rep = cellfun(@(x) x(:,col_indx(1)),storm_data,'un',false); % SWL
         data_out.Hm0_no_rep = cellfun(@(x) x(:,col_indx(2)),storm_data,'un',false); % Hm0

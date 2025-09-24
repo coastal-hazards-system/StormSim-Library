@@ -124,12 +124,14 @@ switch workflow
         Tp = project_forcing.Tp; % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
+        dt = cellfun(@(x) x*24*3600, project_forcing.dt, 'un', false); % Convert from days to seconds
     case 3 % LCS
         SWL = cellfun(@(x) x(:,5),project_forcing,'un',false); % SWL
         Hm0 = cellfun(@(x) x(:,6),project_forcing,'un',false); % Hm0
         Tp = cellfun(@(x) x(:,7),project_forcing,'un',false); % Tp
         h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
+        dt = cellfun(@(x) x(:, 9)*24*3600,project_forcing,'un',false); % dt
 end
 
 %% COMPUTE STRUCTURE RESPONSE
@@ -245,8 +247,8 @@ if no_resp~=0
     end
     % Compute Overtopping Volume
     if calc_q_vol == 1 && length(Resp.q{1}(:,1)) > 1
-        Resp.Q_vol = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),Resp.q,'un',false));
-        Resp.Q_vol_wave_ot = cell2mat(cellfun(@(x) sum(x,1,"omitnan"),Resp.q_wave_ot,'un',false));
+        Resp.Q_vol = cell2mat(cellfun(@(x, y) sum(x.*y,1,"omitnan"),Resp.q, dt, 'un',false));
+        Resp.Q_vol_wave_ot = cell2mat(cellfun(@(x, y) sum(x.*y,1,"omitnan"),Resp.q_wave_ot, dt, 'un',false));
     end
 else % StormSim:EVA was called, no structure responses
     Resp = [];
