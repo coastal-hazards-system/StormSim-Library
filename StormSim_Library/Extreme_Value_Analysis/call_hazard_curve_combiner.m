@@ -55,6 +55,9 @@ for j = s_indx
         case {'p2dyn','p2sta','p2total','p3dyn','p3sta','p3total','pu','X_low','theta_low','X_up','theta_up','Bx','X_c_surge','theta_center','Bjet','Vjet','Fjet'}
             % Skip Until Issues Are Sorted
             continue;
+        case {'Hm0t'}
+            % Use Values Associated To Hm0
+            u_field = u_vector{contains(u_names, 'hm0_u_r')};
         otherwise
             u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
     end
