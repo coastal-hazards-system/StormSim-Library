@@ -2,7 +2,7 @@ function StormSim_JPM_plot(JPM_output, jpm_options, plot_options)
 %
 % Colors for percentiles plots
 cs={'r-.','b--','b--','r-.'};
-prc=round(pst_options.prc);
+prc=round(jpm_options.prc);
 
 % Initialize Figures
 fig=figure('Color',[1 1 1],'visible','off');
@@ -33,7 +33,7 @@ ylabel(plot_options.yaxis_Label, 'FontSize', 12);
 % Process the percentiles
 pObj=struct('o',[],'n',[],'L','');
 for i=2:length(prc)+1 % First Row Is Mean
-    pObj(i-1).o = plot(ax, JPM_output.HC_plt_x, JPM_output.HC_plt(i, :), cs{i-1}, 'LineWidth', 2);
+    pObj(i-1).o = plot(ax, JPM_output.HC_plt_x, JPM_output.HC_plt(:, i), cs{i-1}, 'LineWidth', 2);
     pObj(i-1).n = prc(i-1);
     pObj(i-1).L = {['CL',int2str(prc(i-1)),'%']};
 end
@@ -45,7 +45,7 @@ t1 = pObj_t(pObj_t.n>50,:); t1 = table2struct(t1); %above the mean
 t2 = pObj_t(pObj_t.n<50,:); t2 = table2struct(t2); %below the mean
 
 % Mean and Empirical
-h1 = plot(ax, JPM_output.HC_plt_x, JPM_output.HC_plt(1, :), 'k-', 'LineWidth', 2); % Mean
+h1 = plot(ax, JPM_output.HC_plt_x, JPM_output.HC_plt(:, 1), 'k-', 'LineWidth', 2); % Mean
 % Legend
 legend([[t1.o],h1,[t2.o]],{t1.L,'Mean',t2.L},...
     'Location','southoutside','Orientation','horizontal','NumColumns',5,'FontSize',10);

@@ -1,4 +1,4 @@
-function [Storm, storm2rm] = chs_peaks_formater_mod(swl_peaks_table, hm0_peaks_table, STWAVE_headers_location, storm_duration, Tp_special)
+function [Storm, storm2rm] = chs_peaks_formater(swl_peaks_table, hm0_peaks_table, STWAVE_headers_location, storm_duration, Tp_special)
 %{
     %% DESCRIPTION
     This function parses converted CHS data structure to generate a
