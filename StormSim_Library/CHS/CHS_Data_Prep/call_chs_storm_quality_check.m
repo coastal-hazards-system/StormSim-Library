@@ -43,7 +43,7 @@ chs_ssl_bias_file = config.chs_ssl_bias_and_uncertainty_file;
 % Define CHS REgional Study Grid File
 grid_path = config.chs_grid_file_source;
 % Storm Duration
-storm_duration = config.storm_duration;
+storm_duration = config.storm_duration/24; % Conver from hours to days
 %
 disp_on = config.print_progress;
 
