@@ -234,7 +234,7 @@ if no_resp~=0
         % Compute Transmitted Wave
         switch workflow
             case {1,2,4} % PROS
-                Resp.Hm0t = cellfun(@(x, y) mean(x.*y,2,"omitnan"), project_forcing.('Hm0_no_rep'), Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
+                Resp.Hm0t = cellfun(@(x, y) x.*y, project_forcing.('Hm0_no_rep'), Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
             case 3 % LCS
                 Resp.Hm0t = cellfun(@(x, y) x.*y, Hm0, Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
         end

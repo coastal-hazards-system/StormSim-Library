@@ -43,7 +43,7 @@ switch staID
     case 'Hm0t'
         U_a = hm0_u_a;
         U_r = hm0_u_r;
-        uncert_treatment_jpm = 'combined';
+        uncert_treatment_jpm = 'relative';
         unit_label = 'm';
         y_label = ['H_{m_{0t}} [' unit_label ' ]'];
         var_name = 'H_{m_{0t}}';
