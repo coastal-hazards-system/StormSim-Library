@@ -173,13 +173,13 @@ if exist(pm_path,'dir')
             [~, ~, ~, dist, ~] = find_nearest_latlon(staID(bias_indx, col_indx), staID(bias_indx, col_indx+1),...
                 trk_lat, trk_lon, []);
             dist200=find(dist<=trk_dist);
-
+            ReducedSet = Param(dist200, :);
             % Low Intensity Storm Population
-            smpl1 = Param(Param(dist200,7)<28, 1);
+            smpl1 = ReducedSet(ReducedSet(:,7)<28, 1);
             % Medium Intensity Storm Population
-            smpl2 = Param((Param(dist200,7)>=28) & (Param(dist200,7)<48), 1);
+            smpl2 = ReducedSet((ReducedSet(:,7)>=28) & (ReducedSet(:,7)<48), 1);
             % High Intensity Storm Population
-            smpl3 = Param(Param(dist200,7)>=48, 1);
+            smpl3 = ReducedSet(ReducedSet(:,7)>=48, 1);
             % Make DP Col Be The 5
             Param = [Param(:,1:4), Param(:,7), Param(:,5:6)];
     end
