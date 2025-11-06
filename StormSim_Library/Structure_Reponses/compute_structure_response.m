@@ -5,7 +5,11 @@ struc_type = config.struc_type;
 % Storm Duration [s]
 duration = config.storm_duration*3600; % Convert hr to s
 % Compute Forcing HC
-compute_HC = config.pros_compute_forcing_HC;
+if isfield(config, 'pros_compute_forcing_HC')
+    compute_HC = config.pros_compute_forcing_HC;
+else 
+    compute_HC = 0;
+end
 % Define Requested Workflow
 workflow = config.workflow;
 % Gravity
@@ -73,12 +77,21 @@ crest_elev = structure.crest_elevation;
 crest_width = structure.crest_width;
 % Define Structure Toe Elevation (<0 below datum zero)
 toe_elev = structure.toe_elevation; % Flip convention
-% Berm Elevation (<0 Below Datum Zero)
-berm_elev = structure.berm_elevation; %
-% Berm Width
-berm_width = structure.berm_width;
-% Berm Slope
-berm_slope = structure.berm_slope;
+if config.add_berm
+    % Berm Elevation (<0 Below Datum Zero)
+    berm_elev = structure.berm_elevation; %
+    % Berm Width
+    berm_width = structure.berm_width;
+    % Berm Slope
+    berm_slope = structure.berm_slope;
+else
+    % Berm Elevation (<0 Below Datum Zero)
+    berm_elev = toe_elev; % This Translates to h == hb
+    % Berm Width
+    berm_width = 0;
+    % Berm Slope
+    berm_slope = 1;  % Can't set to 0, Will cause 1/0 in Goda Pressure Calcs
+end
 % Rubblemound Fields
 switch struc_type
     case 4
@@ -98,10 +111,10 @@ switch struc_type
         toe_elev = wall_bottom_elev;
 end
 % Water Density kg/m^3
-rho_w = structure.water_density;
+rho_w = config.water_density;
 % GET BW SPECIFIC FIELDS
 if ismember(struc_type, [3, 4])
-    SG = 1 + config.armor_delta;% Armor Stone Specific Gravity
+    SG = 1 + structure.armor_delta;% Armor Stone Specific Gravity
     dr = SG*rho_w;% Armor Stone Density [kg/m^3]
     V_ss = structure.seaside_mass/dr; % Seaside Median Volume of Armor Stone
     SDn = V_ss^(1/3);% (LCBW) Seaside Nominal Stone Diameter (m)
@@ -133,6 +146,8 @@ switch workflow
         Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
         dt = cellfun(@(x) x(:, 9)*24*3600,project_forcing,'un',false); % dt
 end
+% Compute Water Depth @ Berm
+hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
 
 %% COMPUTE STRUCTURE RESPONSE
 if no_resp~=0
@@ -152,8 +167,6 @@ if no_resp~=0
             end
             % Compute Tm1_0
             Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
-            % Compute Water Depth @ Berm
-            hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
             % Compute Wall Pressures
             if calc_p1 == 1 || calc_p2_p3 == 1
                 % P1
