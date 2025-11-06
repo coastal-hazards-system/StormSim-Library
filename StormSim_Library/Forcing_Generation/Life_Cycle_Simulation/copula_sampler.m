@@ -1,4 +1,4 @@
-function Y = copula_sampler_mod(storm_peaks, storm_indexes)  
+function Y = copula_sampler(storm_peaks, storm_indexes)  
 %% COMPUTE GAUSSIAN COPULA STATISTICAL PARAMETERS & SAMPLE STORMS
     % Returns a probability density estimate, f, for each sample data column
     for k = 1:4
