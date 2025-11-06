@@ -149,16 +149,16 @@ nYears = config.mcs_nYears;
 % Water density (kg/m^3)
 dw = config.water_density;
 % Seaside Damage Ultimate Limit State (ULS)
-Ssea_ULS = config.seaside_S_uls;
+Ssea_ULS = structure.seaside_S_uls;
 % Leeside Damage Ultimate Limit State (ULS)
-Slee_ULS = config.leeside_S_uls;
+Slee_ULS = structure.leeside_S_uls;
 % Seaside Damage Serviceability Limit State (SLS)
-Ssea_SLS = config.seaside_design_S;%e.g. S=7, just before exposure of underlayer
+Ssea_SLS = structure.seaside_design_S;%e.g. S=7, just before exposure of underlayer
 % Leeside Damage Serviceability Limit State (SLS)
-Slee_SLS = config.leeside_design_S; %e.g. S=7, just before exposure of underlayer
+Slee_SLS = structure.leeside_design_S; %e.g. S=7, just before exposure of underlayer
 % Coefficients are found in CEM and in Eurotop. For levees with grass, the
 % surface roughness influence increses for small wave heights.
-gamma_f = config.roughness_ifactor;
+gamma_f = structure.roughness_ifactor;
 % ---------- LOGICAL SWITCHES ----------
 % Structure Repair Assesment; 0 - Repairs Not Included In Analysis, 1 - Repairs Are Included In Analysis
 repair_switch = config.csr_apply_structure_repair;
@@ -178,7 +178,6 @@ seaside_slope = structure.seaside_slope;
 leeside_slope = structure.leeside_slope;
 armor_delta = structure.armor_delta;
 seaside_mass = structure.seaside_mass;
-lcbw_seaside_mass = structure.lcbw_seaside_mass;
 leeside_mass = structure.leeside_mass;
 cem_P = structure.cem_P;
 % Armor Stone Specific Gravity
@@ -189,10 +188,6 @@ dr = SG*dw;
 V_ss = seaside_mass/dr;
 % Seaside Nominal Stone Diameter (m)
 SDn = V_ss^(1/3);
-% % (LCBW) Seaside Median Volume of Armor Stone
-V_ss_lcbw = lcbw_seaside_mass/dr;
-% % (LCBW) Seaside Nominal Stone Diameter (m)
-SDn_lcbw = V_ss_lcbw^(1/3);
 %Leeside Median Volume of Armor Stone
 LV_ss = leeside_mass/dr;
 % Leeside Nominal Stone Diameter (m)
