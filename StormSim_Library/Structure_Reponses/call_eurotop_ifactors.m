@@ -2,7 +2,7 @@ function gammas = call_eurotop_ifactors(config, structure, SWL, Hm0)
 %% GRAB DETAILS FROM "config"
 strucType = config.struc_type;
 % Surface roughness coefficient
-gamma_f = config.roughness_ifactor;
+gamma_f = structure.roughness_ifactor;
 % Get Berm Logical Flag
 add_berm = config.add_berm;
 
