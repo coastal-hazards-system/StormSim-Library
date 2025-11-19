@@ -277,14 +277,18 @@ if ismember(workflow, [1,2,4])
         SWL = project_forcing.('SWL_no_rep');
         Hm0 = project_forcing.('Hm0_no_rep');
         Tp = project_forcing.('Tp_no_rep');
-        % Take The Mean 
-        % Find SWL Max For Each Storm
-        Resp.('SWL') = cellfun(@(x) max(x,[],1),SWL,'un',false);
-        % Find Hm0 Max For Each Storm
-        [Resp.('Hm0'), Hm0_indx] = cellfun(@(x) max(x,[],1),Hm0,'un',false);
-        %
-        Resp.('Tp') = cellfun(@(x,y) x(y), Tp, Hm0_indx, 'un', false);
-        %
+        % This Max Is Mostly Meant To Handle Hm0/Tp Max Relationship
+        if get_max == 1
+            Resp.('SWL') = cellfun(@(x) max(x,[],1),SWL,'un',false);
+            % Find Hm0 Max For Each Storm
+            [Resp.('Hm0'), Hm0_indx] = cellfun(@(x) max(x,[],1),Hm0,'un',false);
+            %
+            Resp.('Tp') = cellfun(@(x,y) x(y), Tp, Hm0_indx, 'un', false);
+        else
+            Resp.('SWL') = SWL;
+            Resp.('Hm0') = Hm0;
+            Resp.('Tp') = Tp;
+        end
         forcing_bool = [1, 1, 1];
     else
         forcing_bool = [0, 0, 0];
