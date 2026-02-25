@@ -95,76 +95,29 @@ for stm = 1:length(stmID)
 
     %% ADJUST MODEL OUTPUTS (IF NEEDED)
     % Adjust Storm Time Matching (If Needed)
-    if dt_ad > dt_wv
-        % Determine Stride For Data Pull To Match ADCIRC Model
-        tstp_stride = dt_ad/dt_wv;
-        % Limit Indexing To integer Values
-        if mod(tstp_stride,1) == 0
-            waves = waves(1:tstp_stride:end, :);
-            wv_dtime = wv_dtime(1:tstp_stride:end,:);
-            dt_final = datenum(dt_ad);
-        end
-    elseif dt_ad < dt_wv
-        % Determine Stride For Data Pull To Match Wave Model
-        tstp_stride = dt_wv/dt_ad;
-        % Limit Indexing To integer Values
-        if mod(tstp_stride,1) == 0
-            WL = WL(1:tstp_stride:end, :);
-            ad_dtime = ad_dtime(1:tstp_stride:end,:);
-            dt_final = datenum(dt_wv);
-        end
+    if dt_ad > dt_wv % Wave Model dt Is Finer
+        % Define dt and date vector
+        dt_final = dt_ad;
+        date_final = ad_dtime;
+        % Interp Wave Signal To ADCIRC dt
+        waves(1) = interp1(wv_dtime, waves(1), ad_dtime, 'linear');
+        waves(2) = interp1(wv_dtime, waves(2), ad_dtime, 'linear');
+        waves(3) = interp1(wv_dtime, waves(3), ad_dtime, 'linear');
+    elseif dt_ad < dt_wv % ADCIRC dt Is Finer
+        % Define dt and date vector
+        dt_final = dt_wv;
+        date_final = wv_dtime;
+        % Interp ADCIRC Signal To Wave Model dt
+        WL = interp1(ad_dtime, WL, wv_dtime, 'linear');
     else % dt are the same , nothing to do
-        tstp_stride = dt_ad/dt_wv; % Returns 1
-    end
-    % Failsafe In Case dt's are not divisible
-    if mod(tstp_stride, 1) ~= 0 % timesteps are different but not divisible
-        % Try To Get Hourly
-        ad_stride = minutes(60)/unique(diff(ad_dtime));
-        wv_stride = minutes(60)/unique(diff(wv_dtime));
-        dt_final = datenum(0,0,0,0,60,0);
         %
-        if mod(ad_stride, 1) == 0 & mod(wv_stride, 1) == 0
-            WL = WL(1:ad_stride:end, :);
-            ad_dtime = ad_dtime(1:ad_stride:end, :);
-            waves = waves(1:wv_stride:end, :);
-            wv_dtime = wv_dtime(1:wv_stride:end, :);
-        else
-            error('Error: Unable to timestep match storm data or build hourly dataset.');
-        end
-    end
-    % If Timestep Is Not Hourly Then Need To Extract Hourly Intervals
-    %{
-            Notes:
-            After Analysis of Storm Suite For NACCS It Was Found That
-            Model Output For STWAVE Has One Of Three Timesteps: 15 min,
-            30 min or hourly (Tropicals). ExtraTropicals provide hourly
-            only. This Correction Assumes Model Run Begins At 00:00
-    %}
-    % Make Sure That Datasets Are the Sames Size
-    if length(waves(:,1))~=length(WL(:,1))
-        % Try Matching Timesteps Instead Of Range
-        % Find Matching Timestamps STWAVE IN ADCIRC
-        [stVec] = ismember(wv_dtime(:,1),ad_dtime(:,1));
-        % Find Matching Timestamps ADCIRC IN STWAVE
-        adVec = ismember(ad_dtime(:,1),wv_dtime(:,1));
-        % Adjust WL Data
-        WL = WL(adVec,:);
-        % ADjust Wave Data
-        waves = waves(stVec,:);
-        % Check length Again
-        if length(waves(:,1))~=length(WL(:,1))
-            % Assign NaN
-            storm_data(stm, 2) = {nan(1,1)};
-            % Store Bad Storm ID
-            ts_storm2rm = [ts_storm2rm;stmID{stm}];
-            % Move To Next Storm
-            continue;
-        end
+        dt_final = dt_ad;
+        date_final = ad_dtime;
     end
     % Build Storm Data Matrix [ SSL, Hm0, Tp, wDir, date, dt ]
     storm_mat = [WL,...
         waves,...
-        datenum(ad_dtime), repmat(dt_final, length(WL(:,1)), 1)];
+        datenum(date_final), repmat(datenum(dt_final), length(WL(:,1)), 1)];
 
     %% REMOVE BAD ENTRIES
     % ADCIRC
