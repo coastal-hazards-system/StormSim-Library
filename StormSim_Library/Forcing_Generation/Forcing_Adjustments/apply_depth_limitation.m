@@ -1,4 +1,4 @@
-function Hm0 = apply_depth_limitation(Hm0, Tp, h, g)
+function [Hm0, Depth_Limited_Waves] = apply_depth_limitation(Hm0, Tp, h, g)
 %% VECTORIZE INPUTS
 data_dims = size(Hm0);
 Hm0 = Hm0(:);
@@ -20,4 +20,6 @@ Ratio_Check = Depth_Limited_Waves./h;
 Hm0(Hm0>Depth_Limited_Waves) = Depth_Limited_Waves(Hm0>Depth_Limited_Waves);
 % Reshape
 Hm0 = reshape(Hm0,data_dims);
+Depth_Limited_Waves = reshape(Depth_Limited_Waves,data_dims);
+
 end

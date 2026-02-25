@@ -60,7 +60,7 @@ end
 h = cellfun(@(x) x - toe_elev, SWL(:, 1), 'un', false);
 % Apply Depth Limitation
 if apply_DL == 1
-    Hm0 = cellfun(@(x, y, z) apply_depth_limitation(x, y, z, g), Hm0, Tp, h,'un',false);
+    [Hm0, Hm0_DL] = cellfun(@(x, y, z) apply_depth_limitation(x, y, z, g), Hm0, Tp, h,'un',false);
 end
 
 %% STORE ADJUSTED DATA
