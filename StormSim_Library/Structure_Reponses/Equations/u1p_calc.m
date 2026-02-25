@@ -18,4 +18,5 @@ function u1p = u1p_calc(wdth,Rc,z1p,Tmm1,H,Sslp,grav)
     u1pDenom=1+0.1.*wdth./H;
     u1p=sqrt(grav.*H).*1.7.*sqrt(gam_crest).*u1pNum./u1pDenom;
     u1p((z1p-Rc)<0) = 0;
+    u1p(Rc./H<0.3)=0; %JAM added on 2/23/26 from v&P paper.
 end
