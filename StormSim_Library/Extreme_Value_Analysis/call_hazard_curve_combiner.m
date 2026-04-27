@@ -58,6 +58,8 @@ for j = s_indx
         case {'Hm0t'}
             % Use Values Associated To Hm0
             u_field = u_vector{contains(u_names, 'hm0_u_r')};
+        case {'ssl', 'SSL', 'swl', 'SWL'}
+            u_field = u_vector{contains(u_names, 'chs_swl_u_r')};
         otherwise
             u_field = u_vector{contains(u_names, lower(tc_resp(j).var))};
     end
