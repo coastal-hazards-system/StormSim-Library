@@ -89,7 +89,7 @@ if config.use_peaks == 0
         dummy_data = cell2mat(cellfun(@(x) max(x,[],1),...
             storm.(stm_list{kk}).('Timeseries').Default(:,2), 'un', false));
         % Replace Storm Duration For Peak Response
-        dummy_data(:, end) = config.storm_duration;
+        dummy_data(:, end) = config.storm_duration/24;
         % Create Dummy Dataset
         storm.(stm_list{kk}).('Peaks').('Default') = [ storm.(stm_list{kk}).('Timeseries').Default(:,1),...
             num2cell(dummy_data, 2)];
