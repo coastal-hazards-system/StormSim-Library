@@ -35,13 +35,16 @@ for st = 1:length(storm_types)
             if strcmp(storm_types{st}, 'TC')
                 project_forcing.(data_type{kk}).(match_types{ii}).(storm_types{st}).TC_Prob = prob_mass.TC_Freq;%./RandNorm;
             end
-        end
-        % Include dt
-        if strcmp(data_type{kk}, 'Timeseries')
-            project_forcing.(data_type{kk}).Default.(storm_types{st}).dt = cellfun(@(x) x(:, end), storm.(storm_types{st}).(data_type{kk}).('Default')(:, 2),'un',false);
-        else % Peaks
-            n_events = length(storm.(storm_types{st}).(data_type{kk}).('Default')(:, 1));
-            project_forcing.(data_type{kk}).Default.(storm_types{st}).dt = repmat({config.storm_duration}, n_events, 1);
+            % Include dt
+            if strcmp(data_type{kk}, 'Timeseries')
+                project_forcing.(data_type{kk}).Default.(storm_types{st}).dt = cellfun(@(x) x(:, end), storm.(storm_types{st}).(data_type{kk}).('Default')(:, 2),'un',false);
+            else % Peaks
+                n_events = length(storm.(storm_types{st}).(data_type{kk}).(match_types{ii})(:, 1));
+                dt_val = cellfun(@(x) x(1, end),...
+                    storm.(storm_types{st}).(data_type{kk}).(match_types{ii})(:, 2),...
+                    'un', false);
+                project_forcing.(data_type{kk}).(match_types{ii}).(storm_types{st}).dt = dt_val;
+            end
         end
     end
 end
