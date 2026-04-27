@@ -167,9 +167,9 @@ for lcS=1:size(LC_MCSimOUT,2)
 
     %% BUILD STORM FORCING DATA MATRIX
     % Build Forcing Parameters Matrix For Current LC
-    WL = LC_MCSimOUT{lcS}(:,4); %Water Level
-    Hm0 = LC_MCSimOUT{lcS}(:,5); %Wave Height
-    Tp = LC_MCSimOUT{lcS}(:,6); %Peak Wave Period
+    WL = LC_MCSimOUT{lcS}(:,5); %Water Level
+    Hm0 = LC_MCSimOUT{lcS}(:,6); %Wave Height
+    Tp = LC_MCSimOUT{lcS}(:,7); %Peak Wave Period
     % Number Of Simulations (# Of Storms)
     nSim = size(LC_MCSimOUT{lcS},1);
 
