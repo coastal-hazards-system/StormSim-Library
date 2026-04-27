@@ -1,183 +1,237 @@
-function data_out = stormsim_pros_frequency_base(config, structure, data_in, outPath)
-%% GET DETAILS FROM CONFIG
-% project name
-proj_name = config.project_name;
-% Transect Id
-struc_id = strrep(config.struc_id,'_',' ');
-% Define Case  Name
-case_name = strrep(config.case_name,'_',' ');
-% Gravity Constant
-g = config.gravity_constant;
-% Get Secondary Responses To Compute
-calc_p2_p3 = config.compute_p2_p3;
-calc_nappe = config.compute_nappe;
-% Force Q vol to 0
-config.compute_q_vol = 0;
+function data_out = stormsim_pros_frequency_basev2(config, structure, data_in, outPath, workflow)
+    % ==========================================
+    % 1. INITIALIZE CONFIG & STRUCTURE DETAILS
+    % ==========================================
+    proj_name = config.project_name;
+    struc_id  = strrep(config.struc_id, '_', ' ');
+    case_name = strrep(config.case_name, '_', ' ');
+    save_name = fullfile(outPath, [proj_name, '_', struc_id]);
+    
+    g = config.gravity_constant;
+    rho_w = config.water_density;
+    config.compute_q_vol = 0; % Force Q vol to 0
+    
+    crest_elev = structure.crest_elevation;
+    toe_elev   = structure.toe_elevation;
+    
+    % Berm Logic
+    if config.add_berm
+        berm_elev  = structure.berm_elevation;
+        berm_width = structure.berm_width;
+        berm_slope = structure.berm_slope;
+    else
+        berm_elev  = structure.toe_elevation;
+        berm_width = 0;
+        berm_slope = 1; 
+    end
+    
+    % Rubblemound / Wall Logic
+    if config.struc_type == 2
+        hw = structure.wall_bottom_elevation + crest_elev;
+    else
+        hw = NaN; % Failsafe if accessed outside struc_type 2
+    end
+    
+    emp_coeff = load_empirical_coefficients();
+    storm_types = fieldnames(data_in);
+    data_out = struct();
 
-%% INITIALIZE FIELDS
-% Get Storm Types On Data
-storm_types = fieldnames(data_in);
-% Fields To Get From hazard Tables
-field_to_get = {'y_table', 'y_plot'};
-% Save Name
-save_name = fullfile(outPath, [proj_name,'_', struc_id]);
+    % ==========================================
+    % 2. PROCESS EACH STORM TYPE
+    % ==========================================
+    for st = 1:length(storm_types)
+        storm_name = storm_types{st};
+        hc_data = data_in.(storm_name);
+        
+        % Pre-allocate/Clear loop variables to prevent cross-contamination
+        Output = [];
+        Resp = []; 
+        
+        x_plt = hc_data(1).x_plot;
+        x_tbl = hc_data(1).x_table;
+        cl    = hc_data(1).CL;
+        
+        % Clarified Logic: Can we compute secondary responses directly?
+        req_p2_p3 = config.compute_p2_p3 == 1;
+        req_nappe = config.compute_nappe == 1;
+        has_p1    = any(strcmp({hc_data.var}, 'p1'));
+        has_q     = any(strcmp({hc_data.var}, 'q'));
+        
+        
+        % Process both 'y_table' and 'y_plot' seamlessly
+        for field_str = ["y_table", "y_plot"]
+            field = char(field_str);
 
-
-%% GET DETAILS FROM STRUCTURE
-% Define Structure Crest Elevation
-crest_elev = structure.crest_elevation;
-% Berm Elevation (<0 Below Datum Zero)
-berm_elev = structure.berm_elevation; %
-% Rubblemound Fields
-switch config.struc_type
-    case  2
-        wall_bottom_elev = structure.wall_bottom_elevation;
-        hw = wall_bottom_elev + crest_elev;
-end
-% Define Structure Toe Elevation (<0 below datum zero)
-toe_elev = structure.toe_elevation; % Flip convention
-% Water Density kg/m^3
-rho_w = structure.water_density;
-% Load Empirical Coefficients
-[emp_coeff] = load_empirical_coefficients();
-
-%% GRAB DATA AND INITIALIZE FIELDS
-for st = 1:length(storm_types)
-    % Initialize Storage Variable
-    Output = [];
-    hc_data = data_in.(storm_types{st});
-    % Get Plot & Table Frequency Vector
-    x_plt =  hc_data(1).x_plot;
-    x_tbl = hc_data(1).x_table;
-    % Get COnfidence Limits
-    cl = hc_data(1).CL;
-    % Check For Additional Data
-    chk1 = calc_nappe == 1 & any(strcmp({hc_data.var}, 'q'));
-    chk2 = calc_p2_p3 == 1 & any(strcmp({hc_data.var}, 'p1'));
-    % Loop For Each Dataset (table, plot)
-    for dd = 1:2
-        % Grab Hazard Curve Data (y_tbl, y_plt)
-        [SWL, swl_pass] = get_hc_data(hc_data, 'SWL', field_to_get{dd});
-        [Hm0, hm0_pass] = get_hc_data(hc_data, 'Hm0', field_to_get{dd});
-        [Tp, tp_pass] = get_hc_data(hc_data, 'Tp', field_to_get{dd});
-        Tm10 = cellfun(@(x) x./1.1, Tp, 'un', false);
-        % Check For Minimum Requirement (SWL, Hm0, Tp HC Must Exist)
-        if sum([swl_pass, hm0_pass, tp_pass])~=3
-            Resp = [];
-            continue;
-        end
-        % Compute Additional Fields
-        h = cellfun(@(x) x - toe_elev, SWL, 'un', false);
-        Rc = cellfun(@(x) crest_elev - x, SWL, 'un', false);
-        hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
-
-        %%  ALREADY HAVE ALL HAZARDS FOR SECONDARY RESPONSE (PROS-RB + PROS-FB)
-        % In this section responses such as q & p1 are computed using RB approach
-        % and only p2, p3, & nappe reesponses are computed using FB.
-        % Compute Secondary Responses
-        if sum([calc_p2_p3, calc_nappe]) == sum([chk1, chk2])
-            % 3. Compute P2, P3, Pu
-            if calc_p2_p3 == 1
-                % Grab Additional Dependency
-                p1 = num2cell(hc_data(strcmp('p1', {hc_data.var})).(field_to_get{dd}), 1);
-                % Compute P2 & P3 Wall Pressures (Plots)
-                [Resp.(field_to_get{dd}).p2dyn,...Resp.y_table
-                    Resp.(field_to_get{dd}).p2sta, Resp.(field_to_get{dd}).p2total,...
-                    Resp.(field_to_get{dd}).p3dyn, Resp.(field_to_get{dd}).p3sta,...
-                    Resp.(field_to_get{dd}).p3total, Resp.(field_to_get{dd}).pu] = ...
-                    cellfun(@(a, b, c, d, e, f) goda_forces_on_vertical_p2p3(a, b, 1.8,...
-                    0, c, d, e, hw, f, rho_w, g), Hm0, Tm10, h, hb, Rc, p1, 'un', false);
+            [SWL, pass_swl] = get_hc_data(hc_data, 'SWL', field);
+            if ~pass_swl
+                [SWL, pass_swl] = get_hc_data(hc_data, 'SSL', field);
             end
-            % Compute Nappe Responses
-            if calc_nappe == 1
-                % Grab Additional Dependency
-                q = num2cell(hc_data(strcmp('q', {hc_data.var})).(field_to_get{dd}), 1);
-                %
-                [Resp.(field_to_get{dd}).X_low,...
-                    Resp.(field_to_get{dd}).theta_low, Resp.(field_to_get{dd}).X_up,...
-                    Resp.(field_to_get{dd}).theta_up, Resp.(field_to_get{dd}).Bx,...
-                    Resp.(field_to_get{dd}).X_c_surge,...
-                    Resp.(field_to_get{dd}).theta_center,...
-                    Resp.(field_to_get{dd}).Bjet, Resp.(field_to_get{dd}).Vjet,...
-                    Resp.(field_to_get{dd}).Fjet] = cellfun(@(a, b, c) floodwall_nappe_response(a, b,...
-                    c, hw, rho_w), SWL, Hm0, q, 'un', false);
+            [Hm0, pass_hm0] = get_hc_data(hc_data, 'Hm0', field);
+            [Tp,  pass_tp]  = get_hc_data(hc_data, 'Tp', field);
+            
+            % Abort if minimum hazard curves do not exist
+            if ~(pass_swl && pass_hm0 && pass_tp)
+                Resp = [];
+                continue; 
             end
-        else
-            %% NEED TO COMPUTE ALL NON FORCING RESPONSES WITH PROS-FB
-            % in this section only SWL, Hm0, Tp hazard curves are created using
-            % PROS-RB things such as: q, Q, R2p, Dn50, P1, P2, P3, ... are FB.
-            % Grab Hazard Curve Data & Create Proxy Dataset
-            project_forcing.SWL = SWL;
-            project_forcing.Hm0 = Hm0;
-            project_forcing.Tp = Tp;
-            % Compute All Requested Structure Responses as a f(SWL, Hm0, Tp)
-            [Resp.(field_to_get{dd})] = compute_structure_response(config, structure, project_forcing, emp_coeff, 0);
+            
+            % Compute Intermediate Variables
+            Tm10 = cellfun(@(x) x ./ 1.1, Tp, 'UniformOutput', false);
+            h    = cellfun(@(x) x - toe_elev, SWL, 'UniformOutput', false);
+            Rc   = cellfun(@(x) crest_elev - x, SWL, 'UniformOutput', false);
+            hb   = cellfun(@(x) x - berm_elev, SWL, 'UniformOutput', false);
+            
+            % Compute Responses
+           switch workflow
+               case 1 % PROS-RB (Only Compute Secondary Responses As FB 
+                   % Check For Compute Specs
+                   can_do_secondary = (~req_p2_p3 || has_p1) && (~req_nappe || has_q);
+                   if can_do_secondary
+                       if req_p2_p3
+                           p1 = get_hc_data(hc_data, 'p1', field);
+                           [Resp.(field).p2dyn, Resp.(field).p2sta, Resp.(field).p2total,...
+                               Resp.(field).p3dyn, Resp.(field).p3sta, Resp.(field).p3total, Resp.(field).pu] = ...
+                               cellfun(@(a, b, c, d, e, f) goda_forces_on_vertical_p2p3(a, b, 1.8, 0, c, d, e, hw, f, rho_w, g), ...
+                               Hm0, Tm10, h, hb, Rc, p1, 'UniformOutput', false);
+                       end
+
+                       if req_nappe
+                           q = get_hc_data(hc_data, 'q', field);
+                           [Resp.(field).X_low, Resp.(field).theta_low, Resp.(field).X_up,...
+                               Resp.(field).theta_up, Resp.(field).Bx, Resp.(field).X_c_surge,...
+                               Resp.(field).theta_center, Resp.(field).Bjet, Resp.(field).Vjet, Resp.(field).Fjet] = ...
+                               cellfun(@(a, b, c) floodwall_nappe_response(a, b, c, hw, rho_w), ...
+                               SWL, Hm0, q, 'UniformOutput', false);
+                       end
+                   end
+               case 4 % PROS-EB2 (Compute All PSE Responses As FB)
+                   % Grab Uncertainty                    
+                   tp_u = sqrt(1+config.chs_hm0_u_r)-1; %0.0724
+                   swl_u = [config.chs_swl_u_a, config.chs_swl_u_r];
+                   hm0_u = [config.chs_hm0_u_a, config.chs_hm0_u_r];
+                   % Define MC Samples
+                   MCsim = 10000; % For EB2
+                   % Sample
+                   normU_swl = randn(length(SWL{1}),MCsim);
+                   normU_hm0 = randn(length(SWL{1}),MCsim);
+                   normU_tp = (1+tp_u.*normU_hm0);
+                   % SWL
+                   project_forcing.SWL = {pcha_forcing_uncertainty_EB2(SWL{1},...
+                       swl_u(1), swl_u(2),...
+                       normU_swl, storm_name)};
+                   % Hm0
+                   project_forcing.Hm0 = {pcha_forcing_uncertainty_EB2(Hm0{1},...
+                       hm0_u(1), hm0_u(2),...
+                       normU_hm0, storm_name)};
+                   % Tp
+                   project_forcing.Tp = {Tp{1}.*normU_tp};
+                   % Storm Duration
+                   project_forcing.dt  = {repmat(config.storm_duration, size(SWL{1}))};
+                   %
+                   Resp.(field) = compute_structure_response(config, structure, project_forcing, emp_coeff, 0);
+                   %
+                   if ~isempty(Resp.(field))
+                       fnames = fieldnames(Resp.(field));
+                       for ii = 1:length(fnames)
+                           % Sort AEF Vector Across All MC Sims
+                           resp_sort = sort(Resp.(field).(fnames{ii}){:}, 2);
+                           % Pick Out CL Of Interest
+                           Resp.(field).(fnames{ii}) = resp_sort(:, ceil(MCsim.*hc_data(1).CL./100));
+                       end
+                       % Make Sure To Overwrite R2p+SWL
+                       if any(contains(fnames, {'R2p_SWL'}))
+                           Resp.(field).('R2p_SWL') = cell2mat(SWL) + Resp.(field).('R2p');
+                       end
+                   end
+           end
+        end
+        
+        % ==========================================
+        % 3. APPEND RESULTS TO HAZARD TABLE
+        % ==========================================
+        if ~isempty(Resp.y_table)
+            resp_vars = fieldnames(Resp.y_table);
+            
+            for vv = 1:length(resp_vars)
+                v_name = resp_vars{vv};
+                [~, ~, ~, unit_label, lbl_name, y_label, y_scale_log] = response_library_headers(config, v_name);
+                
+                % Formatted Strings
+                title_str = {sprintf('StormSim: PROS-FB | %s | %s', case_name, struc_id), ...
+                             sprintf('%s | %s [%s]', storm_name, lbl_name, unit_label)};
+                out_name  = sprintf('%s_%s_%s_Hazard_Curve.png', save_name, v_name, storm_name);
+                
+                % Append
+                Output = response_appender(Output, vv, v_name, y_label, title_str, ...
+                    x_plt, [Resp.y_plot.(v_name)], x_tbl, [Resp.y_table.(v_name)], ...
+                    {'Computed using frequency base approach.'}, y_scale_log, cl, out_name);
+            end
+            
+            % Clean up inputs and merge
+            if isfield(hc_data, 'tbl_rsp_x')
+                hc_data = rmfield(hc_data, {'tbl_rsp_x', 'tbl_rsp_y'});
+            end
+            
+            % Prioritize existing RB calculations using exact matching
+            rm_indx = ismember({Output.var}, {hc_data.var});
+            data_out.(storm_name) = [hc_data, Output(~rm_indx)];
+        else 
+            data_out.(storm_name) = hc_data;
         end
     end
 
-    %% CREATE AND APPEND HAZARD TABLE
-    if ~isempty(Resp)
-        % Get List Of Responses
-        resp_var = fieldnames(Resp.y_table);
-        % Loop Through Each Response
-        for vv = 1:length(resp_var)
-            % Search Response Library For Uncertainty Values & Associated Labels
-            [~, ~, ~,...
-                unit_label,...
-                var_name, y_label, y_scale_log] = response_library_headers(config, resp_var{vv});
-            % Create Title String For Plots
-            title_str = {['StormSim: PROS-FB | '  case_name ' | ' struc_id],...
-                ['' storm_types{st} ' | ' var_name ' [' unit_label ']']};
-            % Create Hazard Table Outputs
-            Output =  response_appender(Output, vv, resp_var{vv}, y_label,...
-                title_str, x_plt, [Resp.y_plot.(resp_var{vv}){:}],...
-                x_tbl, [Resp.y_table.(resp_var{vv}){:}],...
-                {'Computed using frequency base approach.'}, y_scale_log, cl,...
-                [save_name '_' resp_var{vv} '_' storm_types{st} '_Hazard_Curve.png']);
-        end
-        % Remove Additional Fields
-        if isfield(data_in.(storm_types{st}),'tbl_rsp_x')
-            data_in.(storm_types{st}) = rmfield(data_in.(storm_types{st}), {'tbl_rsp_x', 'tbl_rsp_y'});
-        end
-        % Ensure We Keep Response Base Over FB
-        rm_indx = contains({Output.var}, {data_in.(storm_types{st}).var});
-        % Append To Hazard Tables
-        data_out.(storm_types{st}) = [data_in.(storm_types{st}), Output(~rm_indx)];
-    else % Nothing To Append
-        data_out.(storm_types{st}) = data_in.(storm_types{st});
-    end
-end
-
-%% AUX FUNCTIONS
-% Create Hazard Tables
-    function Output =  response_appender(Output, rIndx, sVar, y_label, title_str, x_plt, y_plt, x_tbl, y_tbl, POT, y_log_scale, CL, outName)
-        % Replace Fields For P2
-        Output(rIndx).('var') = sVar;
-        Output(rIndx).CL = CL; % Percentiles (Cols)
-        % Only Grab Frequency Bound On The Table
-        Output(rIndx).('x_plot') = x_plt(x_plt >= 0.001 & x_plt <= max(x_tbl),:);
-        Output(rIndx).('y_plot') = y_plt(x_plt >= 0.001 & x_plt <= max(x_tbl),:);
-        Output(rIndx).('x_table') = x_tbl(x_tbl >= 0.001 & x_tbl <= max(x_tbl),:);
-        Output(rIndx).('y_table') = y_tbl(x_tbl >= 0.001 & x_tbl <= max(x_tbl),:);
-        Output(rIndx).('x_table_ARI') = x_tbl;
-        Output(rIndx).('POT') = POT;
-        Output(rIndx).('y_label') = y_label;
-        Output(rIndx).('title') = title_str;
-        Output(rIndx).y_log_scale = y_log_scale; % Y Log Scale For Overtopping
-        Output(rIndx).('save_name') = outName;
+    % ==========================================
+    % HELPER FUNCTIONS
+    % ==========================================
+    function Output = response_appender(Output, rIndx, sVar, y_label, title_str, x_plt, y_plt, x_tbl, y_tbl, POT, y_log_scale, CL, outName)
+        % Create boolean masks once to avoid evaluating logic 4 separate times
+        idx_tbl = x_tbl >= 0.001;
+        idx_plt = x_plt >= 0.001 & x_plt <= max(x_tbl);
+        
+        Output(rIndx).var         = sVar;
+        Output(rIndx).CL          = CL; 
+        Output(rIndx).x_plot      = x_plt(idx_plt, :);
+        Output(rIndx).y_plot      = y_plt(idx_plt, :);
+        Output(rIndx).x_table     = x_tbl(idx_tbl, :);
+        Output(rIndx).y_table     = y_tbl(idx_tbl, :);
+        Output(rIndx).x_table_ARI = x_tbl;
+        Output(rIndx).POT         = POT;
+        Output(rIndx).y_label     = y_label;
+        Output(rIndx).title       = title_str;
+        Output(rIndx).y_log_scale = y_log_scale; 
+        Output(rIndx).save_name   = outName;
     end
 
-% Get HC Data And Flag If Passed
     function [var_out, pass_indx] = get_hc_data(data, varname, field_get)
-        % Check If Var Exist
         var_indx = strcmp(varname, {data.var});
-        %
-        if ~any(var_indx)
-            var_out = {NaN};
-            pass_indx = 0;
+        if any(var_indx)
+            pass_indx = true;
+            var_out = num2cell(data(var_indx).(field_get), 1);
         else
-            pass_indx = 1;
-            var_out = num2cell(data(strcmp(varname, {data.var})).(field_get), 1);
+            pass_indx = false;
+            var_out = {NaN};
         end
+    end
+
+    function iVar_w_u = pcha_forcing_uncertainty_EB2(iVar, u_a, u_r, normU, stm_type)
+        % Need To Adjust Ua, Ur If TC Data (10% -> Partioning Inside JPM)
+        switch stm_type
+            case {'TC', 'CC'}
+                % Partition Uncertainty
+                p1_a = 0.1; %same units as response array
+                if u_a^2 >= p1_a^2
+                    u_a = sqrt(u_a^2-p1_a^2);
+                end
+                %partition of the relative unc
+                p1_r = .1; %dimensionless fraction
+                if u_r^2 >= p1_r^2
+                    u_r = sqrt(u_r^2-p1_r^2);
+                end
+        end
+        %
+        a = u_a+iVar; r = u_r.*iVar;
+        u_iVar = 1./sqrt(1./(a).^2 + 1./(r).^2);
+        u_iVar = u_iVar .* (a./abs(a));
+        iVar_w_u = iVar + u_iVar.*normU;
     end
 end
