@@ -11,10 +11,6 @@ add_berm = config.add_berm;
 crest_ele = structure.crest_elevation;
 % Toe Elevation
 toe_ele = structure.toe_elevation;
-% Berm Elevation
-berm_elev = structure.berm_elevation;
-% Berm Width
-berm_width = structure.berm_width;
 if strucType == 2
     % Wall Bottom Elevation
     wall_bottom_elev = structure.wall_bottom_elevation;
@@ -23,10 +19,25 @@ else
 end
 % Seaward Slope
 % seaward_slope = structure.seaside_slope;
-% Berm Slope
-berm_slope = structure.berm_slope;
 % Compute Freeboard
 Rc = crest_ele - SWL;
+
+if config.add_berm
+    % Berm Elevation (<0 Below Datum Zero)
+    berm_elev = structure.berm_elevation; %
+    % Berm Width
+    berm_width = structure.berm_width;
+    % Berm Slope
+    berm_slope = structure.berm_slope;
+else
+    % Berm Elevation (<0 Below Datum Zero)
+    berm_elev = toe_ele; % This Translates to h == hb
+    % Berm Width
+    berm_width = 0;
+    % Berm Slope
+    berm_slope = 1;  % Can't set to 0, Will cause 1/0 in Goda Pressure Calcs
+end
+
 
 %% COMPUTE INFLUENCE FACTORS
 % Wall Influence Factor
