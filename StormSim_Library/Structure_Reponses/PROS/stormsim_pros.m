@@ -25,6 +25,7 @@ if config.workflow == 4 % PROS-FB
     varnames = varnames(~contains(varnames, {'pros_', '_Ks','_slope'})); % Remove unwanted
     % Get Responses To Compute Usign PROS-FB
     fb_responses = cellfun(@(x) config.(x), varnames, 'un', true);
+    varnames = varnames(fb_responses);
     % Turn Off Responses For RB Section
     config = config_editor(config, varnames, 0);
 end
@@ -48,8 +49,10 @@ end
 %% STORMSIM: PROS - COMBINE HAZARDS
 if contains(config.storm_sampling, {'CC'})
     if isfield(HC_out, 'TC') & isfield(HC_out, 'XC')
-        disp('         Combining project primary responses hazard curves...');
-        [HC_out.('CC')] = call_hazard_curve_combiner(config, HC_out.('TC'), HC_out.('XC'), use_aep);
+        if ~isempty(HC_out.('TC')) & ~isempty(HC_out.('XC'))
+            disp('         Combining project primary responses hazard curves...');
+            [HC_out.('CC')] = call_hazard_curve_combiner(config, HC_out.('TC'), HC_out.('XC'), use_aep);
+        end
     end
 end
 
