@@ -116,14 +116,14 @@ if contains('XC',storm_types)
             p.DataTipTemplate.DataTipRows(end+1) = row;
         end
     end
-end
+    % Add Legend
+    legend2 = legend(ax_xc_objs(2));
 
-% Add Legend
-legend2 = legend(ax_xc_objs(2));
-% Define Legend Location
-set(legend2,'Location','southeast','FontSize',ax_tick_fnt,...
-    'Orientation','horizontal','NumColumns',3,...
-    'FontSize', 16);
+    % Define Legend Location
+    set(legend2,'Location','southeast','FontSize',ax_tick_fnt,...
+        'Orientation','horizontal','NumColumns',3,...
+        'FontSize', 16);
+end
 
 %% PLOT TC DATA
 if contains('TC',storm_types)
@@ -152,6 +152,15 @@ if contains('TC',storm_types)
             % Append New Data Tip
             p.DataTipTemplate.DataTipRows(end+1) = row;
         end
+    end
+    if ~exist("legend2", 'var')
+        % Add Legend
+        legend2 = legend(ax_tc_objs(2));
+
+        % Define Legend Location
+        set(legend2,'Location','southeast','FontSize',ax_tick_fnt,...
+            'Orientation','horizontal','NumColumns',3,...
+            'FontSize', 16);
     end
 end
 
