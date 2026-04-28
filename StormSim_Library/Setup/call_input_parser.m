@@ -314,7 +314,9 @@ switch config.struc_type
 end
 
 %% APPEND ADDITIONAL SIMULATION DETAILS TO CONFIG
-
+if ~isfield(config, 'Nyrs_XC')
+    config.Nyrs_XC = 0;
+end
 % Make Sure Confidence Limits Are In The Expected Format
 try
     % Split Sring
