@@ -183,56 +183,89 @@ if ~hotstart_fail % New Case Run (hot start)
                 storm = rmfield(storm,'TC');
             end
     end
-    % Verify Peaks
-    if contains( {'Peaks'}, storm_level_2)
-        % Verify WLP
-        [wlp_chk, storm] = alternate_dataset_check(storm, storm_level_1,...
-            'WLP', create_wlp);
-        % Verify WHP
-        [whp_chk, storm] = alternate_dataset_check(storm, storm_level_1,...
-            'WHP', create_whp);
-        % Define Loading Flag
-        peaks_chk = wlp_chk & whp_chk;
-    else % if use_peaks == 0 && ~contains('Peaks') || use_peaks == 1 && ~contains('Peaks')
-        if use_peaks == 0
-            peaks_chk = true;
-        else
-            peaks_chk = false;
+    st_types = fieldnames(storm);
+    if ~isempty(st_types)
+        %
+        switch storm_sampling
+            case 'CC'
+                chk = length(st_types) == 2;
+            otherwise
+                chk = contains(st_types, storm_sampling);
         end
+        %
+        chk2 = config.use_peaks + config.use_timeseries == length(storm_level_2);
     end
-    % Verify Timeseries
-    if contains({'Timeseries'}, storm_level_2)
-        % Define Timeseries Loading Flag
-        timeseries_chk = true;
-        % Remove Timeseries From Loaded Data If User Specified
-        if use_timeseries == 0
-            for ii = storm_types % Loop Across Storm Types
-                storm.(ii{:}).Timeseries = rmfield(storm.(ii{:}), 'Timeseries');
+
+    if isempty(st_types) || ~chk || ~chk2
+        hotstart_fail = true;
+        % Delete Files 
+        delete(fullfile(ss_storm.folder, ss_storm.name));
+        delete(chs_data_filename);
+        config.u_engine = 0;
+        config.f_adjust= 0;
+        % Delete Project Forcing 
+        delete(fullfile(ss_storm.folder, config.case_name,"*_project_forcing.mat"));
+        chs_data_filename = [];
+        mkdir('Temp');
+        % Decompress Zip Folder
+        unzip(config.chs_zip,'Temp');
+        % Scan Unzip Directory
+        temp_dir = dir(['Temp' filesep '**' filesep '*.h5']);
+        % Add Field To config
+        [chs_files_2_convert, II] = sortrows({temp_dir.name}',1,'ascend');
+        chs_files_2_convert_paths = {temp_dir(II).folder}';
+    else
+        % Verify Peaks
+        if contains( {'Peaks'}, storm_level_2)
+            % Verify WLP
+            [wlp_chk, storm] = alternate_dataset_check(storm, storm_level_1,...
+                'WLP', create_wlp);
+            % Verify WHP
+            [whp_chk, storm] = alternate_dataset_check(storm, storm_level_1,...
+                'WHP', create_whp);
+            % Define Loading Flag
+            peaks_chk = wlp_chk & whp_chk;
+        else % if use_peaks == 0 && ~contains('Peaks') || use_peaks == 1 && ~contains('Peaks')
+            if use_peaks == 0
+                peaks_chk = true;
+            else
+                peaks_chk = false;
             end
         end
-    else % Define Flag According To Case
-        if use_timeseries == 0
+        % Verify Timeseries
+        if contains({'Timeseries'}, storm_level_2)
+            % Define Timeseries Loading Flag
             timeseries_chk = true;
-        else
-            timeseries_chk = false;
+            % Remove Timeseries From Loaded Data If User Specified
+            if use_timeseries == 0
+                for ii = storm_types % Loop Across Storm Types
+                    storm.(ii{:}).Timeseries = rmfield(storm.(ii{:}), 'Timeseries');
+                end
+            end
+        else % Define Flag According To Case
+            if use_timeseries == 0
+                timeseries_chk = true;
+            else
+                timeseries_chk = false;
+            end
         end
-    end
-    % Determine If Pre-Processing Needs To Be Run
-    if stm_type_chk && peaks_chk && timeseries_chk
-        % .mats Have The Necessary information For Requested Config. Do Nothing.
-        disp_toggle(disp_on,'Project forcing detected. Loading processed SP data....');
-        % hotstrat Conditions Have Been Met
-        hotstart_fail = false;
-    else % .mats Do Not Have Required Data For Requested Config
-        % Delete Loaded Vars
-        clearvars('storm','prob_mass');
-        % Set file2look To Empty
-        hotstart_fail = true;
-        % Display Message To User
-        if ~strcmp(fext, '.zip') && isempty(chs_data_filename)
-            storm_simulation_error_msg(stm_type_chk, peaks_chk, timeseries_chk, temp_path);
-        else
-            disp_toggle(disp_on,'Project forcing does not have neccesary dependencies. Restarting import process....');
+        % Determine If Pre-Processing Needs To Be Run
+        if stm_type_chk && peaks_chk && timeseries_chk
+            % .mats Have The Necessary information For Requested Config. Do Nothing.
+            disp_toggle(disp_on,'Project forcing detected. Loading processed SP data....');
+            % hotstrat Conditions Have Been Met
+            hotstart_fail = false;
+        else % .mats Do Not Have Required Data For Requested Config
+            % Delete Loaded Vars
+            clearvars('storm','prob_mass');
+            % Set file2look To Empty
+            hotstart_fail = true;
+            % Display Message To User
+            if ~strcmp(fext, '.zip') && isempty(chs_data_filename)
+                storm_simulation_error_msg(stm_type_chk, peaks_chk, timeseries_chk, temp_path);
+            else
+                disp_toggle(disp_on,'Project forcing does not have neccesary dependencies. Restarting import process....');
+            end
         end
     end
 end
