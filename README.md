@@ -1,3 +1,6 @@
+NOTE TO ALL: StormSim is in active development. Maker sure to check for version updates. 
+
+
 ![SSLogo](https://github.com/Coastal-Hazards-System/StormSim-Library/assets/51959561/2b532547-1716-4bdb-815e-9e646b93615a)
 ## 👋 Welcome, Beta Testers!
 Thank you for being a part of our exciting journey as we unveil CHG's cutting-edge probabilistic tool suite, the StormSim-Library. Your interest and participation are truly appreciated, and we're genuinely excited to have you on board.
