@@ -28,6 +28,7 @@ calc_p1 = config.compute_p1;
 calc_p2_p3 = config.compute_p2_p3;
 calc_nappe = config.compute_nappe;
 calc_wave_transmission = config.compute_wave_transmission;
+calc_dn50_submerged = config.compute_dn50_submerged;
 % Get Save Point Depth
 SPdepth = config.chs_sp_depth;
 % Remove Responses Based On Structure Type
@@ -209,14 +210,27 @@ if no_resp~=0
                     [Resp.Dn50] = cellfun(@(a, b, c, d) melby_Dn50_seaside_stability(a, b, c,...
                         duration, slope, delta, P, S, g, emp_coeff.km1, emp_coeff.km2, d),...
                         Hm0, Tm, h, Rc,'un',false);
+                    % Compute Damage When Structure Is Submerged
+                   if calc_dn50_submerged == 1
+                       % Call Submerged Equation Here
+                       [Resp.Dn50, ~] = cellfun(@(a,b,c,d,e) submerged_stone_armor_stability(a, b, c, d, e,crest_elev,S,delta,g),...
+                           Hm0, Tp, h, Rc, Resp.Dn50, 'un', false);
+                   end
                 end
                 % Leeside
                 if calc_dn50_ls == 1
+                    %
                     [Resp.Dn50_Lee] = cellfun(@(a,b,c,d,e) ...
                         van_gent_Dn50_leeside_stability(S_ls, a, b, c, d,...
-                        crest_width, slope, slope_lee, duration, delta, g,...
+                        crest_width,slope, slope_lee, duration, delta, g,...
                         emp_coeff.k_ls1, emp_coeff.k_ls2, e.gamma_f),...
-                        Hm0, Tm10, Tm, Rc,gammas,'un',false);
+                        Hm0, Tm10, Tm, Rc, gammas,'un',false);
+                    % Compute Damage When Structure Is Submerged
+                    if calc_dn50_submerged == 1
+                        % Call Submerged Equation Here
+                        [Resp.Dn50_Lee, ~] = cellfun(@(a,b,c,d,e) submerged_stone_armor_stability(a, b, c, d, e,crest_elev,S_ls,delta,g),...
+                            Hm0, Tp, h, Rc, Resp.Dn50_Lee, 'un', false);
+                    end
                 end
             end
             % Dn50 Seaside Low Crested Breakwater
@@ -247,12 +261,10 @@ if no_resp~=0
         % Compute Transmitted Wave
         switch workflow
             case {1,2,4} % PROS
-                Resp.Hm0t = cellfun(@(x, y) x.*y, project_forcing.('Hm0_no_rep'), Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
+                Resp.Hm0t = cellfun(@(x, y) x.*y, project_forcing.('Hm0_no_rep'), Kt, 'un', false); 
             case 3 % LCS
                 Resp.Hm0t = cellfun(@(x, y) x.*y, Hm0, Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
         end
-        % For PROS need to use _no_reps Hm0 in order to properly account
-        % for uncertainty
     end
     % Damaging Depth Response
     if calc_dd == 1
@@ -263,7 +275,7 @@ if no_resp~=0
         Resp.Q_vol = cell2mat(cellfun(@(x, y) sum(x.*y,1,"omitnan"),Resp.q, dt, 'un',false));
         Resp.Q_vol_wave_ot = cell2mat(cellfun(@(x, y) sum(x.*y,1,"omitnan"),Resp.q_wave_ot, dt, 'un',false));
     end
-else % StormSim:EVA was called, no structure responses
+else % No Responses Computed
     Resp = [];
 end
 

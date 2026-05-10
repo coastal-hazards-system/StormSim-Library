@@ -69,7 +69,6 @@ Dn50_Melby(Hsig<=0.1 | h<0) = NaN;
 Rc_r =  Rc./Dn50_Melby;
 % Remove Response Entries Outside of Equation Bounds 
 Dn50_Melby(Rc_r<1) = NaN;
-% Reshape
 Dn50_Melby = reshape(Dn50_Melby, data_dims);
 
 %% Low Crested

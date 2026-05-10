@@ -1,8 +1,5 @@
 function [S,Szero] = seaside_armor_stone_damage(depth,SLast,...
-    Hsig,Tm,crest_elevation,Sslp,SDn,SG,grav,P,Nz,Rc,Szerolim,cutoff,WL,cutoff_switch,km1,km2,Ks,dS)
-
-%% DEFINE DAMAGE PROGRESSION INCREMENT AND EMPIRICAL FACTOR
-Eq_range = Rc/SDn>=1 & Rc/SDn<=Inf;
+    Hsig,Tm,crest_elevation,Sslp,SDn,SG,grav,P,Nz,Rc,Szerolim,cutoff,WL,cutoff_switch,km1,km2,Ks,dS,compute_S_submerged)
 
 %% DAMAGE (S) COMPUTATION
 if (Hsig>0.1) && (depth>0)
@@ -39,20 +36,30 @@ if (Hsig>0.1) && (depth>0)
 
     %% CUTOFF ANALYSIS FOR STRUCTURE SUBMERGENCE
     if Szero > Szerolim
-        if Eq_range
-            % Verify Validity Range
-            if cutoff_switch == 0
-                % Compute Damage Accumulation
-                S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
-            else
-                if  WL<=crest_elevation+cutoff % Boolean Checks For Equation Validity Range
-                    % Compute Damage Accumulation
-                    S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
-                else
-                    % If No New Damage Carry Previous Damage Level
-                    S=SLast;
-                end
-            end
+        % Verify Validity Range
+        if cutoff_switch == 0 % Evaluate Actual Design 
+            Eq_range = Rc/SDn>=1 & Rc/SDn<=Inf;
+        else % Artificially Increase Freeboard (Raise Structure)
+            % Compute "New" Crest Elevation
+            cutoff_elevation = crest_elevation + cutoff;
+            % Compute Artificial Freeboard
+            Rc_artificial = cutoff_elevation - WL;
+            % Define New 
+            Eq_range = Rc_artificial/SDn>=1 & Rc_artificial/SDn<=Inf;
+        end
+        % Compute Damage If Within Equation Bounds
+        if Eq_range % This is a scalar bool
+            % Compute Damage Accumulation
+            S=dS + Ks*sqrt(Nze+Nz)*(am*Nm)^5;
+        elseif Rc<0 && compute_S_submerged == 1
+            % Call Submerged Equation Here
+            % The "Potential" Damage (S_pot): This calculates how much damage the current wave conditions would cause if they persisted for exactly N_ref waves.
+            % Formula is typically are  calibrated to N_ref = 3000 waves.
+            % By using this as a reference, we can calculate the "potential damage" for the current hour and then scale it based on
+            % the square-root-of-time rule (S proportional sqrt{N}) to maintain consistency with your Melby seaside functions.
+            %     Nref = 3000;
+            % [S, S_pot] = submerged_armor_stone_damage(h, SLast, Hsig, Tm*1.1, crest_elevation, SDn, Delta, grav, Nref, Nz);     
+            S=SLast;
         else
             S=SLast;
         end
