@@ -146,7 +146,13 @@ if exist(config.out_files.storm_and_prob_mass, 'file')
     end
 else
     hotstart_fail = true; % Set Hotstart to fail
-    chs_data_filename = []; % Nothing To Load
+    if exist(config.out_files.chs_data, 'file')
+        % Load CHS_Data
+        chs_data_filename = config.out_files.chs_data;
+        fext = '.zip'; % Force Standard CHS Data Processing In Case Hotstart Fails
+    else
+        chs_data_filename = [];
+    end
 end
 
 %% EVALUATE DATASET FOR "HOTSTART"
@@ -188,7 +194,10 @@ if ~hotstart_fail % New Case Run (hot start)
                 chk = contains(st_types, storm_sampling);
         end
         %
-        chk2 = config.use_peaks + config.use_timeseries == length(storm_level_2);
+        pat = {'Peaks';'Timeseries'};
+        pat = pat([config.use_peaks;config.use_timeseries] == 1);
+        % For Any Data Type On storm Make Sure All Requested Are Present 
+        chk2 = all(any(cell2mat(cellfun(@(x) contains(pat, x), storm_level_2, 'un', false)'), 2));
     end
 
     if isempty(st_types) || ~chk || ~chk2
@@ -234,7 +243,7 @@ if ~hotstart_fail % New Case Run (hot start)
             % Remove Timeseries From Loaded Data If User Specified
             if use_timeseries == 0
                 for ii = storm_types % Loop Across Storm Types
-                    storm.(ii{:}).Timeseries = rmfield(storm.(ii{:}), 'Timeseries');
+                    storm.(ii{:}) = rmfield(storm.(ii{:}), 'Timeseries');
                 end
             end
         else % Define Flag According To Case

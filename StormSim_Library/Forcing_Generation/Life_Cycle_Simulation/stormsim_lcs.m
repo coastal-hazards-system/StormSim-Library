@@ -73,6 +73,8 @@ switch storm_sampling
         % Define Number of Years In Extratropical Data
         XC_Nyrs = config.Nyrs_XC;
 end
+mcs_ref_pth = fullfile(config.outfolder, config.project_name, config.struc_id,...
+    config.ref_case_name, 'LCS', [config.project_name,'_', config.struc_id, '_', config.ref_case_name, '_LCS_project_forcing.mat']);
 
 %% CREATE DUMMY PEAKS DATASET IF NEEDED
 if config.use_peaks == 0
@@ -118,83 +120,162 @@ end
 %% CYCLE THROUGH LIFE CYCLES
 % Command Prompts
 disp('   Running StormSim: Monte Carlo Simulation (Storm Sampling)....');
-fprintf(1,'      Completion Progress: %3d%%\n',0);
-for lc=1:number_of_life_cyles
+
 
     %% SAMPLE EXTRATROPICAL STORMS
     if strcmp(storm_sampling,'CC')==1 || strcmp(storm_sampling,'XC')==1
-        % Sample TC Storms According To Peak Responses
-        [sampled_xc,...
-            project_forcing.Peaks.Default.('XC'){lc, 1}] = ...
-            sample_xc_storm(cell2mat(storm.XC.Peaks.Default), simulation_years, XC_Nstm/XC_Nyrs);
+        % Sample XC Storms According To Peak Responses
+        if config.load_project_forcing == 1 && exist(mcs_ref_pth, 'file')
+            % Prevent Multiple Loads
+            ref_pf = load(mcs_ref_pth, 'project_forcing');
+            ref_pf = ref_pf.project_forcing;
+            % Prompt User Of Loading
+            if contains(fieldnames(ref_pf.Peaks.Default), 'XC')
+                disp(['     Warning: ref_case_name ('  config.ref_case_name ') does not have XC sampling information...']);
+                hot_start = false;
+            else
+                hot_start = true;
+                disp(['     Loading XC sampling seed from case_name: '  config.ref_case_name]);
+                fprintf(1,'      Completion Progress: %3d%%\n',0);
+                % Pull Sampling Seed
+                sampled_xc = cellfun(@(x) x(:, 1:4), ref_pf.Peaks.Default.('XC'), 'un', false);
+                storm_data = storm.XC.Peaks.Default;
+                % Populate Storm Data
+                for lc=1:number_of_life_cyles
+                    % Find Sampled Event On Storm Suite
+                    stm_indx = arrayfun(@(x) find(cell2mat(storm_data(:, 1)) == x), sampled_xc{lc}(:, 1), 'un', true);
+                    % Pull Storm Data
+                    peaks_data = cellfun(@(x) [x(:, 1:4) config.storm_duration/24], storm_data(stm_indx, 2), 'un', false);
+                    % Create LCs
+                    project_forcing.Peaks.Default.('XC'){lc, 1} = [sampled_xc{lc}, cell2mat(peaks_data)]; % Headers: [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order, SSL, Hm0, Tp, wDir, storm_duration ]
+                    fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
+                end
+            end
+        else
+            hot_start = false;
+        end
+        if ~hot_start
+            disp('     Sampling Extratropical Events .....');
+            fprintf(1,'      Completion Progress: %3d%%\n',0);
+            for lc=1:number_of_life_cyles
+                %
+                [sampled_xc{lc, 1},...
+                    project_forcing.Peaks.Default.('XC'){lc, 1}] = ...
+                    sample_xc_storm(cell2mat(storm.XC.Peaks.Default), simulation_years, XC_Nstm/XC_Nyrs);
+                %
+                fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
+            end
+        end
         % Replicate Storm Sampling With Storm Timeseries
-        if config.use_timeseries == 1
-            % Build LCS Timeseries Dataset
-            project_forcing.Timeseries.Default.('XC'){lc, 1} = timeseries_lc_creation(sampled_xc,...
-                storm.('XC').('Timeseries').('Default'));
-        end
-        % Create Alternate Datasets
-        if config.create_wlp == 1
-            project_forcing.Peaks.WLP.('XC'){lc, 1} = ...
-                sample_alternate_dataset(cell2mat(storm.XC.Peaks.WLP),...
-                sampled_xc, 'XC', project_forcing.Peaks.Default.('XC'){lc, 1});
-        end
-        if config.create_whp == 1
-            project_forcing.Peaks.WHP.('XC'){lc, 1} = ...
-                sample_alternate_dataset(cell2mat(storm.XC.Peaks.WHP),...
-                sampled_xc, 'XC', project_forcing.Peaks.Default.('XC'){lc, 1});
+        for lc=1:number_of_life_cyles
+            if config.use_timeseries == 1
+                % Build LCS Timeseries Dataset
+                project_forcing.Timeseries.Default.('XC'){lc, 1} = timeseries_lc_creation(sampled_xc{lc, 1},...
+                    storm.('XC').('Timeseries').('Default'));
+            end
+            % Create Alternate Datasets
+            if config.create_wlp == 1
+                project_forcing.Peaks.WLP.('XC'){lc, 1} = ...
+                    sample_alternate_dataset(cell2mat(storm.XC.Peaks.WLP),...
+                    sampled_xc{lc, 1}, 'XC', project_forcing.Peaks.Default.('XC'){lc, 1});
+            end
+            if config.create_whp == 1
+                project_forcing.Peaks.WHP.('XC'){lc, 1} = ...
+                    sample_alternate_dataset(cell2mat(storm.XC.Peaks.WHP),...
+                    sampled_xc{lc, 1}, 'XC', project_forcing.Peaks.Default.('XC'){lc, 1});
+            end
         end
     end
 
     %% SAMPLE TROPICAL CYCLONES
     if strcmp(storm_sampling,'CC')==1 || strcmp(storm_sampling,'TC')==1
-        [sampled_tc,...
-            project_forcing.Peaks.Default.('TC'){lc, 1}] = ...
-            sample_tc_storm(cell2mat(storm.TC.Peaks.Default), simulation_years, prob_mass);
+        % Sample XC Storms According To Peak Responses
+        if config.load_project_forcing == 1 && exist(mcs_ref_pth, 'file')
+            % Prevent Multiple Loads
+            ref_pf = load(mcs_ref_pth, 'project_forcing');
+            ref_pf = ref_pf.project_forcing;
+            % Prompt User Of Loading
+            if contains(fieldnames(ref_pf.Peaks.Default), 'TC')
+                disp(['     Warning: ref_case_name ('  config.ref_case_name ') does not have TC sampling information...']);
+                hot_start = false;
+            else
+                hot_start = true;
+                disp(['     Loading TC sampling seed from case_name: '  config.ref_case_name]);
+                fprintf(1,'      Completion Progress: %3d%%\n',0);
+                % Pull Sampling Seed
+                sampled_tc = cellfun(@(x) x(:, 1:4), ref_pf.Peaks.Default.('TC'), 'un', false);
+                storm_data = storm.TC.Peaks.Default;
+                % Populate Storm Data
+                for lc=1:number_of_life_cyles
+                    % Find Sampled Event On Storm Suite
+                    stm_indx = arrayfun(@(x) find(cell2mat(storm_data(:, 1)) == x), sampled_tc{lc}(:, 1), 'un', true);
+                    % Pull Storm Data
+                    peaks_data = cellfun(@(x) [x(:, 1:4) config.storm_duration/24], storm_data(stm_indx, 2), 'un', false);
+                    % Create LCs
+                    project_forcing.Peaks.Default.('TC'){lc, 1} = [sampled_tc{lc}, cell2mat(peaks_data)]; % Headers: [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order, SSL, Hm0, Tp, wDir, storm_duration ]
+                    fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
+                end
+            end
+        else
+            hot_start = false;
+        end
+        if ~hot_start
+            disp('     Sampling Tropical Events .....');
+            fprintf(1,'      Completion Progress: %3d%%\n',0);
+            for lc=1:number_of_life_cyles
+            [sampled_tc{lc, 1},...
+                project_forcing.Peaks.Default.('TC'){lc, 1}] = ...
+                sample_tc_storm(cell2mat(storm.TC.Peaks.Default), simulation_years, prob_mass);
+            %
+            fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
+            end
+        end
         % Replicate Storm Sampling With Storm Timeseries
-        if config.use_timeseries == 1
-            % Build LCS Timeseries Dataset
-            project_forcing.Timeseries.Default.('TC'){lc, 1} = timeseries_lc_creation(sampled_tc,...
-                storm.('TC').('Timeseries').('Default'));
-        end
-        % Create Alternate Datasets
-        if config.create_wlp == 1
-            project_forcing.Peaks.WLP.('TC'){lc, 1} = ...
-                sample_alternate_dataset(cell2mat(storm.TC.Peaks.WLP),...
-                sampled_tc, 'TC', project_forcing.Peaks.Default.('TC'){lc, 1});
-        end
-        if config.create_whp == 1
-            project_forcing.Peaks.WHP.('TC'){lc, 1} = ...
-                sample_alternate_dataset(cell2mat(storm.TC.Peaks.WHP),...
-                sampled_tc, 'TC', project_forcing.Peaks.Default.('TC'){lc, 1});
+        for lc=1:number_of_life_cyles
+            if config.use_timeseries == 1
+                % Build LCS Timeseries Dataset
+                project_forcing.Timeseries.Default.('TC'){lc, 1} = timeseries_lc_creation(sampled_tc{lc, 1},...
+                    storm.('TC').('Timeseries').('Default'));
+            end
+            % Create Alternate Datasets
+            if config.create_wlp == 1
+                project_forcing.Peaks.WLP.('TC'){lc, 1} = ...
+                    sample_alternate_dataset(cell2mat(storm.TC.Peaks.WLP),...
+                    sampled_tc{lc, 1}, 'TC', project_forcing.Peaks.Default.('TC'){lc, 1});
+            end
+            if config.create_whp == 1
+                project_forcing.Peaks.WHP.('TC'){lc, 1} = ...
+                    sample_alternate_dataset(cell2mat(storm.TC.Peaks.WHP),...
+                    sampled_tc{lc, 1}, 'TC', project_forcing.Peaks.Default.('TC'){lc, 1});
+            end
         end
     end
 
     %% COMBINE TROPICAL AND EXTRATROPICAL SAMPLED STORMS
     if strcmp(storm_sampling,'CC')==1
-        % Combined Suite Of XC and TC for Simulation Period Per Each Modeled Life-Cycle
-        project_forcing.Peaks.Default.('CC'){lc, 1} = sortrows([project_forcing.Peaks.Default.('TC'){lc, 1};...
-            project_forcing.Peaks.Default.('XC'){lc, 1}],[3, 4, 2]);
+        for lc=1:number_of_life_cyles
+            % Combined Suite Of XC and TC for Simulation Period Per Each Modeled Life-Cycle
+            project_forcing.Peaks.Default.('CC'){lc, 1} = sortrows([project_forcing.Peaks.Default.('TC'){lc, 1};...
+                project_forcing.Peaks.Default.('XC'){lc, 1}],[3, 4, 2]);
 
-        if whp_switch
-            % Combined Suite Of XC and TC for Simulation Period Per Each Modeled Life-Cycle
-            project_forcing.Peaks.WHP.('CC'){lc, 1} = sortrows([project_forcing.Peaks.WHP.('TC'){lc, 1};...
-                project_forcing.Peaks.WHP.('XC'){lc, 1}],[3, 4, 2]);
-        end
-        if wlp_switch
-            % Combined Suite Of XC and TC for Simulation Period Per Each Modeled Life-Cycle
-            project_forcing.Peaks.WLP.('CC'){lc, 1} = sortrows([project_forcing.Peaks.WLP.('TC'){lc, 1};...
-                project_forcing.Peaks.WLP.('XC'){lc, 1}],[3, 4, 2]);
-        end
-        % Combine Timseries Data
-        if config.use_timeseries == 1
-            project_forcing.Timeseries.Default.('CC'){lc, 1} = sortrows([project_forcing.Timeseries.Default.('TC'){lc, 1};...
-                project_forcing.Timeseries.Default.('XC'){lc, 1}],[3, 4, 2]);
+            if whp_switch
+                % Combined Suite Of XC and TC for Simulation Period Per Each Modeled Life-Cycle
+                project_forcing.Peaks.WHP.('CC'){lc, 1} = sortrows([project_forcing.Peaks.WHP.('TC'){lc, 1};...
+                    project_forcing.Peaks.WHP.('XC'){lc, 1}],[3, 4, 2]);
+            end
+            if wlp_switch
+                % Combined Suite Of XC and TC for Simulation Period Per Each Modeled Life-Cycle
+                project_forcing.Peaks.WLP.('CC'){lc, 1} = sortrows([project_forcing.Peaks.WLP.('TC'){lc, 1};...
+                    project_forcing.Peaks.WLP.('XC'){lc, 1}],[3, 4, 2]);
+            end
+            % Combine Timseries Data
+            if config.use_timeseries == 1
+                project_forcing.Timeseries.Default.('CC'){lc, 1} = sortrows([project_forcing.Timeseries.Default.('TC'){lc, 1};...
+                    project_forcing.Timeseries.Default.('XC'){lc, 1}],[3, 4, 2]);
+            end
         end
     end
-    fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
-end%outside LC loop
-fprintf(1,['\b\b\b\b%3.0f%%' newline],(100*(lc/number_of_life_cyles)));
+    disp(newline);
 
 %% REMOVE ADDITIONAL FIELDS (IF NEEDED)
 % Wave Height Priority
