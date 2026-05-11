@@ -31,6 +31,18 @@ outDir = fullfile(outfolder, project_name, struc_id, case_name);
 workflow = config.workflow;
 % Get Structure Type
 struc_type = config.struc_type;
+%
+switch workflow
+    case {1,2}
+        wflow = 'PROS-RB';
+        wflow2 = 'PROS';
+    case 3
+        wflow = 'LCS';
+        wflow2 = 'LCS';
+    case 4
+        wflow = 'PROS-FB';
+        wflow2 = 'PROS';
+end
 
 %% VOID SWITCHES WHEN NEEDED
 % Safeguard For Unssuported Responses For Each Structure Type
@@ -122,7 +134,9 @@ if run_flag == 1
     %% LOAD ENVRONMENT ACCORDING TO WORKFLOW
     % Determine Environment To Load
     switch workflow
-        case {2,4}
+        case 2
+            config.workflow = 1;
+        case 4
             config.pros_compute_forcing_HC = 1;
     end
     % Check For TC Probabilities Dependencies
@@ -141,10 +155,20 @@ if run_flag == 1
     end
 end
 
+%% BUILD FILENAMES FOR SIMULATION 
+% Transect Level Files (Applies To All Alternatives)
+config.out_files.storm_and_prob_mass = [config.name_prefix '_SP' num2str(config.sp_ID) '.mat'];
+config.out_files.chs_data = [config.name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat'];
+% ALternative Specific Files
+prefix = fullfile(config.outfolder, config.project_name,...
+    config.struc_id, config.case_name, wflow2, [config.project_name '_' config.struc_id '_' config.case_name '_' wflow]);
+config.out_files.config = [prefix '_config_file.mat'];
+config.out_files.resp_data = [prefix '_config_file.mat'];
+config.out_files.project_forcing = [prefix '_project_forcing.mat'];
+
 %% INITIALIZE GEOMETRY
     % Create Structure Variable
     [structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot
     % Save Out Configuration & Structure File
-    save(fullfile(outDir, [project_name '_' struc_id '_' case_name '_config_file.mat']),...
-        'config','structure');
+    save(config.out_files.config, 'config','structure');
 end

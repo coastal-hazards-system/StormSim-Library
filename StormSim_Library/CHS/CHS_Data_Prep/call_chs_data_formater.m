@@ -118,27 +118,22 @@ disp_on = config.print_progress;
 
 %% CHECK IF PROCESSED SAVEPOINT DATA EXIST FOR TRANSECT (struc_id)
 % Check For StormSim Files On Transect Directory
-% Check For StormSim Files On Transect Directory
-ss_files_list = dir(fullfile(sim_dir, '*_SP*.mat')); % Search For Expected StormSim Naming Convention On Project Folder
 % If Any File Is Found Try Loading To Save Processing Time
-if ~isempty(ss_files_list)
-    ss_storm = ss_files_list(~contains({ss_files_list.name},{'raw_files'})); % Existing storm .mat created by StormSim
-    ss_raw = ss_files_list(contains({ss_files_list.name},{'raw_files'})); % Existing CHS_Data .mat created by StormSim
+if exist(config.out_files.storm_and_prob_mass, 'file')
     % Check For StormSim Processed CHS_Data .mat
-    if ~isempty(ss_raw)
+    if exist(config.out_files.chs_data, 'file')
         % Load CHS_Data
-        chs_data_filename = fullfile(ss_raw.folder, ss_raw.name);
+        chs_data_filename = config.out_files.chs_data;
         fext = '.zip'; % Force Standard CHS Data Processing In Case Hotstart Fails
     else
         chs_data_filename = [];
         CHS_Data = []; % Need This In Case Hotstart Without CHS_Data
     end
     % Check For StormSim Processed storm .mat
-    if ~isempty(ss_storm)
-
+    if exist(config.out_files.storm_and_prob_mass, 'file')
         disp_toggle(disp_on,'StormSim generated storm .mat detected. Loading data..');
         % Load storm
-        load(fullfile(ss_storm.folder, ss_storm.name), 'storm', 'prob_mass');
+        load(config.out_files.storm_and_prob_mass, 'storm', 'prob_mass');
         % Hotstart Is Possible
         hotstart_fail = false;
         % Load CHS_Data For Output
@@ -199,12 +194,12 @@ if ~hotstart_fail % New Case Run (hot start)
     if isempty(st_types) || ~chk || ~chk2
         hotstart_fail = true;
         % Delete Files 
-        delete(fullfile(ss_storm.folder, ss_storm.name));
+        delete(config.out_files.storm_and_prob_mass);
         delete(chs_data_filename);
         config.u_engine = 0;
         config.f_adjust= 0;
         % Delete Project Forcing 
-        delete(fullfile(ss_storm.folder, config.case_name,"*_project_forcing.mat"));
+        delete(config.out_files.project_forcing);
         chs_data_filename = [];
         mkdir('Temp');
         % Decompress Zip Folder
@@ -367,10 +362,9 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         rmdir(temp_path,'s');
     end
     % Export Project Forcing
-    save([name_prefix '_SP' num2str(config.sp_ID) '.mat'], 'storm', 'prob_mass');
+    save(config.out_files.storm_and_prob_mass, 'storm', 'prob_mass');
     % Append Storm Data Dependent Fields To Configuration File
-    save(fullfile(config.outfolder, project_name, struc_id, case_name,[ project_name '_' struc_id '_' config.case_name '_config_file.mat']),...
-        'config', '-append');
+    save(config.out_files.config, 'config', '-append');
 else % StormSim Processing Checkpoint Met Requirements. Use Loaded Data
     % Remove Temp Folder
     if exist(temp_path,'dir')

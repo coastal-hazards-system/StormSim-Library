@@ -68,8 +68,15 @@ out_folder = config.outfolder;
 sim_dir = fullfile(out_folder, project_name, struc_id);
 % Make Temp Path Empty
 config.temp_path = '';
+%
+switch config.workflow
+    case {1,2,4}
+        wflow = 'PROS';
+    case 3
+        wflow = 'LCS';
+end
 % OutDir
-case_folder = fullfile(out_folder, project_name, struc_id, case_name);
+case_folder = fullfile(out_folder, project_name, struc_id, case_name,wflow);
 % Project And Transect ID Folder And Subfolder
 if ~exist(case_folder,'dir')
     mkdir(case_folder);

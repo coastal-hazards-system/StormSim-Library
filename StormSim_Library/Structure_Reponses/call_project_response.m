@@ -85,7 +85,7 @@ switch workflow
         % Define Workflow ID
         wName = 'LCS';
         % Define Workflow Subdirectory
-        subDir = [subDir filesep 'Life_Cycle_Simulation' filesep];
+        subDir = [subDir filesep 'LCS' filesep];
         % Create Subdirectory
         if ~exist(subDir,'dir')
             mkdir(subDir);
@@ -117,5 +117,5 @@ end
 % Display Status
 disp('Saving project responses....');
 % Save Outputs
-save([subDir project_name '_' struc_id '_' case_name '_' wName '_project_responses.mat'],'Resp','-v7.3');
+save(config.out_files.resp_data,'Resp','-v7.3');
 end

@@ -4,57 +4,59 @@ function [project_forcing, config]  = call_project_forcing_formater(config, stor
 workflow = config.workflow;
 % Define Storm Type ('XC' or 'TC')
 storm_sampling = config.storm_sampling;
-% Define Save Name
-save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
-    config.case_name , [config.project_name,'_', config.struc_id]);
-% Define MCS Project Forcing Mode
-load_project_forcing = config.load_project_forcing;
-% Define Reference Case_name
-ref_case_name = config.ref_case_name;
-% Define Workflow Key Phrase
-switch workflow
-    case 1
-        wName = 'PROS-RB';
-    case 4 % PROS
-        wName = 'PROS-FB';
-    case 3 % LCS
-        wName = 'LCS';
-end
 % Initialize Load Flag As False
 load_pass = false;
+% Grab Sim File Paths
+existing_file = config.out_files.project_forcing;
 
 %% FORMAT FORCING DATA ACCORDING TO WORKFLOW
-% Build Ref Case Path
-mcs_ref_pth = fullfile(config.outfolder, config.project_name, config.struc_id,...
-    ref_case_name, [config.project_name,'_', config.struc_id, '_' wName '_project_forcing.mat']);
-existing_file = [save_name '_' wName '_project_forcing.mat'];
-existing_config = [save_name '_' config.case_name '_config_file.mat'];
-% Evaluate According To User Selection
-if load_project_forcing == 1 && exist(mcs_ref_pth,'file')
-    try
-        % Load Project Forcing
-        load(mcs_ref_pth,'project_forcing');
-        % Copy To Current Case
-        if ~exist([save_name '_' wName '_project_forcing.mat'], 'file')
-            copyfile(mcs_ref_pth, [save_name '_' wName '_project_forcing.mat']);
-        end
-        % Project Forcing Was Succesfully Loaded, Skip Next Step
-        load_pass = true;
-        % Prompt User Of Loading
-        disp(['Successfully loaded project_forcing from simulation case '  ref_case_name]);
-    catch
-        % Prompt User Of Loading Fail
-        disp(['Loading of project_forcing from simulation case '  ref_case_name 'failed. Initializing new run....']);
-        % Set Load Flag To False
-        load_pass = false; % Will create new "project_forcing" according to requested workflow.
-    end
-elseif exist(existing_file, 'file') == 2
+% Check If Project Forcing Exist
+if exist(existing_file, 'file') == 2
+    % Load Project Forcing
     load(existing_file,'project_forcing');
-    config2 = load(existing_config, 'config');
-    config.u_engine = config2.config.u_engine;
-    config.f_adjust = config2.config.f_adjust;   
-    disp('Successfully loaded project_forcing');
-    load_pass = true;
+    % Check If Existing Data Complies With Request
+    has_peaks = contains('Peaks', fieldnames(project_forcing));
+    if ~has_peaks
+        has_wlp = false;
+        has_whp = false;
+    else
+        has_wlp = contains('WLP', fieldnames(project_forcing.Peaks));
+        has_whp = contains('WHP', fieldnames(project_forcing.Peaks));
+    end
+    has_timeseries = contains('Timeseries', fieldnames(project_forcing));
+    if ~has_peaks
+        has_xc = contains('XC', fieldnames(project_forcing.Timeseries.Default));
+        has_tc = contains('TC', fieldnames(project_forcing.Timeseries.Default));
+    else
+        has_xc = contains('XC', fieldnames(project_forcing.Peaks.Default));
+        has_tc = contains('TC', fieldnames(project_forcing.Peaks.Default));
+    end
+    % Define Storm Type Needs
+    switch lower(config.storm_sampling)
+        case 'xc'
+            tc_conf = false;
+            xc_conf = true;
+        case 'tc'
+            tc_conf = true;
+            xc_conf = false;
+        case 'cc'
+            tc_conf = true;
+            xc_conf = true;
+    end
+    % Build Boolean Table
+    have = [has_peaks;has_wlp;has_whp;has_timeseries;has_tc;has_xc];
+    need = [cellfun(@(x) logical(config.(x)), {'use_peaks','create_wlp','create_whp','use_timeseries'}, 'un', true)';tc_conf;xc_conf];
+    % Check If Loaded Project Forcing Meets The Requirements
+    if any(~have(need)) % Requested Data Is Not Present
+        delete(config.out_files.project_forcing);
+        load_pass = false;
+        config.u_engine = 0;
+        config.f_adjust = 0;
+    else
+        disp('A project_forcing already exist for this alternative. Trying to load....');
+        disp(['Successfully loaded:' existing_file]);
+        load_pass = true;
+    end
 end
 
 %% FORMAT STORM SUITE ACCORDING TO WORKFLOW
@@ -67,12 +69,12 @@ if ~load_pass
             % Reshape Forcing Parameters For RB Analysis (nStorms * normal_discretizations)
             project_forcing = stormsim_pros_formater(storm_sampling, storm, prob_mass, config.print_progress);
             % Save Peaks Life Cycle Structures
-            save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
+            save(existing_file,'project_forcing','-v7.3');
         case 3 % StormSim: LCS
             % Call StormSim: Monte Carlo Storm Sampler
             [project_forcing] = stormsim_lcs(config, storm, prob_mass);
             % Save Peaks Life Cycle Structures
-            save([save_name '_' wName '_project_forcing.mat'],'project_forcing','-v7.3');
+            save(existing_file,'project_forcing','-v7.3');
     end
     % RESET DATA MOD FLAGS
     config.u_engine = 0;
