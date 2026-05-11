@@ -1,20 +1,6 @@
 function [project_forcing, config] = call_uncertainty_engine(config, project_forcing)
-%% GRAB INFORMATION FROM "config"
-% Grab Uncertainty Application Flag
-u_engine = config.u_engine; % Check if user has already applied uncertainty with this function
-save_name = fullfile(config.outfolder, config.project_name, config.struc_id,...
-    config.case_name , [config.project_name,'_', config.struc_id]);
-% Define Workflow Key Phrase
-switch config.workflow
-    case 1 % PROS
-        wName = 'PROS-RB';
-    case 4
-        wName = 'PROS-FB';
-    case 3 % LCS
-        wName = 'LCS';
-end
 %% APPLY FORCING AND STRCUCTURAL UNCERTAINTY
-if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicates
+if config.u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicates
     % Display Status Message
     disp('Applying uncertainty to project forcing....');
     %% STORMSIM: PROS (STRUCTURE DESIGN)
@@ -54,9 +40,8 @@ if u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Replicate
     % Add Uncertainty Application Flag To Config
     config.u_engine = 1;
     %% SAVE OUT ADJUSTED & WITH UNCERTAINTY PROJECT_FROCING & CONFIG
-    save([save_name '_' wName '_project_forcing.mat'], 'project_forcing','-v7.3');
-    save([save_name '_' config.case_name '_config_file.mat'], 'config', '-append');
-
+    save(config.out_files.project_forcing, 'project_forcing','-v7.3');
+    save(config.out_files.config, 'config', '-append');
 else % Project Forcing Replicates Already Have Uncertainty Applied
     % Display Status Message
     disp('Project forcing already has uncertainty, skipping....');
