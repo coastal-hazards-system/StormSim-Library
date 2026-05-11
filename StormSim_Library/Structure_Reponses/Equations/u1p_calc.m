@@ -15,6 +15,7 @@ function u1p = u1p_calc(wdth,Rc,z1p,Tmm1,H,Sslp,grav)
     gam_crest =gamf;
     % Compute u1%
     u1pNum=sqrt((z1p-Rc)./gamf./H); % What To Do When z1p-Rc
+    u1pNum(z1p == 0) = 0; % If there is no overtopping, there can't be flow velocity.
     u1pDenom=1+0.1.*wdth./H;
     u1p=sqrt(grav.*H).*1.7.*sqrt(gam_crest).*u1pNum./u1pDenom;
     u1p((z1p-Rc)<0) = 0;

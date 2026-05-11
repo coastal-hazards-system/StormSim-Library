@@ -34,29 +34,22 @@ function[z1p] = z1p_calc(H,Tmm1,Rc,Sslp,grav)
   c2 = 0.25.*c1.^2./c0;
   pR = 0.5.*c1./c0;
 
- % roughness coefficient for rubble mound
-    if SSPm <= 2
-      gamf=0.55;
-    elseif SSPm >= 10
-      gamf=1.0;
-    else
-      gamf=0.05625.*(SSPm-2)+0.55;
-    end
-  
-   gam_beta = 1.0;   % reduction factor for wave obliquity
-   gamma = gamf.*gam_beta;
-   %============================================================
+  % roughness coefficient for rubble mound
+  gamf = 0.05625.*(SSPm-2)+0.55;
+  gamf(SSPm <= 2) = 0.55;
+  gamf(SSPm >= 10) = 1.0;
+
+
+  gam_beta = 1.0;   % reduction factor for wave obliquity
+  gamma = gamf.*gam_beta;
+  %============================================================
 
   %============================================================
   % Runup
-  if SSPm <= pR
-    z1p = gamma .* H .* c0 .* SSPm;
-  else
-    z1p = gamma .* H .* (c1 - c2./SSPm);
-  end
- if Rc < 0.6 
-  z1p = 0;
- end
-%============================================================
+  z1p = gamma .* H .* (c1 - c2./SSPm);
+  z1p(SSPm <= pR) = gamma(SSPm <= pR) .* H(SSPm <= pR) .* c0 .* SSPm(SSPm <= pR);
+  % Freeboard Restriciton
+  z1p(Rc<0.6) = 0;
+  %============================================================
 
 return
