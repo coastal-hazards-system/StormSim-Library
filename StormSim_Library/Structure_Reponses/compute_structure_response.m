@@ -3,7 +3,7 @@ function [Resp] = compute_structure_response(config, structure, project_forcing,
 % Strucutre Type
 struc_type = config.struc_type;
 % Storm Duration [s]
-duration = config.storm_duration*3600; % Convert hr to s
+duration = config.storm_duration*24*3600; % Convert day to s
 % Compute Forcing HC
 if isfield(config, 'pros_compute_forcing_HC')
     compute_HC = config.pros_compute_forcing_HC;
@@ -172,7 +172,7 @@ if no_resp~=0
             if calc_p1 == 1 || calc_p2_p3 == 1
                 % P1
                 Resp.p1 = cellfun(@(a, b, c, d) goda_forces_on_vertical_p1(a, b, 1.8,...
-                    0, c, d, berm_width, berm_slope, rho_w, g), Hm0, Tm10, h, hb, 'un', false);
+                    0, c, d, berm_width, berm_slope, rho_w, g, SPdepth, calc_dd_slope), Hm0, Tm10, h, hb, 'un', false);
             end
             %
             if calc_p2_p3 == 1

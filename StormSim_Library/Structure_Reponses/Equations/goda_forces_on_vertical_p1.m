@@ -1,4 +1,4 @@
-function [p1dyn]=goda_forces_on_vertical_p1(Hm0,Tp,design_scale,beta,hs,d,Bm,m,rho_w, g)
+function [p1dyn]=goda_forces_on_vertical_p1(Hm0,Tp,design_scale,beta,hs,d,Bm,m,rho_w,g,SPdepth,tanbeta)
 %{
 This script computes Goda pressures, forces, and moments on a vertical wall
 using methods from Table VI-5-53 and Table VI-5-55 in the CEM. 
@@ -18,7 +18,9 @@ Input Definitions:
     B       = width of caisson, ft    
     gamma_c = specific weight of caisson, pcf
     Bm      = berm width, ft
-    m       = cotangent of slope of berm
+    m       = cotangent of slope of berm   
+    SPdepth = savepoint depth
+    tanbeta = Seabed slope
 
 Output Definitions:
     p1dyn = total pressure at still water level
@@ -57,8 +59,6 @@ hs = hs(:);
 d = d(:);
 
 %%  PREPROCESSING
-% Compute Design Hm0
-H_design = Hm0*design_scale;
 % Height between SWL and top of caisson (hc)
 % hc = hw-hs;
 % Initialize hb
@@ -74,6 +74,17 @@ lambda1 = 1; % More Cases Will Be Added In The Future
 lambda2 = 1;
 % Define Constants
 gamma_w = rho_w.*g; % Specific weight of water, pcf
+
+%% DEPTH LIMITATION 
+Ts = Tp; %note that Ts=0.93*Tp for Jonswap with gamma=3.3 but approaches Tp as gamma 
+% increases (spectrum becomes narrower).  So here we assume narrow spectra to be conservative.
+% Deep Water Wave Length 
+Lo = grav*Ts.^2/2/pi;
+% Compute maximum significant wave height in the surf zone (Depth Limitation)
+HbonLo(:, 1) = 0.17*(1-exp(-1.5*pi*SPdepth/Lo*(1+15*tanbeta^(4/3)))); %Goda, 1995
+Hb = HbonLo.*Lo;
+% Keep Smallest 
+H_design = min(Hb, Hm0.*design_scale, "omitnan");
 
 %% COMPUTE WATER COL @ 5*Hm0 (hb)
 % 5*Hm0 Resides On Top Of Berm
