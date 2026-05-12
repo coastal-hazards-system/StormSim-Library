@@ -8,7 +8,7 @@
 % function[output] = LeeDamFunc(input)
 %============================================================
 function[S,u1p] = leeside_armor_stone_damage(SLast,...
-    H, Tp, u1p_last, LDn, Lslp, h, Rc, Nz, Delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged)
+    H, Tp, u1p_last, LDn, Lslp, h, Rc, Nz, Delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged, cutoff_switch, cutoff)
 %============================================================
 Tmm1=Tp/1.1;     % spectral mean wave period in sec
 %============================================================

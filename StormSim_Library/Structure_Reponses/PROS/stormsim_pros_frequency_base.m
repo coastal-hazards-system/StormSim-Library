@@ -126,7 +126,7 @@ function data_out = stormsim_pros_frequency_basev(config, structure, data_in, ou
                    % Tp
                    project_forcing.Tp = {Tp{1}.*normU_tp};
                    % Storm Duration
-                   project_forcing.dt  = {repmat(config.storm_duration, size(SWL{1}))};
+                   project_forcing.dt  = {repmat(datenum(0,0,0,config.storm_duration,0,0), size(SWL{1}))};
                    %
                    Resp.(field) = compute_structure_response(config, structure, project_forcing, emp_coeff, 0);
                    %

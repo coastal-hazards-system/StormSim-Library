@@ -357,7 +357,7 @@ for NlcS = 1:nLC
                 leeside_armor_stone_damage(SLee_with_repairs_last,...
                 Hm0{NlcS}(Ntime), Tp{NlcS}(Ntime), u1p_last, LDn,...
                 leeside_slope, h{NlcS}(Ntime),Rc{NlcS}(Ntime), Nz{NlcS}(Ntime), ...
-                armor_delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged);
+                armor_delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged,  cutoff_switch, cutoff_delta);
             % Store t-1 Damage State
             SLee_with_repairs_last = SLee_with_repairs{NlcS}(Ntime);
         end
@@ -366,7 +366,7 @@ for NlcS = 1:nLC
         % Compute Incremental Leeside Damage
         [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = leeside_armor_stone_damage(SLee_no_repairs_last,...
             Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
-            leeside_slope,h{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,crest_elevation,grav, compute_S_submerged);
+            leeside_slope,h{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,crest_elevation,grav, compute_S_submerged,  cutoff_switch, cutoff_delta);
         % Store t-1 Damage State
         u1p_last = u1p{NlcS}(Ntime);
         SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);

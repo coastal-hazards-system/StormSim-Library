@@ -97,10 +97,7 @@ function [PF_Summary,Reliab_Summary] = stormsim_csr_peaks(config, structure, emp
 % Water density (kg/m^3)
 dw = config.water_density;
 % Storm duration (hr)
-Dstm = config.storm_duration;
-% Output Save Dir
-outDir = [config.project_name, filesep, config.struc_id, filesep,...
-    config.project_name,'_', config.struc_id];
+Dstm = config.storm_duration*24; % Convert form days to hrs
 % Get Requested CLs
 prc = [cellfun(@str2double,strsplit(config.project_CLs(2:end-1),{' '}))];
 
@@ -111,8 +108,6 @@ sFields = fieldnames(structure);
 for ii = 1:length(sFields)
     eval([sFields{ii} ' = structure.(sFields{ii});']);
 end
-% Flip Toe Convention
-depth = toe_elevation*-1;
 % Deterministic value of zero damage level seaside
 S_ss = seaside_design_S;
 % Deterministic value of zero damage level leeside
@@ -163,7 +158,7 @@ tan_ls = 1./leeside_slope;
 % Gravitational acceleration (m/s^2)
 g = config.gravity_constant;
 % Loop Through All Life Cycles
-for lcS=1:size(LC_MCSimOUT,2)
+for lcS=1:length(LC_MCSimOUT)
 
     %% BUILD STORM FORCING DATA MATRIX
     % Build Forcing Parameters Matrix For Current LC
