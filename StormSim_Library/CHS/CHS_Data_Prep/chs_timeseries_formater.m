@@ -94,15 +94,23 @@ for stm = 1:length(stmID)
     ad_dtime = ad_dtime(ad_dtime>=min(wv_dtime) & ad_dtime<=max(wv_dtime), :);
 
     %% ADJUST MODEL OUTPUTS (IF NEEDED)
-    % Adjust Storm Time Matching (If Needed)
+    % Adjust Storm Time Matching (If Needed) For Now Locked to 1 hr dt.
+    % Commented Out dt specific logic for future implementation
+    dt_final = hours(1);
+    date_final = [max([min(wv_dtime), min(ad_dtime)]):dt_final:min([max(wv_dtime), max(ad_dtime)])]';
+    WL = interp1(ad_dtime, WL, date_final, 'linear');
+        waves(:, 1) = interp1(wv_dtime, waves(:, 1), date_final, 'linear');
+        waves(:, 2) = interp1(wv_dtime, waves(:, 2), date_final, 'linear');
+        waves(:, 3) = interp1(wv_dtime, waves(:, 3), date_final, 'linear');
+    %{
     if dt_ad > dt_wv % Wave Model dt Is Finer
         % Define dt and date vector
         dt_final = dt_ad;
         date_final = ad_dtime;
         % Interp Wave Signal To ADCIRC dt
-        waves(1) = interp1(wv_dtime, waves(1), ad_dtime, 'linear');
-        waves(2) = interp1(wv_dtime, waves(2), ad_dtime, 'linear');
-        waves(3) = interp1(wv_dtime, waves(3), ad_dtime, 'linear');
+        waves(:, 1) = interp1(wv_dtime, waves(:, 1), ad_dtime, 'linear');
+        waves(:, 2) = interp1(wv_dtime, waves(:, 2), ad_dtime, 'linear');
+        waves(:, 3) = interp1(wv_dtime, waves(:, 3), ad_dtime, 'linear');
     elseif dt_ad < dt_wv % ADCIRC dt Is Finer
         % Define dt and date vector
         dt_final = dt_wv;
@@ -114,6 +122,7 @@ for stm = 1:length(stmID)
         dt_final = dt_ad;
         date_final = ad_dtime;
     end
+    %}
     % Build Storm Data Matrix [ SSL, Hm0, Tp, wDir, date, dt ]
     storm_mat = [WL,...
         waves,...
