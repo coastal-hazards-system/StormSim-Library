@@ -308,6 +308,17 @@ config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented
 % This helps toggle print outs 
 config.print_progress = true;
+% Hide Berms Until Conceptual Models Are Set 
+config.add_berm = 0;
+config.berm_slope = 1;
+config.berm_width = 0;
+config.berm_elevation = 0;
+
+%% RESPONSES UNCERTAINTIES
+config.dn50_u = 0.15;
+config.p1_u = 0.43;
+config.q_u = 0.78;
+config.r2p_u = 0.13;
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % isempty(ss_files_list) -> 1 (Print Welcome Message) , 0 (No Print)
