@@ -85,6 +85,11 @@ switch struc_type
             'armor_delta','crest_elevation','seaside_mass','water_density'};
 end
 
+% Temp Patch (Remove Berm Fields)
+if config.add_berm == 0
+    vars_2_grab(contains(vars_2_grab, 'berm')) = [];
+end
+
 %% EXTRACT AND FORMAT "config" DATA
 % Display Status Message
 disp(['Creating ',s_type,' geometry....']);
