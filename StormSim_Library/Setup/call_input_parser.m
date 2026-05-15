@@ -258,40 +258,6 @@ if isempty(ss_storm) && strcmp(data_case, 'storm_data')
     save([config.name_prefix '_SP' num2str(config.sp_ID) '.mat'], 'storm', 'prob_mass');
 end
 
-%% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
-% Overwrite Bias & Uncertainty With Loaded Data
-if exist(fullfile(sim_dir, case_name, [project_name '_' struc_id '_' case_name ,'_config_file.mat']), 'file')
-    % Load Config
-    config_load = load(fullfile(sim_dir, case_name, [project_name '_' struc_id '_' case_name '_config_file.mat']));
-    config_load = config_load.config;
-    % Pull Bias & Uncertainty Values If Same File For Convenience
-    if strcmp(config.chs_ssl_bias_and_uncertainty_file, config_load.chs_ssl_bias_and_uncertainty_file) % Same Bias File
-        try
-            % SSL Proportional & Abolute Uncertainty
-            config.chs_swl_u_a = config_load.chs_swl_u_a;
-            config.chs_swl_u_r = config_load.chs_swl_u_r;
-            config.chs_hm0_u_a = config_load.chs_hm0_u_a;
-            config.chs_hm0_u_r = config_load.chs_hm0_u_r;
-            % SSL Proportional And Absolute Bias
-            config.chs_swl_b_a = config_load.chs_swl_b_a;
-            config.chs_swl_b_r = config_load.chs_swl_b_r;
-        end
-    end
-    % If SP ID Doesn't Match Wipe Transect Folder, New Forcing
-    if config.sp_ID ~= config_load.sp_ID
-        % Delete Files Because Bias Needs to Be Recomputed
-        rmdir(sim_dir, 's');
-    end
-    % Grab Forcing Adjustment Flags
-    config.u_engine = config_load.u_engine;
-    config.f_adjust = config_load.f_adjust;
-else
-    % Uncertainty Engine Field Initialization
-    config.u_engine = 0;
-    % Forcing Adjustments Field Initialization
-    config.f_adjust = 0;
-end
-
 %% APPLY STRUCTURE TYPE RESPONSES RESTRICTIONS 
 % Grab Structure Response Switches
 switch config.struc_type

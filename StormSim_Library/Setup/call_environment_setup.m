@@ -69,6 +69,13 @@ switch struc_type
         % Nappe
         config.compute_nappe = 0;
 end
+% Workflow Restrictions
+switch workflow
+    case 2
+        config.workflow = 1;
+    case 4
+        config.pros_compute_forcing_HC = 1;
+end
 % Check For Berm
 if config.add_berm == 0 % If No Berm Ensure Fields Are Set To 0
     switch config.struc_type
@@ -130,29 +137,54 @@ if run_flag == 1
     end
     % Display Welcome Banner
     disp(welcome_message);
+end
 
-    %% LOAD ENVRONMENT ACCORDING TO WORKFLOW
-    % Determine Environment To Load
-    switch workflow
-        case 2
-            config.workflow = 1;
-        case 4
-            config.pros_compute_forcing_HC = 1;
-    end
-    % Check For TC Probabilities Dependencies
-    if contains(config.storm_sampling, {'TC', 'CC'})
-        chk2 = exist(PM_path,'dir') | exist(PM_path,'file');
-        % Verify Results
-        if chk2 ~= 0
-            disp('CHS tropical cylcones probability masses found...');
-        else
-            disp('CHS tropical cyclones probability masses not found...');
-            % Throw Error Message
-            warning('Warning ID: 001 | call_environment_setup.missing_dependency | CHS probability masses not found. Storm sampling limited to extratropical only (XC)....');
-            % Update Config
-            config.storm_sampling = 'XC';
-        end
-    end
+%% CHECK FOR CHS DEPENDENCIES FOLDER
+if ~exist(config.chs_dependencies,'dir')
+    % Prompt User
+    error(['Error: Missing CHS_Dependencies folder.', newline,...
+        'Download from: https://chs.erdc.dren.mil/Home/Library']);
+else
+    disp('External CHS_Dependencies folder found...');
+    % Revised function: Returns a cell array of full paths for 0, 1, or N matches
+    f_x = @(x, y) fullfile({y(contains({y.name}, x)).folder}, {y(contains({y.name}, x)).name});
+
+    % 1. Get ADCIRC & Wave Model Bias And Uncertainty
+    dummy = dir(fullfile(config.chs_dependencies, 'Probability_Masses', config.region, '*.mat'));
+    config.in_files.tc_dsw = f_x('DSW', dummy);
+    config.in_files.tc_master_table = f_x('Param', dummy);
+
+    % 2. Atlantic Basin TC Statistics
+    dummy = dir(fullfile(config.chs_dependencies, 'Probability_Masses', '*.mat'));
+    config.in_files.crl = f_x('CRLs', dummy); % Coastal Reference Locations 
+    config.in_files.tc_srr = f_x('SRR', dummy); % Storm Recurrance Rates [stm/yr*Km] at CRLs
+
+    % 3. Study Grid
+    dummy = dir(fullfile(config.chs_dependencies, 'Grid_Files', config.region, '*.mat'));
+    config.in_files.grid = f_x(config.region, dummy);
+
+    % 4. Model Bias & Epistemic Uncertainty 
+    dummy = dir(fullfile(config.chs_dependencies, 'Bias_and_Uncertainty', config.region, '*.mat'));
+    config.in_files.BnU_circulation = f_x({'Comb','WL'}, dummy);
+    config.in_files.BnU_waves = f_x('STWAVE', dummy);
+end
+
+%% CHECK FOR STORM TYPE COMPLIANCE 
+% Grab Storm Types On chs_zip 
+st_types = cellfun(@(x) strsplit(x, '_'), config.chs_files_2_convert(:, 2), 'un', false);
+st_types = unique(cellfun(@(x) x(2), st_types, 'un', true));
+% Make Bool Check For Storm Type Request 
+switch config.storm_sampling
+    case 'XC'
+        stm_pass = any(contains(st_types, {'XC','XH'}));
+    case 'TC'
+        stm_pass = any(contains(st_types, {'TS','TC'}));
+    case 'CC'
+        stm_pass = any(contains(st_types, {'TS','TC'})) &  any(contains(st_types, {'XC','XH'}));
+end
+% Stop Execution If Fail
+if ~stm_pass
+    error('Error: Provided CHS savepoint data does not meet storm type requirements');
 end
 
 %% BUILD FILENAMES FOR SIMULATION 
@@ -165,6 +197,55 @@ prefix = fullfile(config.outfolder, config.project_name,...
 config.out_files.config = [prefix '_config_file.mat'];
 config.out_files.resp_data = [prefix '_config_file.mat'];
 config.out_files.project_forcing = [prefix '_project_forcing.mat'];
+
+%% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
+% Overwrite Bias & Uncertainty With Loaded Data
+if exist(config.out_files.config, 'file')
+    % Load Config
+    config_load = load(config.out_files.config, 'config');
+    config_load = config_load.config;
+    % Pull Bias & Uncertainty Values If Same File For Convenience
+    if strcmp(config.out_files.config, config_load.out_files.config) % Same Bias File
+        try
+            % SSL Proportional & Abolute Uncertainty
+            config.chs_swl_u_a = config_load.chs_swl_u_a;
+            config.chs_swl_u_r = config_load.chs_swl_u_r;
+            config.chs_hm0_u_a = config_load.chs_hm0_u_a;
+            config.chs_hm0_u_r = config_load.chs_hm0_u_r;
+            % SSL Proportional And Absolute Bias
+            config.chs_swl_b_a = config_load.chs_swl_b_a;
+            config.chs_swl_b_r = config_load.chs_swl_b_r;
+            % If SP ID Doesn't Match Wipe Transect Folder, New Forcing
+            if config.sp_ID ~= config_load.sp_ID
+                % Delete Files Because Bias Needs to Be Recomputed
+                sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name);
+                rmdir(sim_dir, 's');
+                mkdir(sim_dir);
+                % Grab Forcing Adjustment Flags
+                config.u_engine = 0;
+                config.f_adjust = 0;
+            else
+                % Grab Forcing Adjustment Flags
+                config.u_engine = config_load.u_engine;
+                config.f_adjust = config_load.f_adjust;
+            end
+        catch
+            % Delete Files Because Bias Needs to Be Recomputed
+            sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name);
+            rmdir(sim_dir, 's');
+            mkdir(sim_dir);
+            % Uncertainty Engine Field Initialization
+            config.u_engine = 0;
+            % Forcing Adjustments Field Initialization
+            config.f_adjust = 0;
+        end
+    end
+else
+    % Uncertainty Engine Field Initialization
+    config.u_engine = 0;
+    % Forcing Adjustments Field Initialization
+    config.f_adjust = 0;
+end
 
 %% INITIALIZE GEOMETRY
     % Create Structure Variable
