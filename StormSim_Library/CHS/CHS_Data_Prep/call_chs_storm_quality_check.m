@@ -38,7 +38,7 @@ WHP_switch = config.create_whp;
 chs_region = config.region;
 % Save Point ID
 spID = config.sp_ID;
-% Define Storm Surge Level CHS Bias File
+%
 chs_ssl_bias_file = config.chs_ssl_bias_and_uncertainty_file;
 % Define CHS REgional Study Grid File
 grid_path = config.chs_grid_file_source;
@@ -196,36 +196,32 @@ end
 % Initialize Bias Trigger
 bias_tgr = 1;
 % Load Bias Correction Data For CHS Region
-if ~exist(chs_ssl_bias_file,'file') | contains(chs_region, {'Lake'}) | isempty(spID) | strcmp(storm_type, 'XC')
-    % Check for Non Zero Bias Values
-    bias_tgr = 0;
-else
+
+if exist(config.in_files.BnU_circulation, 'file') && exist(config.in_files.BnU_waves, 'file')
     switch chs_region
         case 'CHS-LA'
             % Load Grid Files
-            load(fullfile(grid_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
-            load(fullfile(grid_path, 'CHS-LA_staID.mat'), 'staID');  % staID -> [SP_ID Node_ID Lon Lat Depth]
+            load(config.in_files.grid{contains(config.in_files.grid, 'SPs')}, 'SPs');  % SPs
+            load(config.in_files.grid{contains(config.in_files.grid, 'staID')}, 'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
             % Get Row
             adcirc_node_id = SPs(SPs(:,1) == spID, 2);
             % Find Correct Row ID For Bias & Uncertainty
             bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
         otherwise
-            % Get File Dir
-            dummy = dir(fullfile(grid_path,'*.mat'));
             % Define Load Cases
             load_cases = {'nodeID','staID'};
-            % Pull Grid File
-            dummy = dummy(contains({dummy.name},{'nodeID','staID'}));
+            % Grab File Names
+            [~, grid_files, ~] = fileparts(config.in_files.grid);
             % Identify Case
-            load_bool = cell2mat(cellfun(@(x)contains(dummy.name, x), {'nodeID','staID'}, 'un', false));
+            load_bool = cell2mat(cellfun(@(x)contains(grid_files, x), {'nodeID','staID'}, 'un', false));
             % Load Grid Files
             switch load_cases{load_bool}
                 case 'nodeID'
                     % Load Grid Files
-                    staID = load(fullfile(grid_path, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
+                    staID = load(config.in_files.grid, 'nodeID');staID = staID.nodeID;  % SPs
                 case 'staID'
                     % Load Grid Files
-                    load(fullfile(grid_path, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    load(config.in_files.grid,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
             end
             % Find Correct Row ID For DSWs
             bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
@@ -233,11 +229,21 @@ else
     % Load Bias Correction File
     warning('off');
     try
-        u_data = load(chs_ssl_bias_file, 'Comb'); % PBL + ADCIRC
+        u_data = load(config.in_files.BnU_circulation, 'Comb'); % PBL + ADCIRC
         u_data = u_data.Comb;
     catch
-        u_data = load(chs_ssl_bias_file, 'WL'); % ADCIRC Only
+        u_data = load(config.in_files.BnU_circulation, 'WL'); % ADCIRC Only
         u_data = u_data.WL;
+    end
+    % Load Wave Model Bias & Uncertainty
+    u_hm0 = load(config.in_files.BnU_waves, 'Hm0');u_hm0 = u_hm0.Hm0;
+    % Determine Fields
+    if length(u_hm0.U_a)~=1
+        config.chs_hm0_u_a = u_hm0.U_a_avg;
+        config.chs_hm0_u_r = u_hm0.U_r_avg;
+    else
+        config.chs_hm0_u_a = u_hm0.U_a;
+        config.chs_hm0_u_r = u_hm0.U_r;
     end
     warning('on');
     % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
@@ -247,8 +253,14 @@ else
     % Overwrite Manual Value
     config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
     config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
+else
+    % Check for Non Zero Bias Values
+    bias_tgr = 0;
 end
-
+% Enforce No Bias Correction For XCs
+if strcmp(storm_type, 'XC')
+    bias_tgr = 0;
+end
 % Apply Bias Correction (If Applicable)
 if bias_tgr == 1
     % Determine Structure Fields
