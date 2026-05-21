@@ -15,18 +15,6 @@ individual strucutre fields.
 Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
 %% CREATE DIRECTORIES
-% Project Name
-project_name = config.project_name;
-% Transect Id
-struc_id = config.struc_id;
-% Define Case  Name
-case_name = config.case_name;
-% Probability Masses
-PM_path = config.prob_mass_source;
-% outfolkder
-outfolder = config.outfolder;
-% OutDir
-outDir = fullfile(outfolder, project_name, struc_id, case_name);
 % Define Workflow
 workflow = config.workflow;
 % Get Structure Type
@@ -43,6 +31,8 @@ switch workflow
         wflow = 'PROS-FB';
         wflow2 = 'PROS';
 end
+chs_region = config.region;
+spID = config.sp_ID;
 
 %% VOID SWITCHES WHEN NEEDED
 % Safeguard For Unssuported Responses For Each Structure Type
@@ -151,40 +141,43 @@ else
 
     % 1. Get ADCIRC & Wave Model Bias And Uncertainty
     dummy = dir(fullfile(config.chs_dependencies, 'Probability_Masses', config.region, '*.mat'));
-    config.in_files.tc_dsw = f_x('DSW', dummy);
-    config.in_files.tc_master_table = f_x('Param', dummy);
+    config.in_files.tc_dsw = cell2mat(f_x('DSW', dummy));
+    config.in_files.tc_master_table = cell2mat(f_x('Param', dummy));
 
     % 2. Atlantic Basin TC Statistics
     dummy = dir(fullfile(config.chs_dependencies, 'Probability_Masses', '*.mat'));
-    config.in_files.crl = f_x('CRLs', dummy); % Coastal Reference Locations 
+    config.in_files.crl = cell2mat(f_x('CRLs', dummy)); % Coastal Reference Locations 
     config.in_files.tc_srr = f_x('SRR', dummy); % Storm Recurrance Rates [stm/yr*Km] at CRLs
 
     % 3. Study Grid
     dummy = dir(fullfile(config.chs_dependencies, 'Grid_Files', config.region, '*.mat'));
-    config.in_files.grid = f_x(config.region, dummy);
+    config.in_files.grid = cell2mat(f_x(config.region, dummy));
 
     % 4. Model Bias & Epistemic Uncertainty 
     dummy = dir(fullfile(config.chs_dependencies, 'Bias_and_Uncertainty', config.region, '*.mat'));
-    config.in_files.BnU_circulation = f_x({'Comb','WL'}, dummy);
-    config.in_files.BnU_waves = f_x('STWAVE', dummy);
+    config.in_files.BnU_circulation = cell2mat(f_x({'Comb','WL'}, dummy));
+    config.in_files.BnU_waves = cell2mat(f_x('STWAVE', dummy));
 end
 
-%% CHECK FOR STORM TYPE COMPLIANCE 
-% Grab Storm Types On chs_zip 
-st_types = cellfun(@(x) strsplit(x, '_'), config.chs_files_2_convert(:, 2), 'un', false);
-st_types = unique(cellfun(@(x) x(2), st_types, 'un', true));
-% Make Bool Check For Storm Type Request 
-switch config.storm_sampling
-    case 'XC'
-        stm_pass = any(contains(st_types, {'XC','XH'}));
-    case 'TC'
-        stm_pass = any(contains(st_types, {'TS','TC'}));
-    case 'CC'
-        stm_pass = any(contains(st_types, {'TS','TC'})) &  any(contains(st_types, {'XC','XH'}));
-end
-% Stop Execution If Fail
-if ~stm_pass
-    error('Error: Provided CHS savepoint data does not meet storm type requirements');
+%% CHECK FOR STORM TYPE COMPLIANCE
+% Only Applicable When CHS HDF5 Files Are Present (Not storm_data Path)
+if ~isempty(config.chs_files_2_convert)
+    % Grab Storm Types On chs_zip
+    st_types = cellfun(@(x) strsplit(x, '_'), config.chs_files_2_convert(:, 2), 'un', false);
+    st_types = unique(cellfun(@(x) x(2), st_types, 'un', true));
+    % Make Bool Check For Storm Type Request
+    switch config.storm_sampling
+        case 'XC'
+            stm_pass = any(contains(st_types, {'XC','XH'}));
+        case 'TC'
+            stm_pass = any(contains(st_types, {'TS','TC'}));
+        case 'CC'
+            stm_pass = any(contains(st_types, {'TS','TC'})) &  any(contains(st_types, {'XC','XH'}));
+    end
+    % Stop Execution If Fail
+    if ~stm_pass
+        error('Error: Provided CHS savepoint data does not meet storm type requirements');
+    end
 end
 
 %% BUILD FILENAMES FOR SIMULATION 
@@ -197,6 +190,64 @@ prefix = fullfile(config.outfolder, config.project_name,...
 config.out_files.config = [prefix '_config_file.mat'];
 config.out_files.resp_data = [prefix '_config_file.mat'];
 config.out_files.project_forcing = [prefix '_project_forcing.mat'];
+
+ %% GRAB CSTORM MODELING BIAS & EPISTEMIC UNCERTAINTY  
+    % Load Bias Correction Data For CHS Region
+    switch chs_region
+        case 'CHS-LA'
+            % Load Grid Files
+            load(config.in_files.grid{contains(config.in_files.grid, 'SPs')}, 'SPs');  % SPs
+            load(config.in_files.grid{contains(config.in_files.grid, 'staID')}, 'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
+            % Get Row
+            adcirc_node_id = SPs(SPs(:,1) == spID, 2);
+            % Find Correct Row ID For Bias & Uncertainty
+            bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
+        otherwise
+            % Define Load Cases
+            load_cases = {'nodeID','staID'};
+            % Grab File Names
+            [~, grid_files, ~] = fileparts(config.in_files.grid);
+            % Identify Case
+            load_bool = cell2mat(cellfun(@(x)contains(grid_files, x), {'nodeID','staID'}, 'un', false));
+            % Load Grid Files
+            switch load_cases{load_bool}
+                case 'nodeID'
+                    % Load Grid Files
+                    staID = load(config.in_files.grid, 'nodeID');staID = staID.nodeID;  % SPs
+                case 'staID'
+                    % Load Grid Files
+                    load(config.in_files.grid,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
+            end
+            % Find Correct Row ID For DSWs
+            bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
+    end
+    % Load Bias Correction File
+    warning('off');
+    try
+        u_data = load(config.in_files.BnU_circulation, 'Comb'); % PBL + ADCIRC
+        u_data = u_data.Comb;
+    catch
+        u_data = load(config.in_files.BnU_circulation, 'WL'); % ADCIRC Only
+        u_data = u_data.WL;
+    end
+    % Load Wave Model Bias & Uncertainty
+    u_hm0 = load(config.in_files.BnU_waves, 'Hm0');u_hm0 = u_hm0.Hm0;
+    % Determine Fields
+    if length(u_hm0.U_a)~=1
+        config.chs_hm0_u_a = u_hm0.U_a_avg;
+        config.chs_hm0_u_r = u_hm0.U_r_avg;
+    else
+        config.chs_hm0_u_a = u_hm0.U_a;
+        config.chs_hm0_u_r = u_hm0.U_r;
+    end
+    warning('on');
+    % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
+    B_a_SWL=u_data.B_a(bias_indx); B_r_SWL=u_data.B_r(bias_indx);
+    config.chs_swl_b_a = B_a_SWL;
+    config.chs_swl_b_r = B_r_SWL;
+    % Overwrite Manual Value
+    config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
+    config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
 
 %% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
 % Overwrite Bias & Uncertainty With Loaded Data
@@ -221,6 +272,7 @@ if exist(config.out_files.config, 'file')
                 sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name);
                 rmdir(sim_dir, 's');
                 mkdir(sim_dir);
+                mkdir(fullfile(sim_dir, wflow2));
                 % Grab Forcing Adjustment Flags
                 config.u_engine = 0;
                 config.f_adjust = 0;
@@ -231,7 +283,7 @@ if exist(config.out_files.config, 'file')
             end
         catch
             % Delete Files Because Bias Needs to Be Recomputed
-            sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name);
+            sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name, wflow2);
             rmdir(sim_dir, 's');
             mkdir(sim_dir);
             % Uncertainty Engine Field Initialization

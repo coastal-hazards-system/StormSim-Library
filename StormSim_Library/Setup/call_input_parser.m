@@ -205,7 +205,7 @@ end
 % wave data for each event matched in time.
 if isempty(ss_storm) && strcmp(data_case, 'storm_data')
     % Add CHS Files 2 Convert In Cell Array
-    config.chs_files_2_convert = [];
+    config.chs_files_2_convert = cell(0, 2);
     % Try To Find Savepoint ID On Filename
     if contains(fname, {'SP'})
         sp_id = strsplit(fname, {'_', 'SP'});
@@ -224,12 +224,8 @@ if isempty(ss_storm) && strcmp(data_case, 'storm_data')
         chs_region = 'Custom_Modeling';
         config.region = [];% User Needs To Provide Prob Mass
     end
-    % Make Sure prob_mass Is .mat For Custom modeling
-    if (isempty(config.sp_ID) || isempty(config.chs_region)) && exist(config.prob_mass_source, 'dir') == 7 % User Provided Path As prob_mass
-        error('Error: Could not parse save point ID and/or CHS study from provided file (config.chs_zip). Please provided a corresponding .mat with prob_mass variable on config.prob_mass_source.');
-    end
-    % Load File
-    load(config.chs_zip, 'storm');
+    % Load storm & prob_mass From Provided .mat
+    load(config.chs_zip, 'storm', 'prob_mass');
     % Validate "storm" dataset
     storm_validation(config, storm);
     % Grab Extratropical Storm Fields If Exist
@@ -238,21 +234,12 @@ if isempty(ss_storm) && strcmp(data_case, 'storm_data')
         config.Nyrs_XC = storm.('XC').('Nyrs_XC');
         config.Nstm_XC = storm.('XC').('Nstm_XC');
     end
-    % Handle Prob Mass
-    if strcmp(storm_sampling, 'XC')
-        prob_mass = [];
-    elseif isfolder(config.prob_mass_source)
-        [prob_mass.Param, prob_mass.TC_SRR,...
-            prob_mass.TC_Freq, prob_mass.TotalFreq,...
-            prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(config.prob_mass_source, config.grid_file, config.region, config.sp_ID);
-    elseif isfile(config.prob_mass_source) % .mat
-        % Load File
-        load(config.prob_mass_source, 'prob_mass');
-        % Validate Provided Custom Modeling prob_mass Variable
+    % Validate prob_mass Based On Storm Content
+    if isfield(storm, 'TC')
         prob_mass_validation(config, prob_mass, storm);
     end
     % Create String Pattern For Naming Convention
-    config.name_prefix = fullfile(project_name, struc_id,...
+    config.name_prefix = fullfile(sim_dir,...
         [project_name '_' struc_id '_' chs_region]);
     % Create StormSim storm file
     save([config.name_prefix '_SP' num2str(config.sp_ID) '.mat'], 'storm', 'prob_mass');
@@ -315,10 +302,13 @@ config.berm_width = 0;
 config.berm_elevation = 0;
 
 %% RESPONSES UNCERTAINTIES
-config.dn50_u = 0.15;
-config.p1_u = 0.43;
-config.q_u = 0.78;
-config.r2p_u = 0.13;
+uData = readcell('primary_responses_epistemic_uncertainties.txt');
+uData(1, :) = []; % Remove Headers
+uData = cell2struct(uData(:,3), uData(:,1));
+config.dn50_u = uData.dn50_u;
+config.p1_u = uData.p1_u;
+config.q_u = uData.q_u;
+config.r2p_u = uData.r2p_u;
 
 %% LOAD COMPUTATIONAL ENVIRONMENT
 % isempty(ss_files_list) -> 1 (Print Welcome Message) , 0 (No Print)
@@ -361,6 +351,10 @@ config.r2p_u = 0.13;
                     error('Error: Provided .mat file under chs_zip must have "CHS_Data" or "storm" variables (not both).')
                 else
                     data_case = data_case{var_pass};
+                end
+                % For storm_data: require prob_mass variable to also be present
+                if strcmp(data_case, 'storm_data') && ~any(contains(vars, 'prob_mass'))
+                    error('Error: storm_data .mat must contain both "storm" and "prob_mass" variables.');
                 end
             case '.zip' % Zip Folder Downloaded From CHS
                 data_case = 'chs_data';
