@@ -38,7 +38,7 @@ storm_type = A{1,2};
 info = h5info(Filein);
 % Check What Version Of HDF5 File Is
 File_version = logical(sum(cell2mat(cellfun(@(x) strcmp({info.Attributes.Name},x)',{'CHS File Format','CHS Data Format'},'un',false)),2));
-if isempty(File_version)
+if ~any(File_version)
     dummystr = '<a href="matlab: web(''https://chswebtool.erdc.dren.mil/'')">here</a>';
     error(['Error: Unrecognized CHS hdf5 storm data file. Please download data from ',dummystr,'']);
 end
@@ -50,6 +50,7 @@ if sum(File_version)>1 % V2 File Indication
     end
 end
 File_version = versions(strcmp(info.Attributes(File_version).Value,versions_to_look));
+% CHS Timeseries files always use V1 format regardless of header attribute
 if strcmp(FileType, 'Timeseries')
     File_version = "V1";
 end
@@ -123,35 +124,16 @@ if Has_Attributes
         % Define File Attributes To Look For
         FA =  {'Save Point ID';'Save Point Latitude';'Save Point Longitude';'Save Point Depth';'Storm Type'};
         % Get Location In HDF5 File Attributes Name List
-        try
-            % Search For Attributes
-            FA_indx = cell2mat(cellfun(@(x) find(strcmp(x,{FileAttributes.Name}')==1),FA,'un',false)');
-            % Intialize AUX Var
-            for ii = 2:4
-                FileAttributes(FA_indx(ii)).Value = str2double({FileAttributes(FA_indx(ii)).Value});
+        FA_indx = cellfun(@(x) find(strcmp(x, {FileAttributes.Name}') == 1), FA, 'un', false)';
+        found_mask = ~cellfun(@isempty, FA_indx);
+        % Convert str2double for numeric attributes (positions 2-4: Lat, Lon, Depth)
+        for ii = 2:4
+            if found_mask(ii)
+                FileAttributes(FA_indx{ii}).Value = str2double(FileAttributes(FA_indx{ii}).Value);
             end
-        catch % One Option Not Found
-            % Search For Attributes
-            FA_indx = cellfun(@(x) find(strcmp(x,{FileAttributes.Name}')==1),FA,'un',false)';
-            % Check If Any Of The Needed Are Missing
-            dummy = cell2mat(cellfun(@(x) length(x),FA_indx,'un',false));
-            % Initialyze Dummy Var
-            dummy2 = cell(1,length(dummy)-2);
-            % Extract The Found Attributes Indexes For Vars That Need Formating
-            conv_indx = FA_indx(2:4);
-            % Extract Values Of Matched Vars
-            dummy2(dummy(2:4)==1) = num2cell(str2double({FileAttributes(cell2mat(conv_indx(dummy(2:4)==1))).Value}));
-            % Remove Empty Cells
-            conv_indx(logical(cell2mat(cellfun(@(x) isempty(x),dummy2,'un',false)))) = [];
-            dummy2(logical(cell2mat(cellfun(@(x) isempty(x),dummy2,'un',false)))) = [];
-            FA_indx(dummy==0) = [];
-            % Intialize AUX Var
-            for ii = 1:length(conv_indx)
-                FileAttributes(conv_indx{ii}).Value = dummy2{ii};
-            end
-            % Convert Index To Array
-            FA_indx = cell2mat(FA_indx);
         end
+        FA_indx(~found_mask) = [];
+        FA_indx = cell2mat(FA_indx);
         % Add To Output Var
         cData.Attributes = FileAttributes;
         cData.headers = {FileAttributes(FA_indx).Name};
@@ -198,36 +180,21 @@ if Has_Datasets
         end
 
         %%%% DESCRIPTIONS
-        dummy = cellfun(@(x) find(strcmp({x.Name},{'Description'})==1),{FileDatasets.Attributes},'un',false);
-        % Dataset Attributes
-        try
-            DatasetDescription = cellfun(@(x,y) x(y).Value,{FileDatasets.Attributes},dummy,'un',false)';
-        catch % Likely Missing Description Field
-            % Temp Patch
-            miss_indx = cellfun(@isempty,dummy);
-            %
-            dummy(miss_indx) = {1};
-            % Redefine Description
-            DatasetDescription = cellfun(@(x,y) x(y).Value,{FileDatasets.Attributes},dummy,'un',false)';
-        end
+        desc_indx = cellfun(@(x) find(strcmp({x.Name},'Description')==1), {FileDatasets.Attributes}, 'un', false);
+        miss_desc = cellfun(@isempty, desc_indx);
+        desc_indx(miss_desc) = {1};
+        DatasetDescription = cellfun(@(x,y) x(y).Value, {FileDatasets.Attributes}, desc_indx, 'un', false)';
+        DatasetDescription(miss_desc) = {''};
         % Assign To Output Var
         dummy = [{FileDatasets.Name}',DatasetDescription];
         cData.Storm_Data_Description = dummy(length(DS_indx)+1:end,:);
 
         %%%% UNITS
-        FDS_units_indx =  cellfun(@(x) find(strcmp({x.Name},{'Units'})==1),{FileDatasets.Attributes},'un',false);
-        try
-            FDS_units= cellfun(@(x,y) x(y).Value,{FileDatasets.Attributes},FDS_units_indx,'un',false);
-        catch
-            % Temp Patch
-            miss_indx = cellfun(@isempty,FDS_units_indx);
-            %
-            FDS_units_indx(miss_indx) = {1};
-            % Redefine Units
-            FDS_units= cellfun(@(x,y) x(y).Value,{FileDatasets.Attributes},FDS_units_indx,'un',false);
-            % Replace Non units With Empty Values
-            FDS_units(miss_indx) = {''};
-        end
+        FDS_units_indx = cellfun(@(x) find(strcmp({x.Name},'Units')==1), {FileDatasets.Attributes}, 'un', false);
+        miss_units = cellfun(@isempty, FDS_units_indx);
+        FDS_units_indx(miss_units) = {1};
+        FDS_units = cellfun(@(x,y) x(y).Value, {FileDatasets.Attributes}, FDS_units_indx, 'un', false);
+        FDS_units(miss_units) = {''};
         % Add TO Output Var
         if sum(strcmp('units',fieldnames(cData)))>0
             cData.units = [cData.units,FDS_units];
@@ -335,36 +302,13 @@ end
 %% BUILD DATA HEADERS
 if File_version == "V1"
     if (SRR_special==0 && v1_special==0)
-        % Check What Is Avaialble
-        logic_indx = [Has_Attributes,Has_Gattributes,Has_Gdatasets];
-        line_to_paste = {'{FileAttributes(FA_indx).Name}';'{GAttributes(GA_indx).Name}';'{GDatasets.Name}'};
-
-        % Define Starting Command String
-        dummy = ['cData.headers = ['];
-
-        % Loop For Each Possible Component
-        for ii = 1:3
-            % Check If File Component Exist
-            if logic_indx(ii)
-                % If It Exists Then Add To Command Line String
-                dummy  = [dummy,line_to_paste{ii}];
-            end
-
-            if ii~=3
-                % Add Delimiter To Command Line String
-                dummy = [dummy,','];
-
-            else
-                % Add COmmand Line String Closing Bracket
-                dummy = [dummy,'];'];
-            end
-        end
-
         if (FileType == "AEP" && File_version == "V1")
             cData.headers = [{FileAttributes(FA_indx).Name},{GAttributes(GA_indx).Name},{'AEP Values'},{GDatasets.Name}];
         else
-            % Evaluate The Command Line String
-            eval(dummy);
+            cData.headers = {};
+            if Has_Attributes,  cData.headers = [cData.headers, {FileAttributes(FA_indx).Name}]; end
+            if Has_Gattributes, cData.headers = [cData.headers, {GAttributes(GA_indx).Name}];    end
+            if Has_Gdatasets,   cData.headers = [cData.headers, {GDatasets.Name}];               end
         end
 
         %% BUILD DATA UNITS HEADERS
@@ -407,8 +351,10 @@ if File_version == "V1"
             GA = {GAttributes(GA_indx).Name};
             GA = GA(strcmp('Save Point Depth',GA)==0);
             %%%%%%%                     % Initialize Dummy Storage Vars
-            DScat = cell(length(FileGroups(:,1)),length(GDatasets)); GAcat = {};
-            for stm = 1:length(FileGroups(:,1))
+            nStorms = length(FileGroups(:,1));
+            DScat = cell(nStorms, length(GDatasets));
+            GAcat = cell(nStorms, length(GA));
+            for stm = 1:nStorms
                 % Get Location In HDF5 File Attributes Name List
                 GA_indx2 = cellfun(@(x) find(strcmp(x,{FileGroups(stm).Attributes.Name}')==1),GA,'un',false);
                 GA_indx2(logical(cell2mat(cellfun(@(x) isempty(x),GA_indx2,'un',false)))) = [];
@@ -416,19 +362,23 @@ if File_version == "V1"
                 GA_dummy = {FileGroups(stm).Attributes(cell2mat(GA_indx2)).Value};
 
                 % Get Storm Group Attributes
-                GAcat = [GAcat;GA_dummy];
+                GAcat(stm, :) = GA_dummy;
                 % Loop Through ALl Datasets
                 for DS = 1:length(GDatasets)
                     % Datasets
                     try
-                        if strcmp(GDatasets(DS).Name,{'yyyymmddHHMM'})
-                            DScat(stm,DS) = {cell2mat(cellfun(@(x) num2str(x),...
-                                num2cell(h5read(Filein,[info.Groups(stm).Name,'/',GDatasets(DS).Name])), 'un', false))};
+                        if strcmp(GDatasets(DS).Name,'yyyymmddHHMM')
+                            raw = h5read(Filein,[info.Groups(stm).Name,'/',GDatasets(DS).Name]);
+                            DScat(stm,DS) = {datetime(num2str(raw(:),'%012d'),'InputFormat','yyyyMMddHHmm')};
                         else
                             DScat(stm,DS) = {h5read(Filein,[info.Groups(stm).Name,'/',GDatasets(DS).Name])};
                         end
                     catch % Missing Data Filler
-                        DScat(stm,DS) = {'NaN'};
+                        if strcmp(GDatasets(DS).Name,'yyyymmddHHMM')
+                            DScat(stm,DS) = {NaT};
+                        else
+                            DScat(stm,DS) = {'NaN'};
+                        end
                     end
                     %
                 end
@@ -465,17 +415,7 @@ if File_version == "V1"
         if ~length(data(:,1))>1 % Single entry Hazard Curve
             % Group Attributes
             cData.StormData_Description = info.Groups.Attributes;
-            %
-            dummy = cell(length(data{end}),length(data));
-            dummy_indx = find(cell2mat(cellfun(@(x) length(x)>1,data,'un',false))==1);
-            dummy_indx2 = find(cell2mat(cellfun(@(x) length(x)==1,data,'un',false))==1);
-            for ii = dummy_indx
-                dummy(:,ii) = num2cell(data{ii});
-            end
-
-            dummy(:,dummy_indx2) = repmat(data(dummy_indx2),length(data{end}),1);
-            % Rename
-            data = dummy;
+            data = expand_aep_cells(data);
             % Store Table Data
             cData.Table_StormData = cell2table(data,'VariableNames',cData.headers);
         else % V2 Hazard Curves (SWL,Hm0, Tp in same file)
@@ -488,25 +428,10 @@ if File_version == "V1"
             end
             % Remove Extra Entries
             cData(1).StormData = cData(1).StormData(1,:);
-            % Initialize Dummy Var
-            dummy = cell(length(data{end})*length(data(:,1)),length(data(1,:)));
-            % Get Col Indexes Of Hazard Curve Data
-            dummy_indx = find(cell2mat(cellfun(@(x) length(x)>1,data(1,:),'un',false))==1);
-            % Get Cols Of ID, Lat, Lon
-            dummy_indx2 = find(cell2mat(cellfun(@(x) length(x)==1,data(1,:),'un',false))==1);
             % Loop Through Hazard Curve Files
             for ll = 1:length(data(:,1))
-                % Initialize Dummy Var
-                dummy = cell(length(data{end}),length(data(1,:)));
-                % Expand Data From Cols
-                for ii = dummy_indx
-                    % Convert To Cell Array
-                    dummy(:,ii) = num2cell(data{ll,ii});
-                end
-                % Fill Missing Data
-                dummy(:,dummy_indx2) = repmat(data(ll,dummy_indx2),length(dummy(:,1)),1);
                 % Store Table Data
-                cData(ll).Table_StormData = cell2table(dummy,'VariableNames',cData(ll).headers);
+                cData(ll).Table_StormData = cell2table(expand_aep_cells(data(ll,:)),'VariableNames',cData(ll).headers);
                 % Group Attributes
                 cData(ll).StormData_Description = info.Groups(ll).Attributes;
                 % Fix Units
@@ -559,17 +484,7 @@ else % V2
     if sum(strcmp(FileType,{'AEP','AEF','AEFcond'}))==1
         %
         cData.StormData_Description = info.Groups.Attributes;
-        % Expand Cells
-        dummy = cell(length(data{end}),length(data));
-        dummy_indx = find(cell2mat(cellfun(@(x) length(x)>1,data,'un',false))==1);
-        dummy_indx2 = find(cell2mat(cellfun(@(x) length(x)==1,data,'un',false))==1);
-        for ii = dummy_indx
-            dummy(:,ii) = num2cell(data{ii});
-        end
-        %
-        dummy(:,dummy_indx2) = repmat(data(dummy_indx2),length(data{end}),1);
-        % Rename
-        data = dummy;
+        data = expand_aep_cells(data);
         cData.Table_StormData = cell2table(data,'VariableNames',cData.headers);
     else
         cData.Table_StormData = cell2table(data,'VariableNames',cData.headers);
@@ -591,17 +506,15 @@ if length(cData) == 1
                 % Grab Peak Time
                 switch storm_type
                     case {'XH','XC'}
-                        total_time = [char(cData.Table_StormData.("Storm Name")), repmat('00', height(cData.Table_StormData), 1)];
+                        total_time = datetime([char(cData.Table_StormData.("Storm Name")), repmat('00', height(cData.Table_StormData), 1)], 'InputFormat', 'yyyyMMddHHmm');
                     otherwise
-                        total_time =ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time"));
-                        total_time.Format = "uuuuMMddHHmm";
-                        total_time = string(total_time);
+                        total_time = ref_time+hours(cData.Table_StormData.("Landfall Time"))-hours(cData.Table_StormData.("Peak Time"));
                 end
                 %
                 cData.headers = [cData.headers(1:p_indx), {'yyyymmddHHMM'}, cData.headers(p_indx+1:end)];
                 cData.units = [cData.units(1:p_indx), {''}, cData.units(p_indx+1:end)];
-                cData.StormData = [cData.StormData(:, 1:p_indx), cellstr(total_time), cData.StormData(:, p_indx+1:end)];
-                cData.Table_StormData = [cData.Table_StormData(:, 1:p_indx), table(cellstr(total_time), 'VariableNames', {'yyyymmddHHMM'}) , cData.Table_StormData(:, p_indx+1:end)];
+                cData.StormData = [cData.StormData(:, 1:p_indx), num2cell(total_time), cData.StormData(:, p_indx+1:end)];
+                cData.Table_StormData = [cData.Table_StormData(:, 1:p_indx), table(total_time, 'VariableNames', {'yyyymmddHHMM'}), cData.Table_StormData(:, p_indx+1:end)];
         end
     end
 
@@ -617,4 +530,18 @@ if length(cData) == 1
         end
     end
 end
+end
+
+function expanded = expand_aep_cells(data_row)
+% Expands a 1-x-N cell row where some cols hold vectors and others hold
+% scalars into an nRows-x-N cell array ready for cell2table.
+    n_rows      = length(data_row{end});
+    n_cols      = length(data_row);
+    expanded    = cell(n_rows, n_cols);
+    vec_cols    = cellfun(@(x) length(x) > 1, data_row);
+    scalar_cols = ~vec_cols;
+    for ii = find(vec_cols)
+        expanded(:, ii) = num2cell(data_row{ii});
+    end
+    expanded(:, scalar_cols) = repmat(data_row(scalar_cols), n_rows, 1);
 end

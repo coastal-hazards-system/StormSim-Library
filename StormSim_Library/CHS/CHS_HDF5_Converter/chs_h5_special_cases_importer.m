@@ -10,12 +10,15 @@
                     GDatasets2 = info.Groups(contains({info.Groups.Name},{'/Storm Relative Probabilities'})).Datasets;
 
                     %%%% UNITS %%%%
-                    try
-                        GDS_units_indx = cellfun(@(x) find(strcmp({x.Name},'Units')==1),{GDatasets1.Attributes},'un',false);
-                    end
-                    GDS_units = [];
+                    has_attrs = ~cellfun(@(x) isempty(x), {GDatasets1.Attributes});
+                    GDS_units_indx = cell(1, length(GDatasets1));
+                    GDS_units_indx(has_attrs) = cellfun(@(x) find(strcmp({x.Name},'Units')==1), ...
+                        {GDatasets1(has_attrs).Attributes}, 'un', false);
+                    GDS_units = {};
                     for ii = 1:length(GDS_units_indx)
-                        GDS_units =  [GDS_units,{GDatasets1(ii).Attributes(GDS_units_indx{ii}).Value}];
+                        if ~isempty(GDS_units_indx{ii})
+                            GDS_units = [GDS_units, {GDatasets1(ii).Attributes(GDS_units_indx{ii}).Value}];
+                        end
                     end
                     cData.units = [FA_units,GDS_units,cell(size({GDatasets2.Name}))];
                     %%%% HEADERS
@@ -48,10 +51,9 @@
                 case 2 % NLR
 
                     %%%% DATASETS
-                    % Fill Empty Attirbutes
-                    try
-                        FileDatasets(logical(cell2mat(cellfun(@(x) isempty(x),{FileDatasets.Attributes},'un',false)))).Attributes = struct('Name','Units','Value','');
-                    end
+                    % Fill Empty Attributes
+                    empty_attrs = cellfun(@(x) isempty(x), {FileDatasets.Attributes});
+                    [FileDatasets(empty_attrs).Attributes] = deal(struct('Name','Units','Value',''));
                     % Define String Pattern To Search
                     FA = {'Save Point ID','Save Point Latitude','Save Point Longitude'};
                     % Find Within Datasets

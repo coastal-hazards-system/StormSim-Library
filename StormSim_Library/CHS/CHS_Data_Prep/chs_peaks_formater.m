@@ -52,11 +52,11 @@ Storm(:,4) = hm0_peaks_table.(STWAVE_headers_location.wDir);
 % Assign NaN's If Needed
 Storm(sum(Storm(:,2:4)<-90,2)>=1,2:4) = NaN(1,1);
 Storm(sum(Storm(:,2:4)==0,2)>=1,2:4) = NaN(1,1);
-% Check For 'NaN'
-nan_rows = cell2mat(cellfun(@(x) strcmp(x,'NaN'), swl_peaks_table.("yyyymmddHHMM"), 'UniformOutput', false));
+% Check For NaT
+nan_rows = isnat(swl_peaks_table.("yyyymmddHHMM"));
 % Assign NaN
 Storm(nan_rows,5) = NaN;
-Storm(~nan_rows,5) = datenum(swl_peaks_table.("yyyymmddHHMM")(~nan_rows),"yyyymmddHHMM");
+Storm(~nan_rows,5) = datenum(swl_peaks_table.("yyyymmddHHMM")(~nan_rows));
 % Storm Duration
 Storm(:, 6) = storm_duration;
 % Find NaN's In "Default" Dataset

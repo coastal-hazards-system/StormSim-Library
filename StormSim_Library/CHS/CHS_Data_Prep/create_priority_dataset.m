@@ -46,9 +46,9 @@ for stm = 1:length(stmID)
         continue;
     end
     % Get Storm Timeseries Timestamp
-    ts_date =  datenum(timeseries_table.('yyyymmddHHMM'){stm,1},'yyyymmddHHMM');
+    ts_date =  datenum(timeseries_table.('yyyymmddHHMM'){stm,1});
     % Get Priority Response Peak Timestamp
-    peak_date = datenum(peaks_table.('yyyymmddHHMM')(stm,1),'yyyymmddHHMM');
+    peak_date = datenum(peaks_table.('yyyymmddHHMM')(stm,1));
     % Find Timeseries Data Points Withing The +/- Time Window (tdelta)
     wIndx = find(abs(ts_date-peak_date)<=tdelta);
     % Remove Storm For Failed Peak Match
@@ -56,7 +56,7 @@ for stm = 1:length(stmID)
         % Water Level Priority Failsafe
         if strcmp(priority_type, 'wlp') % Find Surge Timeseries Within Wave Timeseries
             % Get Wave Timestamp
-            ts_date_surge = datenum(timeseries_table_surge.('yyyymmddHHMM'){stm,1},'yyyymmddHHMM');
+            ts_date_surge = datenum(timeseries_table_surge.('yyyymmddHHMM'){stm,1});
             % Find Surge Timseries Rows Within Wave Timeseries
             wl_indx = ts_date_surge >= min(ts_date) & ts_date_surge <= max(ts_date);
             % Execute Data Assignment

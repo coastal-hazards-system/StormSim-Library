@@ -38,10 +38,6 @@ WHP_switch = config.create_whp;
 chs_region = config.region;
 % Save Point ID
 spID = config.sp_ID;
-%
-chs_ssl_bias_file = config.chs_ssl_bias_and_uncertainty_file;
-% Define CHS REgional Study Grid File
-grid_path = config.chs_grid_file_source;
 % Storm Duration
 storm_duration = config.storm_duration/24; % Conver from hours to days
 %
@@ -166,10 +162,10 @@ switch storm_type
             XC_Nstm = height(peaks_data{adcirc_bool==1});
             % Get Timestamp Vector
             tVector = peaks_data{adcirc_bool==1}.yyyymmddHHMM;
-            % Check For NaNs
-            hIndx = sum(cell2mat(cellfun(@(x) ~strcmp(x,{'NaN','         NaN'}),tVector,'UniformOutput',false))==0,2)==0;
+            % Check For NaTs
+            hIndx = ~isnat(tVector);
             % Get Event Record Years
-            [record_years,~,~,~,~,~] = datevec(cell2mat(tVector(hIndx)), 'yyyymmddHHMM');
+            record_years = year(tVector(hIndx));
             % Compute Number Of Years
             XC_Nyrs=max(record_years)-min(record_years)+1;
         else
@@ -177,12 +173,12 @@ switch storm_type
             XC_Nstm = height(timeseries_data{adcirc_bool_ts==1});
             % Get Timestamp Vector
             tVector = timeseries_data{adcirc_bool_ts==1}.yyyymmddHHMM;
-            % Check For NaNs
-            hIndx = cellfun(@(x) ~contains(cellstr(x),{'NaN','         NaN'}),tVector,'un',false);
+            % Check For NaTs
+            hIndx = cellfun(@(x) ~isnat(x), tVector, 'un', false);
             % Get Event Record Years
             for kk = 1:length(hIndx)
                 if any(hIndx{kk})
-                    [record_years{kk},~,~,~,~,~] = datevec(tVector{kk}(hIndx{kk}, :), 'yyyymmddHHMM');
+                    record_years{kk} = year(tVector{kk}(hIndx{kk}));
                 else
                     record_years{kk} = NaN;
                 end
@@ -193,66 +189,9 @@ switch storm_type
 end
 
 %% APPLY BIAS CORRECTION
-% Initialize Bias Trigger
-bias_tgr = 1;
 % Load Bias Correction Data For CHS Region
-
 if exist(config.in_files.BnU_circulation, 'file') && exist(config.in_files.BnU_waves, 'file')
-    switch chs_region
-        case 'CHS-LA'
-            % Load Grid Files
-            load(config.in_files.grid{contains(config.in_files.grid, 'SPs')}, 'SPs');  % SPs
-            load(config.in_files.grid{contains(config.in_files.grid, 'staID')}, 'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
-            % Get Row
-            adcirc_node_id = SPs(SPs(:,1) == spID, 2);
-            % Find Correct Row ID For Bias & Uncertainty
-            bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
-        otherwise
-            % Define Load Cases
-            load_cases = {'nodeID','staID'};
-            % Grab File Names
-            [~, grid_files, ~] = fileparts(config.in_files.grid);
-            % Identify Case
-            load_bool = cell2mat(cellfun(@(x)contains(grid_files, x), {'nodeID','staID'}, 'un', false));
-            % Load Grid Files
-            switch load_cases{load_bool}
-                case 'nodeID'
-                    % Load Grid Files
-                    staID = load(config.in_files.grid, 'nodeID');staID = staID.nodeID;  % SPs
-                case 'staID'
-                    % Load Grid Files
-                    load(config.in_files.grid,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
-            end
-            % Find Correct Row ID For DSWs
-            bias_indx = find(staID(:,1) == spID); % Row INdex For Bias And Uncertainty
-    end
-    % Load Bias Correction File
-    warning('off');
-    try
-        u_data = load(config.in_files.BnU_circulation, 'Comb'); % PBL + ADCIRC
-        u_data = u_data.Comb;
-    catch
-        u_data = load(config.in_files.BnU_circulation, 'WL'); % ADCIRC Only
-        u_data = u_data.WL;
-    end
-    % Load Wave Model Bias & Uncertainty
-    u_hm0 = load(config.in_files.BnU_waves, 'Hm0');u_hm0 = u_hm0.Hm0;
-    % Determine Fields
-    if length(u_hm0.U_a)~=1
-        config.chs_hm0_u_a = u_hm0.U_a_avg;
-        config.chs_hm0_u_r = u_hm0.U_r_avg;
-    else
-        config.chs_hm0_u_a = u_hm0.U_a;
-        config.chs_hm0_u_r = u_hm0.U_r;
-    end
-    warning('on');
-    % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
-    B_a_SWL=u_data.B_a(bias_indx); B_r_SWL=u_data.B_r(bias_indx);
-    config.chs_swl_b_a = B_a_SWL;
-    config.chs_swl_b_r = B_r_SWL;
-    % Overwrite Manual Value
-    config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
-    config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
+    bias_tgr = 1;
 else
     % Check for Non Zero Bias Values
     bias_tgr = 0;
@@ -266,7 +205,7 @@ if bias_tgr == 1
     % Determine Structure Fields
     sNames = fieldnames(storm);
     % Define Function
-    f_u = @(x) x - B_a_SWL./abs(B_a_SWL)./sqrt(1./B_a_SWL.^2 + 1./(B_r_SWL .* x).^2); % Bias Correction Formula
+    f_u = @(x) x - config.chs_swl_b_a./abs(config.chs_swl_b_a)./sqrt(1./config.chs_swl_b_a.^2 + 1./(config.chs_swl_b_r .* x).^2); % Bias Correction Formula
     % Adjust SWL Bias
     for ii = 1:length(sNames) % Data Types: Peaks, Timeseries
         % Get Level_2 Fieldnames

@@ -86,197 +86,106 @@ use_peaks = config.use_peaks;
 use_timeseries = config.use_timeseries;
 % Storm Sampling
 storm_sampling = config.storm_sampling;
-% Define File Name Prefix
-name_prefix = config.name_prefix;
 % Define CHS_Data file (.zip, .mat)
 chs_zip = config.chs_zip;
 % Define CHS_Data Fiel Extension
 [~,~,fext] = fileparts(chs_zip);
-% Deifne Save Point ID
-sp_ID = config.sp_ID;
-% Define Region
-region = config.region;
 % Deifne WLP & WHP Switches
 create_wlp = config.create_wlp;
 create_whp = config.create_whp;
-% Project Name
-project_name = config.project_name;
-% Transect Id
-struc_id = config.struc_id;
-% Define Case  Name
-case_name = config.case_name;
-% Sim Directory
-sim_dir = fullfile(config.outfolder, project_name, struc_id);
-% Probability Masses
-pm_path = config.prob_mass_source;
 % Grab Temp Folder For Simulation
 temp_path = config.temp_path;
-% Grid File
-grid_file = config.chs_grid_file_source;
 % Print Out Switch 
 disp_on = config.print_progress;
 
-%% CHECK IF PROCESSED SAVEPOINT DATA EXIST FOR TRANSECT (struc_id)
-% Check For StormSim Files On Transect Directory
-% If Any File Is Found Try Loading To Save Processing Time
-if exist(config.out_files.storm_and_prob_mass, 'file')
-    % Check For StormSim Processed CHS_Data .mat
-    if exist(config.out_files.chs_data, 'file')
-        % Load CHS_Data
-        chs_data_filename = config.out_files.chs_data;
-        fext = '.zip'; % Force Standard CHS Data Processing In Case Hotstart Fails
-    else
-        chs_data_filename = [];
-        CHS_Data = []; % Need This In Case Hotstart Without CHS_Data
-    end
-    % Check For StormSim Processed storm .mat
-    if exist(config.out_files.storm_and_prob_mass, 'file')
-        disp_toggle(disp_on,'StormSim generated storm .mat detected. Loading data..');
-        % Load storm
-        load(config.out_files.storm_and_prob_mass, 'storm', 'prob_mass');
-        % Hotstart Is Possible
-        hotstart_fail = false;
-        % Load CHS_Data For Output
-        if ~isempty(chs_data_filename)
-            disp_toggle(disp_on,'StormSim generated CHS_Data .mat detected. Loading data..');
-            load(chs_data_filename, 'CHS_Data'); % Need To Load Here For Output Arguments
-        end
-    else
-        hotstart_fail = true; % Set Hotstart to fail
-    end
+%% CHECK IF PROCESSED SAVEPOINT DATA EXIST FOR TRANSECT
+storm_mat_exists    = exist(config.out_files.storm_and_prob_mass, 'file') == 2;
+chs_data_mat_exists = exist(config.out_files.chs_data, 'file') == 2;
+can_coldstart       = chs_data_mat_exists || strcmp(fext, '.zip');
+% Load Files If Present
+if storm_mat_exists
+    disp_toggle(disp_on, 'StormSim generated storm .mat detected. Loading data...');
+    load(config.out_files.storm_and_prob_mass, 'storm', 'prob_mass');
+end
+if chs_data_mat_exists
+    disp_toggle(disp_on, 'StormSim generated CHS_Data .mat detected. Loading data...');
+    load(config.out_files.chs_data, 'CHS_Data');
 else
-    hotstart_fail = true; % Set Hotstart to fail
-    if exist(config.out_files.chs_data, 'file')
-        % Load CHS_Data
-        chs_data_filename = config.out_files.chs_data;
-        fext = '.zip'; % Force Standard CHS Data Processing In Case Hotstart Fails
-    else
-        chs_data_filename = [];
-    end
+    CHS_Data = []; % Ensures output arg is always assigned
 end
 
-%% EVALUATE DATASET FOR "HOTSTART"
-% Create New Case For Current Transect
-if ~hotstart_fail % New Case Run (hot start)
-    % --------- Verify If "storm" Contents Meet "config" Request ----------
-    % Check Storm Sampling
+%% EVALUATE DATASET FOR HOTSTART
+compatible     = false;
+stm_type_chk   = false;
+data_type_chk  = false;
+peaks_chk      = false;
+timeseries_chk = false;
+if storm_mat_exists
+    % --- Storm Type ---
     storm_level_1 = fieldnames(storm);
-    % Check Timeseries & Peaks
-    storm_level_2 = fieldnames(storm.(storm_level_1{1}));
-    storm_level_2 = storm_level_2(contains(storm_level_2,{'Peaks','Timeseries'}));
-    % Verify Storm Sampling
     switch storm_sampling
         case 'CC'
-            % Verify Dataset Complies With User Specifications
-            stm_type_chk = contains('TC',storm_level_1) && contains('XC',storm_level_1);
+            stm_type_chk = any(strcmp(storm_level_1,'TC')) && any(strcmp(storm_level_1,'XC'));
         case 'TC'
-            % Verify Dataset Complies With User Specifications
-            stm_type_chk = contains(storm_sampling, storm_level_1);
-            % Remove Additional Field If Needed
-            if isfield(storm, 'XC')
-                storm = rmfield(storm,'XC');
-            end
+            stm_type_chk = any(strcmp(storm_level_1,'TC'));
+            if isfield(storm,'XC'), storm = rmfield(storm,'XC'); end
         case 'XC'
-            % Verify Dataset Complies With User Specifications
-            stm_type_chk = contains(storm_sampling, storm_level_1);
-            % Remove Additional Field If Needed
-            if isfield(storm, 'TC')
-                storm = rmfield(storm,'TC');
-            end
+            stm_type_chk = any(strcmp(storm_level_1,'XC'));
+            if isfield(storm,'TC'), storm = rmfield(storm,'TC'); end
     end
-    st_types = fieldnames(storm);
-    if ~isempty(st_types)
-        %
-        switch storm_sampling
-            case 'CC'
-                chk = length(st_types) == 2;
-            otherwise
-                chk = contains(st_types, storm_sampling);
-        end
-        %
+    storm_level_1 = fieldnames(storm); % Refresh after potential type strip
+    % Only proceed if storm type check passed and storm is non-empty
+    if stm_type_chk && ~isempty(storm_level_1)
+        % --- Data Types: computed from post-strip storm ---
+        storm_level_2 = fieldnames(storm.(storm_level_1{1}));
+        storm_level_2 = storm_level_2(contains(storm_level_2, {'Peaks','Timeseries'}));
         pat = {'Peaks';'Timeseries'};
-        pat = pat([config.use_peaks;config.use_timeseries] == 1);
-        % For Any Data Type On storm Make Sure All Requested Are Present 
-        chk2 = all(any(cell2mat(cellfun(@(x) contains(pat, x), storm_level_2, 'un', false)'), 2));
-    end
-
-    if isempty(st_types) || ~chk || ~chk2
-        hotstart_fail = true;
-        % Delete Files 
-        delete(config.out_files.storm_and_prob_mass);
-        delete(chs_data_filename);
-        config.u_engine = 0;
-        config.f_adjust= 0;
-        % Delete Project Forcing 
-        delete(config.out_files.project_forcing);
-        chs_data_filename = [];
-        mkdir('Temp');
-        % Decompress Zip Folder
-        unzip(config.chs_zip,'Temp');
-        % Scan Unzip Directory
-        temp_dir = dir(['Temp' filesep '**' filesep '*.h5']);
-        % Add Field To config
-        [chs_files_2_convert, II] = sortrows({temp_dir.name}',1,'ascend');
-        chs_files_2_convert_paths = {temp_dir(II).folder}';
-    else
-        % Verify Peaks
-        if contains( {'Peaks'}, storm_level_2)
-            % Verify WLP
-            [wlp_chk, storm] = alternate_dataset_check(storm, storm_level_1,...
-                'WLP', create_wlp);
-            % Verify WHP
-            [whp_chk, storm] = alternate_dataset_check(storm, storm_level_1,...
-                'WHP', create_whp);
-            % Define Loading Flag
-            peaks_chk = wlp_chk & whp_chk;
-        else % if use_peaks == 0 && ~contains('Peaks') || use_peaks == 1 && ~contains('Peaks')
-            if use_peaks == 0
-                peaks_chk = true;
-            else
-                peaks_chk = false;
-            end
+        pat = pat([use_peaks; use_timeseries] == 1);
+        data_type_chk = all(ismember(pat, storm_level_2));
+        % --- WLP / WHP ---
+        if contains({'Peaks'}, storm_level_2)
+            [wlp_chk, storm] = alternate_dataset_check(storm, storm_level_1, 'WLP', create_wlp);
+            [whp_chk, storm] = alternate_dataset_check(storm, storm_level_1, 'WHP', create_whp);
+            peaks_chk = wlp_chk && whp_chk;
+        else
+            peaks_chk = (use_peaks == 0);
         end
-        % Verify Timeseries
+        % --- Timeseries ---
         if contains({'Timeseries'}, storm_level_2)
-            % Define Timeseries Loading Flag
             timeseries_chk = true;
-            % Remove Timeseries From Loaded Data If User Specified
             if use_timeseries == 0
-                for ii = storm_types % Loop Across Storm Types
+                for ii = storm_level_1'
                     storm.(ii{:}) = rmfield(storm.(ii{:}), 'Timeseries');
                 end
             end
-        else % Define Flag According To Case
-            if use_timeseries == 0
-                timeseries_chk = true;
-            else
-                timeseries_chk = false;
-            end
+        else
+            timeseries_chk = (use_timeseries == 0);
         end
-        % Determine If Pre-Processing Needs To Be Run
-        if stm_type_chk && peaks_chk && timeseries_chk
-            % .mats Have The Necessary information For Requested Config. Do Nothing.
-            disp_toggle(disp_on,'Project forcing detected. Loading processed SP data....');
-            % hotstrat Conditions Have Been Met
-            hotstart_fail = false;
-        else % .mats Do Not Have Required Data For Requested Config
-            % Delete Loaded Vars
-            clearvars('storm','prob_mass');
-            % Set file2look To Empty
-            hotstart_fail = true;
-            % Display Message To User
-            if ~strcmp(fext, '.zip') && isempty(chs_data_filename)
-                storm_simulation_error_msg(stm_type_chk, peaks_chk, timeseries_chk, temp_path);
-            else
-                disp_toggle(disp_on,'Project forcing does not have neccesary dependencies. Restarting import process....');
-            end
-        end
+        compatible = data_type_chk && peaks_chk && timeseries_chk;
     end
+end
+
+%% HOTSTART / COLDSTART DECISION
+if storm_mat_exists && compatible
+    disp_toggle(disp_on, 'Processed CHS data (storm) detected. Loading....');
+elseif can_coldstart
+    % Safe to delete — recovery path confirmed
+    if storm_mat_exists
+        if exist(config.out_files.project_forcing, 'file')
+            delete(config.out_files.project_forcing);
+        end
+        config.u_engine = 0;
+        config.f_adjust = 0;
+        %
+        disp_toggle(disp_on, 'Processed CHS data (storm) does not have necessary dependencies. Restarting import process....');
+    end
+else
+    storm_simulation_error_msg(stm_type_chk, peaks_chk, timeseries_chk, temp_path);
 end
 
 %% STORMSIM COLDSTART - STORM SUITE QA/QC AND FORMATTING (.ZIP)
 % Execute Pre-Processing If Needed
-if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process storm datasets.
+if ~(storm_mat_exists && compatible) && can_coldstart % StormSim needs to create and process storm datasets.
     % CONVERT CHS DATA
     %{
         Run provided CHS h5 files through h5 to MATLAB converter.
@@ -286,7 +195,7 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         and save point ID. 
     %}
     % Evaluate Case Based On File Type
-    if isempty(chs_data_filename)
+    if ~chs_data_mat_exists
         % Determine Minimum File Requirement For config
         % Total Files Needed = storm_types * Data_type * 2 (comes from models (ADCIRC + Wave))
         % Storm_types: XC and/or TC | Data_type: Peaks and/or Timeseries
@@ -319,25 +228,18 @@ if hotstart_fail && strcmp(fext,'.zip')% StormSim needs to create and process st
         if ~isempty(temp_path)
             rmdir(temp_path,'s');
         end
-    else  % chs_data_filename already exists
+    else  % CHS_Data .mat exists — load directly
         disp_toggle(disp_on,'StormSim generated CHS_Data .mat detected. Loading data..');
         % Load CHS_Data From Provided File
-        load(chs_data_filename,'CHS_Data');
+        load(config.out_files.chs_data,'CHS_Data');
     end
 
     % FORMAT AND INSPECT CHS TROPICALS CYCLONES PEAKS DATA
     if contains(storm_sampling,{'TC','CC','TS'})
         %
-        if isfolder(config.prob_mass_source)
-            [prob_mass.Param, prob_mass.TC_SRR,...
-                prob_mass.TC_Freq, prob_mass.TotalFreq,...
-                prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(config.prob_mass_source, config.chs_grid_file_source, config.region, config.sp_ID);
-        elseif isfile(config.prob_mass_source) % .mat
-            % Load File
-            load(config.prob_mass_source, 'prob_mass');
-            % Validate Provided Custom Modeling prob_mass Variable
-            prob_mass_validation(config, prob_mass, []);
-        end
+        [prob_mass.Param, prob_mass.TC_SRR,...
+            prob_mass.TC_Freq, prob_mass.TotalFreq,...
+            prob_mass.smpl1, prob_mass.smpl2, prob_mass.smpl3] = chs_probability_mass_loader(config.chs_dependencies, config.region, config.sp_ID);
         % Format And Inspect Storm Peaks Files
         [config, storm.('TC'), storm.('TC').removed_storms,...
             ~, ~, prob_mass] = call_chs_storm_quality_check(config, CHS_Data, prob_mass, 'TC');
