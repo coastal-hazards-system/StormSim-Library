@@ -33,7 +33,7 @@ switch workflow
 end
 chs_region = config.region;
 spID = config.sp_ID;
-
+region_list = {'CHS-TX','CHS-SA','CHS-PR','CHS-NA','CHS-GoM','CHS-LA','CHS-GLMH'}; % Regions With TC Files
 %% VOID SWITCHES WHEN NEEDED
 % Safeguard For Unssuported Responses For Each Structure Type
 switch struc_type
@@ -130,11 +130,7 @@ if run_flag == 1
 end
 
 %% CHECK FOR CHS DEPENDENCIES FOLDER
-if ~exist(config.chs_dependencies,'dir')
-    % Prompt User
-    error(['Error: Missing CHS_Dependencies folder.', newline,...
-        'Download from: https://chs.erdc.dren.mil/Home/Library']);
-else
+if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
     disp('External CHS_Dependencies folder found...');
     % Revised function: Returns a cell array of full paths for 0, 1, or N matches
     f_x = @(x, y) fullfile({y(contains({y.name}, x)).folder}, {y(contains({y.name}, x)).name});
@@ -146,17 +142,23 @@ else
 
     % 2. Atlantic Basin TC Statistics
     dummy = dir(fullfile(config.chs_dependencies, 'Probability_Masses', '*.mat'));
-    config.in_files.crl = cell2mat(f_x('CRLs', dummy)); % Coastal Reference Locations 
+    config.in_files.crl = cell2mat(f_x('CRLs', dummy)); % Coastal Reference Locations
     config.in_files.tc_srr = f_x('SRR', dummy); % Storm Recurrance Rates [stm/yr*Km] at CRLs
 
     % 3. Study Grid
     dummy = dir(fullfile(config.chs_dependencies, 'Grid_Files', config.region, '*.mat'));
     config.in_files.grid = cell2mat(f_x(config.region, dummy));
 
-    % 4. Model Bias & Epistemic Uncertainty 
+    % 4. Model Bias & Epistemic Uncertainty
     dummy = dir(fullfile(config.chs_dependencies, 'Bias_and_Uncertainty', config.region, '*.mat'));
     config.in_files.BnU_circulation = cell2mat(f_x({'Comb','WL'}, dummy));
     config.in_files.BnU_waves = cell2mat(f_x('STWAVE', dummy));
+else
+    if ~strcmp(config.storm_sampling, 'XC')
+        error(['Error: Missing CHS_Dependencies folder. TC/CC storm sampling requires CHS_Dependencies.', newline,...
+            'Download from: https://chs.erdc.dren.mil/Home/Library']);
+    end
+    disp('CHS_Dependencies not found. Running in XC-only mode...');
 end
 
 %% CHECK FOR STORM TYPE COMPLIANCE
@@ -188,10 +190,11 @@ config.out_files.chs_data = [config.name_prefix '_SP' num2str(config.sp_ID) '_ra
 prefix = fullfile(config.outfolder, config.project_name,...
     config.struc_id, config.case_name, wflow2, [config.project_name '_' config.struc_id '_' config.case_name '_' wflow]);
 config.out_files.config = [prefix '_config_file.mat'];
-config.out_files.resp_data = [prefix '_config_file.mat'];
+config.out_files.resp_data = [prefix '_project_responses.mat'];
 config.out_files.project_forcing = [prefix '_project_forcing.mat'];
 
- %% GRAB CSTORM MODELING BIAS & EPISTEMIC UNCERTAINTY  
+%% GRAB CSTORM MODELING BIAS & EPISTEMIC UNCERTAINTY
+if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
     % Load Bias Correction Data For CHS Region
     switch chs_region
         case 'CHS-LA'
@@ -202,7 +205,7 @@ config.out_files.project_forcing = [prefix '_project_forcing.mat'];
             adcirc_node_id = SPs(SPs(:,1) == spID, 2);
             % Find Correct Row ID For Bias & Uncertainty
             bias_indx = find(staID(:,2) == adcirc_node_id); % Row INdex For Bias And Uncertainty
-        otherwise
+        case {'CHS-TX','CHS-SA','CHS-PR','CHS-NA','CHS-GoM', 'CHS-GLMH'}
             % Define Load Cases
             load_cases = {'nodeID','staID'};
             % Grab File Names
@@ -223,35 +226,49 @@ config.out_files.project_forcing = [prefix '_project_forcing.mat'];
     end
     % Load Bias Correction File
     warning('off');
-    try
-        u_data = load(config.in_files.BnU_circulation, 'Comb'); % PBL + ADCIRC
-        u_data = u_data.Comb;
-    catch
-        u_data = load(config.in_files.BnU_circulation, 'WL'); % ADCIRC Only
-        u_data = u_data.WL;
-    end
-    % Load Wave Model Bias & Uncertainty
-    u_hm0 = load(config.in_files.BnU_waves, 'Hm0');u_hm0 = u_hm0.Hm0;
-    % Determine Fields
-    if length(u_hm0.U_a)~=1
-        config.chs_hm0_u_a = u_hm0.U_a_avg;
-        config.chs_hm0_u_r = u_hm0.U_r_avg;
+    %
+    if ~isempty(config.in_files.BnU_circulation)
+        try
+            u_data = load(config.in_files.BnU_circulation, 'Comb'); % PBL + ADCIRC
+            u_data = u_data.Comb;
+        catch
+            u_data = load(config.in_files.BnU_circulation, 'WL'); % ADCIRC Only
+            u_data = u_data.WL;
+        end
+        % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
+        config.chs_swl_b_a = u_data.B_a(bias_indx);
+        config.chs_swl_b_r = u_data.B_r(bias_indx);
+        config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
+        config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
     else
-        config.chs_hm0_u_a = u_hm0.U_a;
-        config.chs_hm0_u_r = u_hm0.U_r;
+         config.chs_swl_u_a = []; % This Flags A downstream Process
+    end
+
+    if ~isempty(config.in_files.BnU_waves)
+        % Load Wave Model Bias & Uncertainty
+        u_hm0 = load(config.in_files.BnU_waves, 'Hm0');u_hm0 = u_hm0.Hm0;
+        % Determine Fields
+        if length(u_hm0.U_a)~=1
+            config.chs_hm0_u_a = u_hm0.U_a_avg;
+            config.chs_hm0_u_r = u_hm0.U_r_avg;
+        else
+            config.chs_hm0_u_a = u_hm0.U_a;
+            config.chs_hm0_u_r = u_hm0.U_r;
+        end
+    else
+        config.chs_hm0_u_a = [];
     end
     warning('on');
-    % Comb.B_a, B_r, B_a_avg, B_r_avg, U_a, U_r, U_a_avg, U_r_avg
-    B_a_SWL=u_data.B_a(bias_indx); B_r_SWL=u_data.B_r(bias_indx);
-    config.chs_swl_b_a = B_a_SWL;
-    config.chs_swl_b_r = B_r_SWL;
+
     % Overwrite Manual Value
-    config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
-    config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
+
+end
 
 %% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
 % Overwrite Bias & Uncertainty With Loaded Data
 if exist(config.out_files.config, 'file')
+    % Initialize Load Flag 
+    u_load = false;
     % Load Config
     config_load = load(config.out_files.config, 'config');
     config_load = config_load.config;
@@ -280,6 +297,7 @@ if exist(config.out_files.config, 'file')
                 % Grab Forcing Adjustment Flags
                 config.u_engine = config_load.u_engine;
                 config.f_adjust = config_load.f_adjust;
+                u_load = true;
             end
         catch
             % Delete Files Because Bias Needs to Be Recomputed
@@ -297,6 +315,26 @@ else
     config.u_engine = 0;
     % Forcing Adjustments Field Initialization
     config.f_adjust = 0;
+end
+
+%% MANUAL BIAS & UNCERTAINTY INPUT (XC-only mode, no CHS_Dependencies)
+% Missing CHS Dependencies Or Unsupported Region
+cond1 = ~exist(config.chs_dependencies,'dir') || ~ismember(chs_region,region_list);
+% Missing Some UNcertainty Parameters 
+cond3 = isempty(config.in_files.BnU_circulation) || isempty(config.in_files.BnU_waves);
+
+if cond1 || cond3 && ~u_load
+    disp('Missing bias/uncertainty values found for this case. Please provide values manually:');
+    if isempty(config.in_files.BnU_circulation)
+        config.chs_swl_b_a = input('  SWL Absolute Bias [m]:         ');
+        config.chs_swl_b_r = input('  SWL Relative Bias [-]:         ');
+        config.chs_swl_u_a = input('  SWL Absolute Uncertainty [m]:  ');
+        config.chs_swl_u_r = input('  SWL Relative Uncertainty [-]:  ');
+    end
+    if isempty(config.in_files.BnU_waves)
+        config.chs_hm0_u_a = input('  Hm0 Absolute Uncertainty [m]:  ');
+        config.chs_hm0_u_r = input('  Hm0 Relative Uncertainty [-]:  ');
+    end
 end
 
 %% INITIALIZE GEOMETRY
