@@ -1,4 +1,4 @@
-function  [Param, TC_SRR, TC_Freq, TotalFreq, smpl1, smpl2, smpl3] = chs_probability_mass_loader(pm_path, grid_file, region, Nsvpt)
+function  [Param, TC_SRR, TC_Freq, TotalFreq, smpl1, smpl2, smpl3] = chs_probability_mass_loader(chs_dependencies_path, region, Nsvpt)
 %{
     %% DESCRIPTION
         This function is responsible for leading CHS TC storm probability
@@ -21,32 +21,34 @@ function  [Param, TC_SRR, TC_Freq, TotalFreq, smpl1, smpl2, smpl3] = chs_probabi
     Developed by: Fabian A. Garcia Moreno ERDC-CHL
 %}
 % Get Versioning From Path (Temporary)
-pm_version = strsplit(pm_path, filesep);
-pm_version = pm_version{end};
+%% BUILD PATHS 
+pm_path = fullfile(chs_dependencies_path, 'Probability_Masses', region);
+grid_path = fullfile(chs_dependencies_path, 'Grid_Files',region);
+basin_stats_path =  fullfile(chs_dependencies_path, 'Probability_Masses'); 
 
 %% LOAD FILES BASED ON REGION
 
 % Load According To Region (this will be replaced with PM v2)
 if exist(pm_path,'dir')
     % CRL location info
-    load([pm_path filesep '..' filesep,'CHS_Atl_CRLs_v1.6.mat'],'CRL');
+    load([basin_stats_path filesep,'CHS_Atl_CRLs_v1.6.mat'],'CRL');
     % Low intensity (LI) storm recurrence rate (SRR) at each CRL (storms/year/km).
-    SRR_LI = load([pm_path filesep '..' filesep,'SRR_TC_LI_600km.mat']);SRR_LI = SRR_LI.SRR;
+    SRR_LI = load([basin_stats_path filesep,'SRR_TC_LI_600km.mat']);SRR_LI = SRR_LI.SRR;
     % High intensity (MI) storm SRR at each CRL.
-    SRR_MI = load([pm_path filesep '..' filesep,'SRR_TC_MI_600km.mat']);SRR_MI = SRR_MI.SRR;
+    SRR_MI = load([basin_stats_path filesep,'SRR_TC_MI_600km.mat']);SRR_MI = SRR_MI.SRR;
     % High intensity (HI) storm SRR at each CRL.
-    SRR_HI = load([pm_path filesep '..' filesep,'SRR_TC_HI_600km.mat']);SRR_HI = SRR_HI.SRR;
+    SRR_HI = load([basin_stats_path filesep,'SRR_TC_HI_600km.mat']);SRR_HI = SRR_HI.SRR;
     % All storm SRR at each CRL.
-    SRR_All = load([pm_path filesep '..' filesep,'SRR_TC_All_600km.mat']);SRR_All = SRR_All.SRR;
+    SRR_All = load([basin_stats_path filesep,'SRR_TC_All_600km.mat']);SRR_All = SRR_All.SRR;
     %             % Storms relative probability at each save point.
     %             ProbMass = load([pm_path filesep,[region,'_TC_ProbMass_600km.mat']]);
     %             % NACCS Synthetic Storm Parameters
     %             Param = load([pm_path filesep,[region,'_TC_Param_MasterTable.mat']]);
     % Storms relative probability at each save point.
-    switch pm_version
+    switch region
         case 'NACCS'
             % Storms relative probability at each save point.
-            load(fullfile(pm_path,[pm_version '_TC_Freq_CRL.mat']), 'Freq');
+            load(fullfile(pm_path,[region '_TC_Freq_CRL.mat']), 'Freq');
             % Get Frequency Vector
             ProbMass = Freq(Nsvpt).TC;
             % Define Radius Of Influence For SRR
@@ -68,12 +70,12 @@ if exist(pm_path,'dir')
                 storms passing within 200 km of the coastal reference location (CRL)
                 closest to save point
     %}
-    switch pm_version
+    switch region
         case 'CHS-LA'
             % Load Grid Files
-            load(fullfile(grid_file, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
+            load(fullfile(grid_path, 'CHS-LA_ADCIRC_SPs.mat'), 'SPs');  % SPs
             % Load Selected Nodes List
-            load(fullfile(grid_file, 'CHS-LA_staID.mat'), 'staID');
+            load(fullfile(grid_path, 'CHS-LA_staID.mat'), 'staID');
             % Get Row
             adcirc_node_id = SPs(SPs(:,1) == Nsvpt, 2);
             % Find Correct Row ID For DSWs
@@ -82,7 +84,7 @@ if exist(pm_path,'dir')
             col_indx = 3;
         otherwise
             % Get File Dir
-            dummy = dir(fullfile(grid_file,'*.mat'));
+            dummy = dir(fullfile(grid_path,'*.mat'));
             % Define Load Cases
             load_cases = {'nodeID','staID'};
             % Identify Case
@@ -91,12 +93,12 @@ if exist(pm_path,'dir')
             switch load_cases{load_bool}
                 case 'nodeID'
                     % Load Grid Files
-                    staID = load(fullfile(grid_file, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
+                    staID = load(fullfile(grid_path, dummy.name), 'nodeID');staID = staID.nodeID;  % SPs
                     % Define Latitude Column
                     col_indx = 3;
                 case 'staID'
                     % Load Grid Files
-                    load(fullfile(grid_file, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
+                    load(fullfile(grid_path, dummy.name) ,'staID'); % staID -> [SP_ID Node_ID Lon Lat Depth]
                     % Define Latitude Column
                     col_indx = 2;
             end
@@ -125,7 +127,7 @@ if exist(pm_path,'dir')
         trk_lat, trk_lon, []);
     dist200=find(dist<=trk_dist);
     ReducedSet = Param(dist200, :);
-    switch pm_version
+    switch region
         case 'NACCS' % Only 2 intensities (low/High)
             % Low Intensity Storm Population
             smpl1 = ReducedSet(ReducedSet(:,7)<48, 1);
