@@ -20,7 +20,7 @@ switch config.workflow
         SWL = cellfun(@(x) x(:, 5), project_forcing, 'un', false); % Get SWL From LC
         Hm0 = cellfun(@(x) x(:, 6), project_forcing, 'un', false); % Get Hm0 From LC
         Tp = cellfun(@(x) x(:, 7), project_forcing, 'un', false); % Get Tp From LC
-        RandNorm = cellfun(@(x) randn(size(x)), SWL, 'un', false);
+        RandNorm =cellfun(@(x) zeros(size(x)), SWL, 'un', false);
 end
 
 %% APPLY SWL UNCERTAINTY FOR STRUCTURE RESPONSE COMPUTATIONS
