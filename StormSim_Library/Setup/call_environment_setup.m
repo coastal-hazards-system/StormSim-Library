@@ -182,7 +182,7 @@ if ~isempty(config.chs_files_2_convert)
     end
 end
 
-%% BUILD FILENAMES FOR SIMULATION 
+%% BUILD FILENAMES FOR SIMULATION
 % Transect Level Files (Applies To All Alternatives)
 config.out_files.storm_and_prob_mass = [config.name_prefix '_SP' num2str(config.sp_ID) '.mat'];
 config.out_files.chs_data = [config.name_prefix '_SP' num2str(config.sp_ID) '_raw_files.mat'];
@@ -241,7 +241,7 @@ if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
         config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
         config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
     else
-         config.chs_swl_u_a = []; % This Flags A downstream Process
+        config.chs_swl_u_a = []; % This Flags A downstream Process
     end
 
     if ~isempty(config.in_files.BnU_waves)
@@ -266,9 +266,9 @@ end
 
 %% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
 % Overwrite Bias & Uncertainty With Loaded Data
+% Initialize Load Flag
+u_load = false;
 if exist(config.out_files.config, 'file')
-    % Initialize Load Flag 
-    u_load = false;
     % Load Config
     config_load = load(config.out_files.config, 'config');
     config_load = config_load.config;
@@ -320,7 +320,7 @@ end
 %% MANUAL BIAS & UNCERTAINTY INPUT (XC-only mode, no CHS_Dependencies)
 % Missing CHS Dependencies Or Unsupported Region
 cond1 = ~exist(config.chs_dependencies,'dir') || ~ismember(chs_region,region_list);
-% Missing Some UNcertainty Parameters 
+% Missing Some UNcertainty Parameters
 cond3 = isempty(config.in_files.BnU_circulation) || isempty(config.in_files.BnU_waves);
 
 if cond1 || cond3 && ~u_load
@@ -338,8 +338,8 @@ if cond1 || cond3 && ~u_load
 end
 
 %% INITIALIZE GEOMETRY
-    % Create Structure Variable
-    [structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot
-    % Save Out Configuration & Structure File
-    save(config.out_files.config, 'config','structure');
+% Create Structure Variable
+[structure] = create_structure_geometry(config, 0);% Second input argument: 1 - show plot 0 - hide plot
+% Save Out Configuration & Structure File
+save(config.out_files.config, 'config','structure');
 end
