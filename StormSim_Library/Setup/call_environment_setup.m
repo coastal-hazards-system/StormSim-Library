@@ -31,8 +31,16 @@ switch workflow
         wflow = 'PROS-FB';
         wflow2 = 'PROS';
 end
-chs_region = config.region;
-spID = config.sp_ID;
+if ~isfield(config, 'region')
+    chs_region = 'NoRegion';
+else
+    chs_region = config.region;
+end
+if ~isfield(config, 'sp_ID')
+    spID = 1;
+else
+    spID = config.sp_ID;
+end
 region_list = {'CHS-TX','CHS-SA','CHS-PR','CHS-NA','CHS-GoM','CHS-LA','CHS-GLMH'}; % Regions With TC Files
 %% VOID SWITCHES WHEN NEEDED
 % Safeguard For Unssuported Responses For Each Structure Type
@@ -155,10 +163,17 @@ if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
     config.in_files.BnU_waves = cell2mat(f_x('STWAVE', dummy));
 else
     if ~strcmp(config.storm_sampling, 'XC')
-        error(['Error: Missing CHS_Dependencies folder. TC/CC storm sampling requires CHS_Dependencies.', newline,...
+        warning(['Error: Missing CHS_Dependencies folder. TC/CC storm sampling requires CHS_Dependencies.', newline,...
             'Download from: https://chs.erdc.dren.mil/Home/Library']);
     end
     disp('CHS_Dependencies not found. Running in XC-only mode...');
+    config.in_files.BnU_circulation = [];
+    config.in_files.BnU_waves = [];
+    config.in_files.grid = [];
+    config.in_files.tc_srr = [];
+    config.in_files.crl = [];
+    config.in_files.tc_master_table = [];
+    config.in_files.tc_dsw = [];
 end
 
 %% CHECK FOR STORM TYPE COMPLIANCE
@@ -323,7 +338,7 @@ cond1 = ~exist(config.chs_dependencies,'dir') || ~ismember(chs_region,region_lis
 % Missing Some UNcertainty Parameters
 cond3 = isempty(config.in_files.BnU_circulation) || isempty(config.in_files.BnU_waves);
 
-if cond1 || cond3 && ~u_load
+if (cond1 || cond3) && ~u_load
     disp('Missing bias/uncertainty values found for this case. Please provide values manually:');
     if isempty(config.in_files.BnU_circulation)
         config.chs_swl_b_a = input('  SWL Absolute Bias [m]:         ');

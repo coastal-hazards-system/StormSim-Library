@@ -110,6 +110,8 @@ if ~isempty(ss_files_list)
         % Create String Pattern For Naming Convention
         config.name_prefix = fullfile(sim_dir,...
             [project_name '_' struc_id '_' config.region]);
+    else
+        config.chs_files_2_convert = cell(0, 2);
     end
     % Check For StormSim Processed storm .mat
     if ~isempty(ss_storm)
@@ -120,6 +122,28 @@ if ~isempty(ss_files_list)
             % Grab XC_Nyrs & XC_Nstm
             config.Nyrs_XC = storm.('XC').('Nyrs_XC');
             config.Nstm_XC = storm.('XC').('Nstm_XC');
+        end
+        if ~isfield(config, 'name_prefix')
+            [~,fname,~] = fileparts(ss_storm.name);
+            % Try To Find Savepoint ID On Filename
+            if contains(fname, {'SP'})
+                sp_id = strsplit(fname, {'_', 'SP'});
+                config.sp_ID = str2double(sp_id{end});
+            else
+                % Define Save Point ID As Empty
+                config.sp_ID = 1;
+            end
+            % Try And Find CHS Region On File Name
+            if contains(fname, {'CHS-'})
+                chs_region = strsplit(fname, '_');
+                chs_region = chs_region{contains(chs_region, {'CHS-'})};
+                config.region = chs_region;
+            else
+                config.region = 'Custom_Modeling';% User Needs To Provide Prob Mass
+            end
+            % Create String Pattern For Naming Convention
+            config.name_prefix = fullfile(sim_dir,...
+                [project_name '_' struc_id '_' config.region]);
         end
     end
 else
@@ -212,7 +236,7 @@ if isempty(ss_storm) && strcmp(data_case, 'storm_data')
         config.sp_ID = str2double(sp_id{end});
     else
         % Define Save Point ID As Empty
-        config.sp_ID = [];
+        config.sp_ID = 1;
     end
     config.sp_ID_wave = []; % Not important
     % Try And Find CHS Region On File Name
@@ -222,7 +246,7 @@ if isempty(ss_storm) && strcmp(data_case, 'storm_data')
         config.region = chs_region;
     else
         chs_region = 'Custom_Modeling';
-        config.region = [];% User Needs To Provide Prob Mass
+        config.region = 'Custom_Modeling';% User Needs To Provide Prob Mass
     end
     % Load storm & prob_mass From Provided .mat
     load(config.chs_zip, 'storm', 'prob_mass');
@@ -245,13 +269,14 @@ if isempty(ss_storm) && strcmp(data_case, 'storm_data')
     save([config.name_prefix '_SP' num2str(config.sp_ID) '.mat'], 'storm', 'prob_mass');
 end
 
-%% APPLY STRUCTURE TYPE RESPONSES RESTRICTIONS 
+%% APPLY STRUCTURE TYPE RESPONSES RESTRICTIONS
 % Grab Structure Response Switches
 switch config.struc_type
     case 1 % Levee
         config.compute_dn50_seaside = 0;
         config.compute_dn50_leeside = 0;
         config.compute_dn50_lcbw = 0;
+        config.compute_dn50_submerged = 0;
         config.compute_p1 = 0;
         config.compute_p2_p3 = 0;
         config.compute_nappe = 0;
@@ -259,6 +284,7 @@ switch config.struc_type
         config.compute_dn50_seaside = 0;
         config.compute_dn50_leeside = 0;
         config.compute_dn50_lcbw = 0;
+        config.compute_dn50_submerged = 0;
         config.compute_r2p = 0;
     case 3 % Rubble Mound
         config.compute_dn50_lcbw = 0;
@@ -268,6 +294,7 @@ switch config.struc_type
     case 4 % Low Crested Break Water
         config.compute_dn50_seaside = 0;
         config.compute_dn50_leeside = 0;
+        config.compute_dn50_submerged = 0;
         config.compute_p1 = 0;
         config.compute_p2_p3 = 0;
         config.compute_nappe = 0;
@@ -293,9 +320,9 @@ end
 config.structure_dir = 0; % Assume Shore Normal Waves
 config.chs_wDir_u_a = 0; % Assume Shore Normal Waves
 config.tide_std = 0; % Tidal std , not implemented
-% This helps toggle print outs 
+% This helps toggle print outs
 config.print_progress = true;
-% Hide Berms Until Conceptual Models Are Set 
+% Hide Berms Until Conceptual Models Are Set
 config.add_berm = 0;
 config.berm_slope = 1;
 config.berm_width = 0;
