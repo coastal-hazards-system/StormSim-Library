@@ -1,4 +1,4 @@
-function data_out = stormsim_pros_frequency_basev(config, structure, data_in, outPath, workflow)
+function data_out = stormsim_pros_frequency_base(config, structure, data_in, outPath, workflow)
     % ==========================================
     % 1. INITIALIZE CONFIG & STRUCTURE DETAILS
     % ==========================================
