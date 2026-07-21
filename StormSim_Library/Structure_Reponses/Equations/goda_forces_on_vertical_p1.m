@@ -79,7 +79,7 @@ gamma_w = rho_w.*g; % Specific weight of water, pcf
 Ts = Tp; %note that Ts=0.93*Tp for Jonswap with gamma=3.3 but approaches Tp as gamma 
 % increases (spectrum becomes narrower).  So here we assume narrow spectra to be conservative.
 % Deep Water Wave Length 
-Lo = grav*Ts.^2/2/pi;
+Lo = g*Ts.^2/2/pi;
 % Compute maximum significant wave height in the surf zone (Depth Limitation)
 HbonLo(:, 1) = 0.17*(1-exp(-1.5*pi*SPdepth/Lo*(1+15*tanbeta^(4/3)))); %Goda, 1995
 Hb = HbonLo.*Lo;
