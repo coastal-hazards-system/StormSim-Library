@@ -4,6 +4,7 @@ data_dims = size(Hm0);
 Hm0 = Hm0(:);
 Tp = Tp(:);
 h = h(:);
+
 %% Depth limitation wave transformation
 %     disp('      Checking for depth limited waves...')
 % Empirical Breaker Index Coefficient
@@ -18,6 +19,8 @@ Depth_Limited_Waves(Depth_Limited_Waves<=0)=Hm0(Depth_Limited_Waves<=0); %negati
 Ratio_Check = Depth_Limited_Waves./h;
 % Replace Hm0 With Depth Limited Value If Hm0>Hm0_DL
 Hm0(Hm0>Depth_Limited_Waves) = Depth_Limited_Waves(Hm0>Depth_Limited_Waves);
+% Make sure to set to 0 instances of emergent toe (h<0)
+Hm0(h<0) = 0;
 % Reshape
 Hm0 = reshape(Hm0,data_dims);
 Depth_Limited_Waves = reshape(Depth_Limited_Waves,data_dims);
