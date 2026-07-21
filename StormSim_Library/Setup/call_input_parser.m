@@ -286,6 +286,17 @@ switch config.struc_type
         config.compute_dn50_lcbw = 0;
         config.compute_dn50_submerged = 0;
         config.compute_r2p = 0;
+        % Enforce Dependencies For P2/P3 Computations
+        if config.compute_p2_p3 == 1
+            config.compute_p1 = 1;
+            % Secondary Responses Require Forcing HCs 
+            config.pros_compute_forcing_HC = 1;
+        end
+        % Enforce Dependencies For Nappe Discharge Computations
+        if config.compute_nappe == 1
+            config.compute_q = 1;
+            config.pros_compute_forcing_HC = 1;
+        end
     case 3 % Rubble Mound
         config.compute_dn50_lcbw = 0;
         config.compute_p1 = 0;
