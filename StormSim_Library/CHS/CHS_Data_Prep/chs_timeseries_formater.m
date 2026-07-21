@@ -94,8 +94,9 @@ for stm = 1:num_storms
     % ADCIRC Flag Check
     storm_mat(storm_mat(:, 1) < -90, :) = NaN;
     % STWAVE Flag Check
-    storm_mat(any(storm_mat(:, 2:3) < -90, 2), 2:3) = NaN;
-    
+    storm_mat(any(storm_mat(:, 2:4) < -400, 2), 2:4) = NaN;
+    % Remove NaNs
+    storm_mat(any(isnan(storm_mat), 2), :) = [];
     % Empty Matrix Handling
     if isempty(storm_mat)
         bad_count = bad_count + 1;
