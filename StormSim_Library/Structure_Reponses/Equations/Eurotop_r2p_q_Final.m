@@ -1,6 +1,6 @@
 function [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
     Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
-    gamma_star, gamma_v, gamma_b, wall_toe, berm_width, g, structure_type)
+    gamma_star, gamma_v, gamma_b, wall_toe, P, g, structure_type)
 
 
 %{
@@ -142,6 +142,7 @@ gamma_beta_OT = gamma_beta_OT(:);
 gamma_star = gamma_star(:);
 gamma_v = gamma_v(:);
 gamma_b = gamma_b(:);
+berm_width = 0;
 
 %% Define variables
 % Adjust Slope To Match Dimensions
@@ -248,10 +249,10 @@ switch structure_type
         rIndx = w_depth./Hm0>4;
         % no foreshore influence
         q_wave_ot(rIndx) = sqrt(g.*Hm0(rIndx).^3).*OT_coeff1.*...
-            exp(-((OT_coeff2./gamma_beta_OT(rIndx)).*Rc_corrt(rIndx)./Hm0(rIndx)).^1.3);% EurOtop Overtopping Eq 7.1
-        % foreshore influence
+            exp(-(OT_coeff2.*Rc_corrt(rIndx)./Hm0(rIndx)).^1.3);% EurOtop Overtopping Eq 7.1
+        % Non-Impulsive Conditions
         q_wave_ot(~rIndx) = sqrt(g.*Hm0(~rIndx).^3).*OT_coeff3.*...
-            exp(-(OT_coeff4./gamma_beta_OT(~rIndx)).*Rc_corrt(~rIndx)./Hm0(~rIndx));
+            exp(-OT_coeff4.*Rc_corrt(~rIndx)./Hm0(~rIndx)); % Equation 7.5
     case {3, 4} % Rubblemound
         %     disp('      Calculating Rubble Mound Overtopping and Runup...')
         % Embankment coefficients
@@ -281,7 +282,11 @@ switch structure_type
         % EurOtop Eq. 6.7 - gamma_f
         rIndx = breaker_m10 > 5 & breaker_m10 < 10;
         gamma_f_orBB(rIndx) = gamma_f(rIndx) + (breaker_m10(rIndx)-5).*(1-gamma_f(rIndx))./5;
-
+        % For Permeable Structures gamma_f is capped at 0.6
+        if P>0.1
+            % Only Cap Values that fall within
+            gamma_f_orBB(gamma_f_orBB>0.6) = 0.6;
+        end
         % EurOtop Runup Eq 6.1
         %%% Maximum Ru2%./Hm0 = 3 for impermeable and 2.0 for permeable
         % Estimate Run-up (R2%)
