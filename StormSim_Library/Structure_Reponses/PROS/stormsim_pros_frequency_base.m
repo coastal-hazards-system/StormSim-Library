@@ -6,7 +6,7 @@ function data_out = stormsim_pros_frequency_base(config, structure, data_in, out
     struc_id  = strrep(config.struc_id, '_', ' ');
     case_name = strrep(config.case_name, '_', ' ');
     save_name = fullfile(outPath, [proj_name, '_', struc_id]);
-    
+    workflow = config.workflow;
     g = config.gravity_constant;
     rho_w = config.water_density;
     config.compute_q_vol = 0; % Force Q vol to 0
@@ -83,7 +83,7 @@ function data_out = stormsim_pros_frequency_base(config, structure, data_in, out
             
             % Compute Responses
            switch workflow
-               case 1 % PROS-RB (Only Compute Secondary Responses As FB 
+               case 1 % PROS-RB (Only Compute Secondary Responses As EB1 
                    % Check For Compute Specs
                    can_do_secondary = (~req_p2_p3 || has_p1) && (~req_nappe || has_q);
                    if can_do_secondary
@@ -104,7 +104,7 @@ function data_out = stormsim_pros_frequency_base(config, structure, data_in, out
                                SWL, Hm0, q, 'UniformOutput', false);
                        end
                    end
-               case 4 % PROS-EB2 (Compute All PSE Responses As FB)
+               case 4 % PROS-EB2 (Compute All PSE Responses As EB2)
                    % Grab Uncertainty                    
                    tp_u = sqrt(1+config.chs_hm0_u_r)-1; %0.0724
                    swl_u = [config.chs_swl_u_a, config.chs_swl_u_r];
@@ -149,7 +149,7 @@ function data_out = stormsim_pros_frequency_base(config, structure, data_in, out
         % ==========================================
         % 3. APPEND RESULTS TO HAZARD TABLE
         % ==========================================
-        if ~isempty(Resp.y_table)
+        if ~isempty(Resp)
             resp_vars = fieldnames(Resp.y_table);
             
             for vv = 1:length(resp_vars)
