@@ -37,11 +37,14 @@ Output Definitions:
 Written by Abigail L. Stehno (abigail.l.stehno@erdc.dren.mil) 11/17/21
 
 Validation test: 
+[p2dyn, p2sta, p2total, p3dyn, p3sta, p3total, pu]=goda_forces_on_vertical_p2p3(1.9507, 7.7, 1.8, 2, 5.7607, 5.1511, 0.7926,5.9437,p1dyn,1025.502, 9.81)
+^ Must run goda_forces_on_vertical_p1.m validation test first
+
 [p,F,M]=goda_ForcesOnVertical(6.4,7.7,2,18.9,16.9,19.5,2,155,1,10)
 p = 
          p1: 187.7356
          p2: 90.9741
-         p3: 1.4018e+03
+         p3: 1.4018e+03 but I was getting 1.2354e+03, which matches S2G outputs
 F = 
     F_horiz: 2.9205e+03
        F_up: 117.7368
@@ -81,12 +84,15 @@ Comments from Jeff
 
 %% VECTORIZE INPUTS
 data_dims = size(Hm0);
-Hm0 = Hm0(:);
+Hm0 = Hm0(:)*3.2808;
 Tp = Tp(:);
-hs = hs(:);
-d = d(:);
-p1dyn = p1dyn(:);
-Rc = Rc(:);
+hs = hs(:)*3.2808;
+d = d(:)*3.2808;
+p1dyn = p1dyn(:)/47.8803;
+Rc = Rc(:)*3.2808;
+rho_w = rho_w*0.062428;
+g=g(:)*3.28084; 
+hw = hw(:)*3.2808;
 
 %% PREPROCESSING 
 % Compute Design Hm0
@@ -130,14 +136,14 @@ p3total = p3dyn+p3sta; % total p3 at ground/top of fill
 pu = 0.5*(1+cos(beta)).*lambda3.*alpha1.*alpha3*gamma_w.*H_design;
 
 %% RESHAPE OUTPUT VARS 
-p2dyn = reshape(p2dyn,data_dims);
-p3dyn = reshape(p3dyn,data_dims);
-p2sta = reshape(p2sta,data_dims);
-p3sta = reshape(p3sta,data_dims);
-p2total = reshape(p2total,data_dims);
-p3total = reshape(p3total,data_dims);
+p2dyn = reshape(p2dyn,data_dims)*47.8803;
+p3dyn = reshape(p3dyn,data_dims)*47.8803;
+p2sta = reshape(p2sta,data_dims)*47.8803;
+p3sta = reshape(p3sta,data_dims)*47.8803;
+p2total = reshape(p2total,data_dims)*47.8803;
+p3total = reshape(p3total,data_dims)*47.8803;
 
-pu = reshape(pu,data_dims);
+pu = reshape(pu,data_dims)*47.8803;
 end
 
 
