@@ -1,5 +1,8 @@
 function [p1dyn]=goda_forces_on_vertical_p1(Hm0,Tp,design_scale,beta,hs,d,Bm,m,rho_w,g,SPdepth,tanbeta)
 %{
+Note - inputs to the function are in metric and are switched at the beginning of the code to imperial. 
+Output is also in metric. 
+
 This script computes Goda pressures, forces, and moments on a vertical wall
 using methods from Table VI-5-53 and Table VI-5-55 in the CEM. 
 
@@ -29,9 +32,10 @@ Output Definitions:
 Written by Abigail L. Stehno (abigail.l.stehno@erdc.dren.mil) 11./17./21
 
 Validation test: 
-p1dyn = goda_ForcesOnVertical(1.9507, 7.7, 1.8, 2, 5.7607, 5.1511, 0.3048, 10, 1025.502, [1, 1]);
+Validation test: (inputs are metric)
+p1dyn = goda_forces_on_vertical_p1(1.9507, 7.7, 1.8, 2, 5.7607, 5.1511, 0.3048, 10, 1025.502, 9.81,18.9/3.2808,10);
 
-p1dyn = 8.9924e+03 Pa 
+p1: 187.7356 lbf/ft^2 =  8.9922e03 Pa
 
 Comments from Jeff
 - Include a code that calls this function set up with one of the examples. 
@@ -52,19 +56,23 @@ Comments from Jeff
 
 %% VECTORIZE INPUTS 
 data_dims = size(Hm0);
-Hm0 = Hm0(:);
+Hm0 = Hm0(:)*3.2808; % ALS changed to imperial 7/28
 Tp = Tp(:);
 beta = beta(:);
-hs = hs(:);
-d = d(:);
-
+hs = hs(:)*3.2808; % ALS changed to imperial 7/28
+d = d(:)*3.2808; % ALS changed to imperial 7/28
+SPdepth=SPdepth(:)*3.2808; % ALS added 7/28
+ Bm=Bm(:)*3.2808;
+rho_w = rho_w*0.062428;
+g=g(:)*3.28084; 
+ 
 %%  PREPROCESSING
 % Height between SWL and top of caisson (hc)
 % hc = hw-hs;
 % Initialize hb
 hb = zeros(size(hs));
 % Compute Berm "toe" Distance From Wall
-b_dist = m*(hs-d)+Bm;
+b_dist = m*(hs-d)+Bm*3.2808;
 % Compute Berm Heigth At 5*Hm0
 h_p = hs - (5*Hm0)/m;
 % Negative Water Col Failsafe
@@ -73,7 +81,7 @@ hs(hs<0) = 0; d(d<0)=0; h_p(h_p<0) = 0;
 lambda1 = 1; % More Cases Will Be Added In The Future
 lambda2 = 1;
 % Define Constants
-gamma_w = rho_w.*g; % Specific weight of water, pcf
+gamma_w = rho_w.*g/32.17405; % Specific weight of water, pcf % ALS changed to imperial 7/28
 
 %% DEPTH LIMITATION 
 Ts = Tp; %note that Ts=0.93*Tp for Jonswap with gamma=3.3 but approaches Tp as gamma 
@@ -109,7 +117,7 @@ alphaStar = alpha2;
 p1dyn=0.5.*(1+cos(beta)).*(lambda1.*alpha1+lambda2.*alphaStar.*...
     (cos(beta).^2)).*gamma_w.*H_design; % hydrodynamic p1 at SWL
 % Reshape 
-p1dyn = reshape(p1dyn,data_dims);
+p1dyn = reshape(p1dyn,data_dims)*47.8803;
 end
 
 
