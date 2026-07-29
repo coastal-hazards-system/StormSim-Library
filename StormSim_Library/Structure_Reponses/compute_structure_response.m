@@ -60,17 +60,17 @@ crest_elev = structure.crest_elevation;
 % Define Structure Crest Width
 crest_width = structure.crest_width;
 % Define Structure Toe Elevation (<0 below datum zero)
-toe_elev = structure.toe_elevation; % Flip convention
+toe_elev = abs(structure.toe_elevation); % Flip convention
 if config.add_berm
     % Berm Elevation (<0 Below Datum Zero)
-    berm_elev = structure.berm_elevation; %
+    berm_elev = abs(structure.berm_elevation); %
     % Berm Width
     berm_width = structure.berm_width;
     % Berm Slope
     berm_slope = structure.berm_slope;
 else
     % Berm Elevation (<0 Below Datum Zero)
-    berm_elev = toe_elev; % This Translates to h == hb
+    berm_elev = abs(toe_elev); % This Translates to h == hb
     % Berm Width
     berm_width = 0;
     % Berm Slope
@@ -91,7 +91,7 @@ switch struc_type
         % CEM P
         P = structure.cem_P;
     case  2
-        wall_bottom_elev = structure.wall_bottom_elevation;
+        wall_bottom_elev = abs(structure.wall_bottom_elevation);
         hw = wall_bottom_elev + crest_elev;
         toe_elev = wall_bottom_elev;
         P=0;

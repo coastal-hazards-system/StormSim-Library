@@ -13,7 +13,7 @@ g = config.gravity_constant;
 
 %% GRAB DETAILS FROM "structure"
 % Define Structure Toe Elevation (<0 below datum zero)
-toe_elev = structure.toe_elevation; % Flip convention
+toe_elev = abs(structure.toe_elevation); % Flip convention
 
 %% GRAB PROJECT FORCING DATA
 switch config.workflow
