@@ -10,7 +10,7 @@
 function[S,u1p] = leeside_armor_stone_damage(SLast,...
     H, Tp, u1p_last, LDn, Lslp, h, Rc, Nz, Delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged, cutoff_switch, cutoff)
 %============================================================
-Tmm1=Tp/1.1;     % spectral mean wave period in sec
+Tmm1=Tp;% Inside CHESS the input for period is already converted with parent code compute_structure_response.m /1.1;     % spectral mean wave period in sec
 %============================================================
 % Coeffs from Melby 2009
 if SLast>0
