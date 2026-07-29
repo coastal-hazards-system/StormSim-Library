@@ -8,9 +8,9 @@
 % function[output] = LeeDamFunc(input)
 %============================================================
 function[S,u1p] = leeside_armor_stone_damage(SLast,...
-    H, Tp, u1p_last, LDn, Lslp, h, Rc, Nz, Delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged, cutoff_switch, cutoff)
+    H, Tmm1, u1p_last, LDn, Lslp, WL, Rc, Nz, Delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged, cutoff_switch, cutoff)
 %============================================================
-Tmm1=Tp;% Inside CHESS the input for period is already converted with parent code compute_structure_response.m /1.1;     % spectral mean wave period in sec
+% Inside CHESS the input for period is already converted with parent code stormsim_csr_dpa.m /1.1;     % spectral mean wave period in sec
 %============================================================
 % Coeffs from Melby 2009
 if SLast>0
@@ -34,9 +34,9 @@ end
 
 if cutoff_switch == 0 % Evaluate Actual Design
     % Compute Run-up Exceeded By 1% Of The Incident Waves
-    [z1p] = z1p_calc(H, Tp, Rc, Lslp, grav);
+    [z1p] = z1p_calc(H, Tmm1, Rc, Lslp, grav);
     % Compute Crest Velocity Exceeded By 1% Of The Incident Waves
-    u1p = u1p_calc(crest_width, Rc, z1p, Tp, H, Lslp, grav);
+    u1p = u1p_calc(crest_width, Rc, z1p, Tmm1, H, Lslp, grav);
 else % Artificially Increase Freeboard (Raise Structure)
     % Compute "New" Crest Elevation
     cutoff_elevation = crest_elevation + cutoff;
@@ -44,9 +44,9 @@ else % Artificially Increase Freeboard (Raise Structure)
     Rc_artificial = cutoff_elevation - WL;
     % Recompute u1p, z1p
     % Compute Run-up Exceeded By 1% Of The Incident Waves
-    [z1p] = z1p_calc(H, Tp, Rc_artificial, Lslp, grav);
+    [z1p] = z1p_calc(H, Tmm1, Rc_artificial, Lslp, grav);
     % Compute Crest Velocity Exceeded By 1% Of The Incident Waves
-    u1p = u1p_calc(crest_width, Rc_artificial, z1p, Tp, H, Lslp, grav);
+    u1p = u1p_calc(crest_width, Rc_artificial, z1p, Tmm1, H, Lslp, grav);
 end
 %
 if Rc<0 && compute_S_submerged == 1

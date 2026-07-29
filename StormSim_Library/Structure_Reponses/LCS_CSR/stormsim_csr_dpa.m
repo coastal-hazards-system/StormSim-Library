@@ -173,7 +173,7 @@ cutoff_delta = config.csr_cutoff_offset;
 % Extract Strcutural Paramaters From Structure
 crest_elevation = structure.crest_elevation;
 crest_width = structure.crest_width;
-toe_elevation = structure.toe_elevation;
+toe_elevation = abs(structure.toe_elevation);
 seaside_slope = structure.seaside_slope;
 leeside_slope = structure.leeside_slope;
 armor_delta = structure.armor_delta;
@@ -355,8 +355,8 @@ for NlcS = 1:nLC
             % Compute Incremental Leeside Damage
             [SLee_with_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = ...
                 leeside_armor_stone_damage(SLee_with_repairs_last,...
-                Hm0{NlcS}(Ntime), Tp{NlcS}(Ntime), u1p_last, LDn,...
-                leeside_slope, h{NlcS}(Ntime),Rc{NlcS}(Ntime), Nz{NlcS}(Ntime), ...
+                Hm0{NlcS}(Ntime), Tm10{NlcS}(Ntime), u1p_last, LDn,...
+                leeside_slope, WL{NlcS}(Ntime),Rc{NlcS}(Ntime), Nz{NlcS}(Ntime), ...
                 armor_delta, K_ls1, K_ls2, crest_width, crest_elevation, grav, compute_S_submerged,  cutoff_switch, cutoff_delta);
             % Store t-1 Damage State
             SLee_with_repairs_last = SLee_with_repairs{NlcS}(Ntime);
@@ -365,8 +365,8 @@ for NlcS = 1:nLC
         %% LEESIDE DAMAGE PROGRESSION - NO REPAIRS
         % Compute Incremental Leeside Damage
         [SLee_no_repairs{NlcS}(Ntime),u1p{NlcS}(Ntime)] = leeside_armor_stone_damage(SLee_no_repairs_last,...
-            Hm0{NlcS}(Ntime),Tp{NlcS}(Ntime),u1p_last,LDn,...
-            leeside_slope,h{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,crest_elevation,grav, compute_S_submerged,  cutoff_switch, cutoff_delta);
+            Hm0{NlcS}(Ntime),Tm10{NlcS}(Ntime),u1p_last,LDn,...
+            leeside_slope,WL{NlcS}(Ntime),Rc{NlcS}(Ntime),Nz{NlcS}(Ntime),armor_delta,K_ls1,K_ls2,crest_width,crest_elevation,grav, compute_S_submerged,  cutoff_switch, cutoff_delta);
         % Store t-1 Damage State
         u1p_last = u1p{NlcS}(Ntime);
         SLee_no_repairs_last = SLee_no_repairs{NlcS}(Ntime);

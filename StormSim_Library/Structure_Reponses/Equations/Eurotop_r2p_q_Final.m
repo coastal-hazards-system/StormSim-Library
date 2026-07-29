@@ -1,4 +1,4 @@
-function [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=Eurotop_r2p_q_Final(Hm0, Tp, SWL,...
+function [R2p, R2p_SWL, q, q_overflow, q_wave_ot]=Eurotop_r2p_q_Final(Hm0, T_m10, SWL,...
     Rc, slope, gamma_f, gamma_beta_r2p, gamma_beta_OT, ...
     gamma_star, gamma_v, gamma_b, wall_toe, P, g, structure_type)
 
@@ -133,7 +133,7 @@ REFERENCES:
 data_dims = size(SWL);
 Hm0 = Hm0(:);
 SWL = SWL(:);
-Tp = Tp(:);
+T_m10 = T_m10(:);
 Rc = Rc(:);
 slope = slope(:);
 gamma_f = gamma_f(:);
@@ -146,7 +146,6 @@ berm_width = 0;
 
 %% Define variables
 % Adjust Slope To Match Dimensions
-T_m10 = Tp/1.1;                         % neg zero moment period tm_1,0
 L_m10 = g*T_m10.^2 /(2*pi);              % Zero moment wave length
 s_m10 = Hm0./L_m10;                      % Wave steepness
 breaker_m10 = (1./slope)./sqrt(s_m10);    % Breaker parameter
@@ -308,11 +307,12 @@ q_wave_ot(isnan(q_wave_ot)) = 0;
 % q Overflow
 q = q_wave_ot + q_overflow;
 % Define NaN Index
-rIndx = Hm0<0 | Tp<=0 | SWL<=-100 | isnan(Hm0) | isnan(Tp) | isnan(SWL);
+rIndx = Hm0<=0 | T_m10<=0 | SWL<=-100 | isnan(Hm0) | isnan(T_m10) | isnan(SWL);
+rIndx(q_overflow>0) = false; % Ensures we capture the edge case of overflow only
 % Do not calculate structure response if no storm forcing
-q(rIndx) = NaN;
 q_wave_ot(rIndx) = NaN;
 q_overflow(rIndx) = NaN;
+q(rIndx) = NaN;
 R2p(rIndx) = NaN;
 % Compute R2p + SWL
 R2p_SWL = R2p + SWL;

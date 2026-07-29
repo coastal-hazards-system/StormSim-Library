@@ -134,6 +134,10 @@ switch workflow
 end
 % Compute Water Depth @ Berm
 hb = cellfun(@(x) x - berm_elev, SWL,'un',false);
+% Compute Mean Period
+Tm = cellfun(@(x) x./1.2,Tp,'un',false); % 
+% Compute Zeroth Moment Spectral Wave Period
+Tm10 = cellfun(@(x) x./1.1,Tp,'un',false); % 
 
 %% COMPUTE STRUCTURE RESPONSE
 % Intialize LCBW Flag
@@ -152,10 +156,8 @@ if no_resp~=0
                 [~,~, Resp.q, q_overflow, Resp.q_wave_ot]=cellfun(@(a, b, c, d, e, f) Eurotop_r2p_q_Final(a, b, c, d,...
                     f, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     wall_bottom_elev, P, g, struc_type),...
-                    Hm0, Tp, SWL, Rc, gammas, slope_aux,'un',false);
+                    Hm0, Tm10, SWL, Rc, gammas, slope_aux,'un',false);
             end
-            % Compute Tm1_0
-            Tm10 = cellfun(@(x) x./1.1,Tp,'un',false);
             % Compute Wall Pressures
             if calc_p1 == 1 || calc_p2_p3 == 1
                 % P1
@@ -185,12 +187,8 @@ if no_resp~=0
                 [Resp.R2p, Resp.R2p_SWL, Resp.q, ~, Resp.q_wave_ot]=cellfun(@(a, b, c, d, e,f) Eurotop_r2p_q_Final(a, b, c, d,...
                     f, e.gamma_f, e.gamma_beta_r2p, e.gamma_beta_q, e.gamma_star, e.gamma_v, e.gamma_b,...
                     toe_elev, P, g, struc_type),...
-                    Hm0, Tp, SWL, Rc, gammas, slope_aux,'un',false);
+                    Hm0, Tm10, SWL, Rc, gammas, slope_aux,'un',false);
             end
-            % Compute Mean Period
-            Tm = cellfun(@(x) x./1.2,Tp,'un',false); % This should be removed
-            % Compute Zeroth Moment Spectral Wave Period
-            Tm10 = cellfun(@(x) x./1.1,Tp,'un',false); % This should be removed
             % Compute Stone Size Using S Limit State
             if struc_type == 3 || struc_type == 4
                 % Dn50 Seaside (Melby - Momentum Flux)
