@@ -69,8 +69,11 @@ sim_dir = fullfile(out_folder, project_name, struc_id);
 % Make Temp Path Empty
 config.temp_path = '';
 %
+if ~ismember(config.workflow, [1,3,4])
+    error('Error: config.workflow must be 1 (PROS), 3 (LCS), or 4 (PROS-FB). Value 2 (EVA) was a deprecated alias for 1 and has been removed -- set workflow=1 instead.');
+end
 switch config.workflow
-    case {1,2,4}
+    case {1,4}
         wflow = 'PROS';
     case 3
         wflow = 'LCS';

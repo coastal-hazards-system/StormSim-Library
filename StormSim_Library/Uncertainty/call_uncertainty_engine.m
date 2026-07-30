@@ -21,8 +21,8 @@ if config.u_engine == 0 % Uncertainty Has Not Been Applied To Project Forcing Re
                 % Data
                 data = project_forcing.(data_types{dt}).(match_types{mt}).(storm_types{st});
                 % Load RandNorm
-                switch config.workflow % PROS - 1, 2, 4 | LCS - 3
-                    case {1,2,4} % Use Pre-computed Discrete Normal Distribution
+                switch config.workflow % PROS - 1, 4 | LCS - 3
+                    case {1,4} % Use Pre-computed Discrete Normal Distribution
                         switch storm_types{st}
                             case 'TC'
                                 RandNorm = readmatrix('discrete_norm_444.txt')'; % z-scores

@@ -7,7 +7,7 @@ swl_u_r = config.chs_swl_u_r;
 hm0_u_r = config.chs_hm0_u_r;
 % Grab Data Cells According To Workflow
 switch config.workflow
-    case  {1, 2, 4}
+    case  {1, 4}
         % Water Level
         SWL = project_forcing.('SWL');
         % Wave Height
@@ -41,7 +41,7 @@ Tp = cellfun(@(x, y) x.*(1+Tp_U.*y), Tp, RandNorm, 'un', false);
 
 %% Store Results
 switch config.workflow
-    case  {1, 2, 4}
+    case  {1, 4}
         project_forcing.SWL = SWL; % Get SWL From LC
         project_forcing.Hm0 = Hm0; % Get Hm0 From LC
         project_forcing.Tp = Tp; % Get Tp From LC

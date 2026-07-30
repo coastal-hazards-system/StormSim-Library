@@ -116,7 +116,7 @@ end
 %% GET FORCING FIELDS
 % Grab Workflow Specific Fields
 switch workflow
-    case {1,2,4} % RB
+    case {1,4} % RB
         % Create Forcing Variables For Simplicity
         SWL = project_forcing.SWL; % SWL
         Hm0 = project_forcing.Hm0; % Hm0
@@ -246,7 +246,7 @@ if no_resp~=0
         [Kt] = cellfun(@(a,b,c) eurotop_wave_transmission(a,b,c,crest_width,tana,g),Hm0,Tp,Rc,'un',false);
         % Compute Transmitted Wave
         switch workflow
-            case {1,2,4} % PROS
+            case {1,4} % PROS
                 Resp.Hm0t = cellfun(@(x, y) x.*y, project_forcing.('Hm0_no_rep'), Kt, 'un', false); 
             case 3 % LCS
                 Resp.Hm0t = cellfun(@(x, y) x.*y, Hm0, Kt, 'un', false); % This is only correct for LCS, Deterministic Calc
@@ -272,7 +272,7 @@ if get_max == 1
     var_names = {'Dn50', 'Dn50_Lee', 'Dn50_LCBW', 'FS_LCBW', 'R2p', 'R2p_SWL', 'q', 'q_wave_ot', 'p1', 'DamDepth', 'DamDepthElev', 'Hm0t'};
     % Evaluate According To Workflow
     switch workflow
-        case {1, 2, 4} % Find Max Responses For Timeseries (RB3)
+        case {1, 4} % Find Max Responses For Timeseries (RB3)
             %
             var_names = var_names(var_bool == 1);
             %

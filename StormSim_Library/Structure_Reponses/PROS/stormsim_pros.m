@@ -27,7 +27,7 @@ if config.workflow == 4 % PROS-FB
     varnames = varnames(~contains(varnames, {'pros_', '_Ks','_slope'})); % Remove unwanted
     % Get Responses To Compute Usign PROS-FB
     fb_responses = cellfun(@(x) config.(x), varnames, 'un', true);
-    varnames = varnames(fb_responses);
+    varnames = varnames(logical(fb_responses));
     % Turn Off Responses For RB Section
     config = config_editor(config, varnames, 0);
 end

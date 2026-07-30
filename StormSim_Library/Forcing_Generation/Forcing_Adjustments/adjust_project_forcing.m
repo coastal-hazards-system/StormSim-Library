@@ -17,7 +17,7 @@ toe_elev = abs(structure.toe_elevation); % Flip convention
 
 %% GRAB PROJECT FORCING DATA
 switch config.workflow
-    case  {1, 2, 4}
+    case  {1, 4}
         SWL = [project_forcing.('SWL'), project_forcing.('SWL_no_rep')];% Water Level
         Hm0 = project_forcing.('Hm0');% Wave Height
         Tp = project_forcing.('Tp'); % Wave Period
@@ -66,7 +66,7 @@ end
 %% STORE ADJUSTED DATA
 % Store Modifications
 switch config.workflow
-    case  {1, 2, 4}
+    case  {1, 4}
         project_forcing.SWL = SWL(:, 1); % Get SWL From LC
         project_forcing.SWL_no_rep = SWL(:,2);
         project_forcing.Hm0 = Hm0; % Get SWL From LC

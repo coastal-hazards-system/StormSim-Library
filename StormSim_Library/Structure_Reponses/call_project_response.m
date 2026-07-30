@@ -27,7 +27,7 @@ function [Resp] = call_project_response(config, project_forcing, structure, crea
     %% COMPUTE STRUCTURE RESPONSE BASED ON WORKFLOW
     switch workflow
         
-        case {1, 2, 4} % ================= PROS WORKFLOW =================
+        case {1, 4} % ================= PROS WORKFLOW =================
             % Define workflow parameters
             wName  = ifthen(workflow == 4, 'FB', 'RB');
             subDir = fullfile(subDir, 'PROS');
