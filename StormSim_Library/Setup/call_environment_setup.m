@@ -160,7 +160,7 @@ if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
     % 4. Model Bias & Epistemic Uncertainty
     dummy = dir(fullfile(config.chs_dependencies, 'Bias_and_Uncertainty', config.region, '*.mat'));
     config.in_files.BnU_circulation = cell2mat(f_x({'Comb','WL'}, dummy));
-    config.in_files.BnU_waves = cell2mat(f_x('STWAVE', dummy));
+    config.in_files.BnU_waves = cell2mat(f_x({'STWAVE', 'SWAN'}, dummy));
 else
     if ~strcmp(config.storm_sampling, 'XC')
         warning(['Error: Missing CHS_Dependencies folder. TC/CC storm sampling requires CHS_Dependencies.', newline,...
@@ -255,6 +255,7 @@ if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
         config.chs_swl_b_r = u_data.B_r(bias_indx);
         config.chs_swl_u_a = u_data.U_a(bias_indx); % SWL absolute uncertainty
         config.chs_swl_u_r = u_data.U_r(bias_indx); % SWL Proportional uncertainty
+        config.chs_swl_bu_source = 'chs_dependencies';
     else
         config.chs_swl_u_a = []; % This Flags A downstream Process
     end
@@ -270,6 +271,7 @@ if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
             config.chs_hm0_u_a = u_hm0.U_a;
             config.chs_hm0_u_r = u_hm0.U_r;
         end
+        config.chs_hm0_u_source = 'chs_dependencies';
     else
         config.chs_hm0_u_a = [];
     end
@@ -280,57 +282,7 @@ if exist(config.chs_dependencies,'dir') && ismember(chs_region,region_list)
 end
 
 %% LOAD SIMULATION BIAS AND UNCERTAINTY VALUES
-% Overwrite Bias & Uncertainty With Loaded Data
-% Initialize Load Flag
-u_load = false;
-if exist(config.out_files.config, 'file')
-    % Load Config
-    config_load = load(config.out_files.config, 'config');
-    config_load = config_load.config;
-    % Pull Bias & Uncertainty Values If Same File For Convenience
-    if strcmp(config.out_files.config, config_load.out_files.config) % Same Bias File
-        try
-            % SSL Proportional & Abolute Uncertainty
-            config.chs_swl_u_a = config_load.chs_swl_u_a;
-            config.chs_swl_u_r = config_load.chs_swl_u_r;
-            config.chs_hm0_u_a = config_load.chs_hm0_u_a;
-            config.chs_hm0_u_r = config_load.chs_hm0_u_r;
-            % SSL Proportional And Absolute Bias
-            config.chs_swl_b_a = config_load.chs_swl_b_a;
-            config.chs_swl_b_r = config_load.chs_swl_b_r;
-            % If SP ID Doesn't Match Wipe Transect Folder, New Forcing
-            if config.sp_ID ~= config_load.sp_ID
-                % Delete Files Because Bias Needs to Be Recomputed
-                sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name);
-                rmdir(sim_dir, 's');
-                mkdir(sim_dir);
-                mkdir(fullfile(sim_dir, wflow2));
-                % Grab Forcing Adjustment Flags
-                config.u_engine = 0;
-                config.f_adjust = 0;
-            else
-                % Grab Forcing Adjustment Flags
-                config.u_engine = config_load.u_engine;
-                config.f_adjust = config_load.f_adjust;
-                u_load = true;
-            end
-        catch
-            % Delete Files Because Bias Needs to Be Recomputed
-            sim_dir = fullfile(config.outfolder, config.project_name, config.struc_id, config.case_name, wflow2);
-            rmdir(sim_dir, 's');
-            mkdir(sim_dir);
-            % Uncertainty Engine Field Initialization
-            config.u_engine = 0;
-            % Forcing Adjustments Field Initialization
-            config.f_adjust = 0;
-        end
-    end
-else
-    % Uncertainty Engine Field Initialization
-    config.u_engine = 0;
-    % Forcing Adjustments Field Initialization
-    config.f_adjust = 0;
-end
+[config, u_load] = resolve_hotstart_state(config, wflow2);
 
 %% MANUAL BIAS & UNCERTAINTY INPUT (XC-only mode, no CHS_Dependencies)
 % Missing CHS Dependencies Or Unsupported Region
@@ -345,10 +297,12 @@ if (cond1 || cond3) && ~u_load
         config.chs_swl_b_r = input('  SWL Relative Bias [-]:         ');
         config.chs_swl_u_a = input('  SWL Absolute Uncertainty [m]:  ');
         config.chs_swl_u_r = input('  SWL Relative Uncertainty [-]:  ');
+        config.chs_swl_bu_source = 'manual';
     end
     if isempty(config.in_files.BnU_waves)
         config.chs_hm0_u_a = input('  Hm0 Absolute Uncertainty [m]:  ');
         config.chs_hm0_u_r = input('  Hm0 Relative Uncertainty [-]:  ');
+        config.chs_hm0_u_source = 'manual';
     end
 end
 

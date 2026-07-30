@@ -1,4 +1,11 @@
 function [project_forcing, config]  = call_project_forcing_formater(config, storm, prob_mass)
+%CALL_PROJECT_FORCING_FORMATER Loads/builds project_forcing, applying hotstart coverage checks.
+% IMPORTANT: Callers MUST capture BOTH outputs:
+%   [project_forcing, config] = call_project_forcing_formater(config, storm, prob_mass);
+% The coverage check below can reset config.u_engine/config.f_adjust to 0
+% when a cached project_forcing.mat does not cover the current request --
+% later pipeline stages only see that reset if the second output is
+% captured. No caller inside StormSim_Library currently enforces this.
 %% GRAB INPUT FROM "config"
 % Define Requested Workflow (1 -> RB1 Approach, other-> Life-Cycle Base)
 workflow = config.workflow;
@@ -15,39 +22,9 @@ if exist(existing_file, 'file') == 2
     % Load Project Forcing
     load(existing_file,'project_forcing');
     % Check If Existing Data Complies With Request
-    has_peaks = contains('Peaks', fieldnames(project_forcing));
-    if ~has_peaks
-        has_wlp = false;
-        has_whp = false;
-    else
-        has_wlp = contains('WLP', fieldnames(project_forcing.Peaks));
-        has_whp = contains('WHP', fieldnames(project_forcing.Peaks));
-    end
-    has_timeseries = contains('Timeseries', fieldnames(project_forcing));
-    if ~has_peaks
-        has_xc = contains('XC', fieldnames(project_forcing.Timeseries.Default));
-        has_tc = contains('TC', fieldnames(project_forcing.Timeseries.Default));
-    else
-        has_xc = contains('XC', fieldnames(project_forcing.Peaks.Default));
-        has_tc = contains('TC', fieldnames(project_forcing.Peaks.Default));
-    end
-    % Define Storm Type Needs
-    switch lower(config.storm_sampling)
-        case 'xc'
-            tc_conf = false;
-            xc_conf = true;
-        case 'tc'
-            tc_conf = true;
-            xc_conf = false;
-        case 'cc'
-            tc_conf = true;
-            xc_conf = true;
-    end
-    % Build Boolean Table
-    have = [has_peaks;has_wlp;has_whp;has_timeseries;has_tc;has_xc];
-    need = [cellfun(@(x) logical(config.(x)), {'use_peaks','create_wlp','create_whp','use_timeseries'}, 'un', true)';tc_conf;xc_conf];
-    % Check If Loaded Project Forcing Meets The Requirements
-    if any(~have(need)) % Requested Data Is Not Present
+    [covers, missing_desc] = project_forcing_coverage(config, project_forcing);
+    if ~covers % Requested Data Is Not Present
+        disp_toggle(config.print_progress, sprintf('Hotstart: cached project forcing does not cover requested permutation (missing: %s) -- deleting, will be regenerated....', missing_desc));
         delete(config.out_files.project_forcing);
         load_pass = false;
         config.u_engine = 0;

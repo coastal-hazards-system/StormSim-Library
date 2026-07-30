@@ -129,16 +129,21 @@ disp('   Running StormSim: Monte Carlo Simulation (Storm Sampling)....');
             % Prevent Multiple Loads
             ref_pf = load(mcs_ref_pth, 'project_forcing');
             ref_pf = ref_pf.project_forcing;
-            % Prompt User Of Loading
-            if contains(fieldnames(ref_pf.Peaks.Default), 'XC')
-                disp(['     Warning: ref_case_name ('  config.ref_case_name ') does not have XC sampling information...']);
-                hot_start = false;
-            else
+            % Check What Sampling Seed The Reference Case Actually Has
+            has_ref_peaks = isfield(ref_pf,'Peaks') && isfield(ref_pf.Peaks,'Default') && isfield(ref_pf.Peaks.Default,'XC');
+            has_ref_ts = isfield(ref_pf,'Timeseries') && isfield(ref_pf.Timeseries,'Default') && isfield(ref_pf.Timeseries.Default,'XC');
+            if has_ref_peaks || has_ref_ts
                 hot_start = true;
-                disp(['     Loading XC sampling seed from case_name: '  config.ref_case_name]);
+                if has_ref_peaks
+                    disp(['     Loading XC sampling seed from case_name: '  config.ref_case_name]);
+                    % Pull Sampling Seed
+                    sampled_xc = cellfun(@(x) x(:, 1:4), ref_pf.Peaks.Default.('XC'), 'un', false);
+                else
+                    disp(['     Loading XC sampling seed from case_name (derived from Timeseries, reference has no Peaks): '  config.ref_case_name]);
+                    % Pull Sampling Seed (Identity Columns Repeat Per Timestep, Same As Peaks Would Provide)
+                    sampled_xc = cellfun(@(x) unique(x(:, 1:4), 'rows', 'stable'), ref_pf.Timeseries.Default.('XC'), 'un', false);
+                end
                 fprintf(1,'      Completion Progress: %3d%%\n',0);
-                % Pull Sampling Seed
-                sampled_xc = cellfun(@(x) x(:, 1:4), ref_pf.Peaks.Default.('XC'), 'un', false);
                 storm_data = storm.XC.Peaks.Default;
                 % Populate Storm Data
                 for lc=1:number_of_life_cyles
@@ -150,6 +155,9 @@ disp('   Running StormSim: Monte Carlo Simulation (Storm Sampling)....');
                     project_forcing.Peaks.Default.('XC'){lc, 1} = [sampled_xc{lc}, cell2mat(peaks_data)]; % Headers: [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order, SSL, Hm0, Tp, wDir, storm_duration ]
                     fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
                 end
+            else
+                disp(['     Warning: ref_case_name ('  config.ref_case_name ') does not have XC sampling information...']);
+                hot_start = false;
             end
         else
             hot_start = false;
@@ -194,16 +202,21 @@ disp('   Running StormSim: Monte Carlo Simulation (Storm Sampling)....');
             % Prevent Multiple Loads
             ref_pf = load(mcs_ref_pth, 'project_forcing');
             ref_pf = ref_pf.project_forcing;
-            % Prompt User Of Loading
-            if contains(fieldnames(ref_pf.Peaks.Default), 'TC')
-                disp(['     Warning: ref_case_name ('  config.ref_case_name ') does not have TC sampling information...']);
-                hot_start = false;
-            else
+            % Check What Sampling Seed The Reference Case Actually Has
+            has_ref_peaks = isfield(ref_pf,'Peaks') && isfield(ref_pf.Peaks,'Default') && isfield(ref_pf.Peaks.Default,'TC');
+            has_ref_ts = isfield(ref_pf,'Timeseries') && isfield(ref_pf.Timeseries,'Default') && isfield(ref_pf.Timeseries.Default,'TC');
+            if has_ref_peaks || has_ref_ts
                 hot_start = true;
-                disp(['     Loading TC sampling seed from case_name: '  config.ref_case_name]);
+                if has_ref_peaks
+                    disp(['     Loading TC sampling seed from case_name: '  config.ref_case_name]);
+                    % Pull Sampling Seed
+                    sampled_tc = cellfun(@(x) x(:, 1:4), ref_pf.Peaks.Default.('TC'), 'un', false);
+                else
+                    disp(['     Loading TC sampling seed from case_name (derived from Timeseries, reference has no Peaks): '  config.ref_case_name]);
+                    % Pull Sampling Seed (Identity Columns Repeat Per Timestep, Same As Peaks Would Provide)
+                    sampled_tc = cellfun(@(x) unique(x(:, 1:4), 'rows', 'stable'), ref_pf.Timeseries.Default.('TC'), 'un', false);
+                end
                 fprintf(1,'      Completion Progress: %3d%%\n',0);
-                % Pull Sampling Seed
-                sampled_tc = cellfun(@(x) x(:, 1:4), ref_pf.Peaks.Default.('TC'), 'un', false);
                 storm_data = storm.TC.Peaks.Default;
                 % Populate Storm Data
                 for lc=1:number_of_life_cyles
@@ -215,6 +228,9 @@ disp('   Running StormSim: Monte Carlo Simulation (Storm Sampling)....');
                     project_forcing.Peaks.Default.('TC'){lc, 1} = [sampled_tc{lc}, cell2mat(peaks_data)]; % Headers: [ storm_IDs, intensity_bin, Sim_Year, yearly_ocurrance_order, SSL, Hm0, Tp, wDir, storm_duration ]
                     fprintf(1,'\b\b\b\b%3.0f%%',(100*(lc/number_of_life_cyles)));
                 end
+            else
+                disp(['     Warning: ref_case_name ('  config.ref_case_name ') does not have TC sampling information...']);
+                hot_start = false;
             end
         else
             hot_start = false;
